@@ -39,19 +39,6 @@ let isAutoSafeLeverage = true; // Auto reverse-deduced safe leverage by default
 let manualLeverage = 10;
 let calculatedMaxSafeLeverage = 50;
 
-// Standard Exchange Leverage Tiers (Common presets across major crypto exchanges)
-const EXCHANGE_LEVERAGE_TIERS = [1, 2, 5, 10, 15, 20, 25, 30, 50, 75, 80, 100, 125, 150];
-
-function roundUpToLeverageTier(rawLev) {
-    if (rawLev <= 1) return 1;
-    for (let i = 0; i < EXCHANGE_LEVERAGE_TIERS.length; i++) {
-        if (EXCHANGE_LEVERAGE_TIERS[i] >= rawLev) {
-            return EXCHANGE_LEVERAGE_TIERS[i];
-        }
-    }
-    return 150;
-}
-
 // 2. Pure Calculation Engine
 const Calculator = {
     calculateRiskAmount(balance, riskPercent) {
@@ -73,7 +60,9 @@ const Calculator = {
 
     /**
      * Reverse-Deduce Maximum Safe Leverage (防爆仓最高安全杠杆)
-     * Rounds up to standard exchange tiers (e.g. 78 -> 80)
+     * Must use Math.floor (downward integer) so that:
+     * - Leverage <= 1 / (slPct + MMR)
+     * This mathematically guarantees that the liquidation price will NEVER precede or exceed Stop Loss.
      */
     calculateMaxSafeLeverage(entryPrice, slPrice, mmr = 0.005) {
         if (entryPrice <= 0 || slPrice <= 0 || entryPrice === slPrice) {
@@ -82,7 +71,7 @@ const Calculator = {
         const slDistance = Math.abs(entryPrice - slPrice);
         const slPct = slDistance / entryPrice;
         const rawLev = 1 / (slPct + mmr);
-        const safeLev = roundUpToLeverageTier(rawLev);
+        const safeLev = Math.floor(rawLev);
         return Math.min(150, Math.max(1, safeLev));
     },
 
@@ -1120,7 +1109,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 liqBuffer = estLiqPrice - slPrice;
             }
-            const isSafe = (liqBuffer > 0 || currentActiveLev <= calculatedMaxSafeLeverage);
+            const isSafe = (liqBuffer >= -0.01);
 
             if (isSafe) {
                 const bufferText = liqBuffer > 0 ? `+$${liqBuffer.toFixed(2)}` : `~$0.00`;
@@ -1159,7 +1148,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     buffer = liq - slPrice;
                 }
-                const rowSafe = (buffer > 0 || lev <= calculatedMaxSafeLeverage);
+                const rowSafe = (buffer >= -0.01);
 
                 const isActive = (lev === currentActiveLev);
                 const isOptimalSafe = (lev === calculatedMaxSafeLeverage);
