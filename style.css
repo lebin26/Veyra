@@ -1307,16 +1307,17 @@ kbd {
     .mobile-sticky-bar {
         display: block;
         position: fixed;
-        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-        left: 12px;
-        right: 12px;
+        /* Lifted position with safe area clearance to prevent phone rounded screen borders from clipping */
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+        left: 16px;
+        right: 16px;
         max-width: 520px;
         margin: 0 auto;
         z-index: 1000;
         background-color: var(--bg-panel);
         border: 1px solid var(--border-default);
-        border-radius: 14px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08);
         transition: transform 260ms var(--ease-out), opacity 260ms var(--ease-out);
         transform: translateY(0);
         opacity: 1;
@@ -1324,11 +1325,11 @@ kbd {
     }
 
     [data-theme="dark"] .mobile-sticky-bar {
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
     }
 
     .mobile-sticky-bar.bar-hidden {
-        transform: translateY(calc(100% + 24px));
+        transform: translateY(calc(100% + 40px));
         opacity: 0;
         pointer-events: none;
     }
@@ -1456,7 +1457,7 @@ button, input, select, textarea, .lot-preset-btn, .risk-preset-btn, .stepper-btn
 
 @media (max-width: 639px) {
     .app-shell {
-        padding: 16px 14px calc(72px + env(safe-area-inset-bottom, 0px));
+        padding: 16px 14px calc(92px + env(safe-area-inset-bottom, 0px));
     }
 
     .desktop-shortcuts-hint {
@@ -1540,7 +1541,7 @@ button, input, select, textarea, .lot-preset-btn, .risk-preset-btn, .stepper-btn
 
 @media (max-width: 360px) {
     .app-shell {
-        padding: 12px 10px calc(76px + env(safe-area-inset-bottom, 0px));
+        padding: 12px 10px calc(96px + env(safe-area-inset-bottom, 0px));
     }
 
     .function-title {
