@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lot calculator · XAUUSD & BTCUSD</title>
-    <meta name="description" content="Precision quantitative reverse-deduction lot sizing and safe leverage calculator for Gold (XAUUSD) and Bitcoin (BTCUSD).">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Veyra Trading · Position Size Calculator</title>
+    <meta name="description" content="Veyra Trading - Position Size Calculator. Precision quantitative reverse-deduction lot sizing and safe leverage calculator for Gold (XAUUSD) and Bitcoin (BTCUSDT).">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,8 +12,12 @@
         <!-- 1. Header & Instrument Switcher -->
         <header class="app-header">
             <div class="header-top-row">
-                <div class="header-title-group">
-                    <h1 id="app-title">Lot calculator</h1>
+                <div class="header-brand-group">
+                    <div class="brand-eyebrow">
+                        <span class="brand-logo-mark"></span>
+                        <span class="brand-title">Veyra Trading</span>
+                    </div>
+                    <h1 id="app-title" class="function-title">Position Size Calculator</h1>
                 </div>
                 <button type="button" id="theme-toggle-btn" class="theme-ghost-btn" aria-label="Toggle theme" title="Toggle theme">
                     <svg id="theme-icon-svg" class="theme-icon-svg" viewBox="0 0 24 24">
@@ -25,7 +29,7 @@
                 <div class="segmented" id="instrument-segmented" role="tablist" aria-label="Select Instrument">
                     <div class="segmented-slider" id="instrument-slider"></div>
                     <button type="button" id="sym-xauusd" class="segmented-btn active" role="tab" aria-selected="true" data-symbol="XAUUSD">XAUUSD</button>
-                    <button type="button" id="sym-btcusdt" class="segmented-btn" role="tab" aria-selected="false" data-symbol="BTCUSDT.P">BTCUSD</button>
+                    <button type="button" id="sym-btcusdt" class="segmented-btn" role="tab" aria-selected="false" data-symbol="BTCUSDT.P">BTCUSDT</button>
                 </div>
             </div>
         </header>
@@ -269,7 +273,7 @@
                     </div>
                 </section>
 
-                <!-- Section: BTCUSD Position & Stop Loss -->
+                <!-- Section: BTCUSDT Position & Stop Loss -->
                 <section id="crypto-position-section" class="calc-section hidden">
                     <div class="section-header-row">
                         <span class="section-title">Stop loss</span>
@@ -285,8 +289,8 @@
                         </div>
                     </div>
 
-                    <!-- BTC SL Mode Switcher (Full Width below header) -->
-                    <div class="segmented" id="btc-sl-segmented" role="tablist" aria-label="BTC Stop Loss Mode">
+                    <!-- BTCUSDT SL Mode Switcher (Full Width below header) -->
+                    <div class="segmented" id="btc-sl-segmented" role="tablist" aria-label="BTCUSDT Stop Loss Mode">
                         <div class="segmented-slider" id="btc-sl-slider"></div>
                         <button type="button" id="btc-mode-price" class="segmented-btn active" role="tab" aria-selected="true">Entry & SL</button>
                         <button type="button" id="btc-mode-diff" class="segmented-btn" role="tab" aria-selected="false">Price diff</button>
@@ -398,7 +402,7 @@
                     </div>
                 </section>
 
-                <!-- Section: BTCUSD Safe Leverage & Margin (Collapsible Accordion) -->
+                <!-- Section: BTCUSDT Safe Leverage & Margin (Collapsible Accordion) -->
                 <section id="crypto-leverage-section" class="collapsible-card hidden">
                     <button type="button" class="collapsible-trigger" id="leverage-collapse-trigger" aria-expanded="false">
                         <span class="collapsible-trigger-title">Safe leverage & margin</span>
@@ -611,7 +615,7 @@
                     </div>
                 </div>
 
-                <!-- Attached Readouts for BTCUSD Mode -->
+                <!-- Attached Readouts for BTCUSDT Mode -->
                 <div id="crypto-pos-metrics" class="results-attached-readouts hidden">
                     <div class="readout-row">
                         <span class="readout-label">Position Value</span>
@@ -674,7 +678,7 @@
             <div class="desktop-shortcuts-hint" aria-label="Keyboard Shortcuts">
                 <span class="shortcuts-title">Shortcuts:</span>
                 <span class="shortcut-tag"><kbd>1</kbd> XAU</span>
-                <span class="shortcut-tag"><kbd>2</kbd> BTC</span>
+                <span class="shortcut-tag"><kbd>2</kbd> BTCUSDT</span>
                 <span class="shortcut-tag"><kbd>R</kbd> Risk</span>
                 <span class="shortcut-tag"><kbd>C</kbd> Lot</span>
                 <span class="shortcut-tag"><kbd>T</kbd> Theme</span>

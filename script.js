@@ -4,7 +4,7 @@
  *     - USD Account: 1 Lot = 100 oz
  *     - USC Cent Account: 1 Lot = 1 oz
  *     - SL Modes: SL Pips (Default 150) | 差价 ($) | Entry / SL
- * - BTCUSD: 
+ * - BTCUSDT: 
  *     - Mode 1: Risk Sizing (Equity + Risk% + SL → Lot Size + Margin + Safe Leverage)
  *     - Mode 2: Custom Lot (Equity + Lot Size + SL + TP → TP/SL PnL + R:R + Margin + Safe Leverage)
  *     - SL Modes: Price | 差价 ($) | 比例 (%)
@@ -13,8 +13,8 @@
 // 1. Asset Specifications
 const INSTRUMENTS = {
     "BTCUSDT.P": {
-        symbol: "BTCUSD",
-        title: "Lot calculator",
+        symbol: "BTCUSDT",
+        title: "Position Size Calculator",
         subtitle: "",
         isCrypto: true,
         contractSize: 1,   // 1 BTC per 1.00 lot
@@ -22,7 +22,7 @@ const INSTRUMENTS = {
     },
     XAUUSD: {
         symbol: "XAUUSD",
-        title: "Lot calculator",
+        title: "Position Size Calculator",
         subtitle: "",
         isCrypto: false,
         contractSize: 100, // 100 oz per 1.00 standard USD lot
@@ -409,7 +409,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let curr = parseFloat(elements.customLotInput.value);
         if (isNaN(curr) || curr <= 0) {
-            curr = isBtc ? 0.01 : 0.01;
+            // Default starting minimum when input is blank:
+            // BTCUSDT starts from 0.001, XAUUSD starts from 0.01
+            curr = isBtc ? 0.001 : 0.01;
             if (direction < 0) curr = step;
         } else {
             curr = Number((curr + direction * step).toFixed(decimals));
@@ -464,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentInstrumentKey = symbolKey;
         const spec = INSTRUMENTS[symbolKey];
 
-        if (elements.appTitle) elements.appTitle.textContent = "Lot calculator";
+        if (elements.appTitle) elements.appTitle.textContent = "Position Size Calculator";
         if (elements.appSubtitle) elements.appSubtitle.textContent = spec.subtitle || "";
 
         if (symbolKey === "XAUUSD") {
@@ -485,6 +487,7 @@ document.addEventListener("DOMContentLoaded", () => {
             elements.lotUscCentHint.textContent = "USC · 0.01 · 1 oz";
             elements.customLotSuffix.textContent = "Lots";
             if (elements.lotStepIndicator) elements.lotStepIndicator.textContent = "Step: 0.01";
+            if (elements.customLotInput) elements.customLotInput.placeholder = "e.g. 0.05";
             if (elements.trustAssumptionText) elements.trustAssumptionText.textContent = "1 pip = $0.10 · 1 lot = 100 oz";
             closeLeverageMenu();
         } else {
@@ -505,6 +508,7 @@ document.addEventListener("DOMContentLoaded", () => {
             elements.lotUscCentHint.textContent = "USC · 0.01 · 0.01 BTC";
             elements.customLotSuffix.textContent = "BTC";
             if (elements.lotStepIndicator) elements.lotStepIndicator.textContent = "Step: 0.001";
+            if (elements.customLotInput) elements.customLotInput.placeholder = "e.g. 0.010";
             if (elements.trustAssumptionText) elements.trustAssumptionText.textContent = "1 pip = $1.00 · 1 lot = 1 BTC";
         }
 
@@ -896,7 +900,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 elements.displayPriceDistance.textContent = `$${priceDistance.toFixed(2)} (${pips.toFixed(1)} pips)`;
             }
         } else {
-            // BTCUSD Calculation (3 SL Modes: Price / 差价 $ / 比例 %)
+            // BTCUSDT Calculation (3 SL Modes: Price / 差价 $ / 比例 %)
             entryPrice = parseFloat(elements.cryptoEntryPriceInput.value);
 
             if (activeBtcSlMode === "price") {
@@ -980,7 +984,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 activeCalcLot = usdLot > 0 ? usdLot : (bybitLot > 0 ? bybitLot : exactUsdLot);
                 actualRiskAmount = activeCalcLot * priceDistance * 100;
             } else {
-                // BTCUSD:
+                // BTCUSDT:
                 // 1. MT5 USD Account: Contract Size = 1 BTC per 1 lot, Step 0.01
                 const exactBtcLot = Calculator.calculateExactLot(riskAmount, priceDistance, 1);
                 let usdLot = 0;
@@ -1029,7 +1033,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Mode 2: Custom Lot Size Sizing & PnL
             const customLot = parseFloat(elements.customLotInput.value);
             activeCalcLot = customLot;
-            const currentContractSize = spec.contractSize; // 100 for XAUUSD, 1 for BTCUSD
+            const currentContractSize = spec.contractSize; // 100 for XAUUSD, 1 for BTCUSDT
             
             actualRiskAmount = activeCalcLot * priceDistance * currentContractSize;
             const slLossPct = (actualRiskAmount / balance) * 100;
@@ -1066,7 +1070,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Reverse-Deduction Engine for Crypto (BTCUSD)
+        // Reverse-Deduction Engine for Crypto (BTCUSDT)
         if (spec.isCrypto && entryPrice > 0) {
             const positionValue = activeCalcLot * entryPrice * spec.contractSize;
             const actualRiskPct = (actualRiskAmount / balance) * 100;
@@ -1430,4 +1434,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setInstrument("XAUUSD");
     syncAllSegmentedSliders();
+
+    // ==========================================================================
+    // 4. MOBILE ACCIDENTAL ZOOM PREVENTION
+    // ==========================================================================
+
+    // Prevent iOS Safari gesture pinch-zoom
+    document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+    document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
+    document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
+
+    // Prevent multi-touch pinch zooming while allowing normal single-finger swiping
+    document.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    document.addEventListener("touchmove", (e) => {
+        if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Prevent double-tap zoom on iOS Safari while allowing tap interactions on buttons/inputs
+    let lastTouchEndTime = 0;
+    document.addEventListener("touchend", (e) => {
+        const now = Date.now();
+        if (now - lastTouchEndTime <= 300) {
+            if (!["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName)) {
+                e.preventDefault();
+            }
+        }
+        lastTouchEndTime = now;
+    }, false);
+
+    // Prevent Ctrl + Wheel zoom on desktop trackpads / mice
+    window.addEventListener("wheel", (e) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // ==========================================================================
+    // 5. UNSELECTABLE TEXT ENFORCEMENT
+    // ==========================================================================
+
+    // Prevent text drag-selection across all displayed text (except editable inputs)
+    document.addEventListener("selectstart", (e) => {
+        if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+            e.preventDefault();
+        }
+    });
+
+    // Prevent manual copy across all displayed text
+    document.addEventListener("copy", (e) => {
+        const activeEl = document.activeElement;
+        if (!activeEl || (activeEl.tagName !== "INPUT" && activeEl.tagName !== "TEXTAREA")) {
+            e.preventDefault();
+        }
+    });
+
+    // Prevent dragging static text
+    document.addEventListener("dragstart", (e) => {
+        if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+            e.preventDefault();
+        }
+    });
 });

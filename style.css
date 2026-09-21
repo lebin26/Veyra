@@ -81,12 +81,21 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    /* Prevent all displayed text from being selected or copied */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 html {
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     overflow-x: hidden;
+    /* Disallow browser pinch-zoom/gesture scaling while allowing natural smooth scrolling */
+    touch-action: pan-x pan-y;
 }
 
 body {
@@ -97,7 +106,17 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    touch-action: pan-x pan-y;
     transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Strictly re-enable text input and caret editing inside form fields */
+input, textarea {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
 }
 
 /* Global tabular-nums for all numbers */
@@ -135,10 +154,39 @@ input, button, table, .tabular-nums, .result-hero-val, .readout-val, .metric-val
     gap: 16px;
 }
 
-.header-title-group h1 {
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+.header-brand-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.brand-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.brand-logo-mark {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--color-brand);
+    box-shadow: 0 0 8px var(--color-brand-ring);
+}
+
+.brand-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-brand);
+    line-height: 1;
+}
+
+.function-title {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
     line-height: 1.2;
 }
@@ -812,7 +860,7 @@ input, button, table, .tabular-nums, .result-hero-val, .readout-val, .metric-val
     animation: valFadeIn 160ms var(--ease-out);
 }
 
-/* Attached Readouts below Result Panel for BTCUSD */
+/* Attached Readouts below Result Panel for BTCUSDT */
 .results-attached-readouts {
     padding: 8px 12px;
     display: flex;
@@ -888,7 +936,7 @@ input, button, table, .tabular-nums, .result-hero-val, .readout-val, .metric-val
 }
 
 /* ==========================================================================
-   BTCUSD: SAFE LEVERAGE & MARGIN (COLLAPSIBLE ACCORDION)
+   BTCUSDT: SAFE LEVERAGE & MARGIN (COLLAPSIBLE ACCORDION)
    ========================================================================== */
 
 .collapsible-card {
@@ -1477,6 +1525,10 @@ button, input, select, textarea, .lot-preset-btn, .risk-preset-btn, .stepper-btn
         width: 100%;
     }
     
+    .function-title {
+        font-size: 19px;
+    }
+    
     .header-actions {
         width: 100%;
     }
@@ -1491,8 +1543,8 @@ button, input, select, textarea, .lot-preset-btn, .risk-preset-btn, .stepper-btn
         padding: 12px 10px calc(76px + env(safe-area-inset-bottom, 0px));
     }
 
-    .header-title-group h1 {
-        font-size: 18px;
+    .function-title {
+        font-size: 17px;
     }
 
     .form-grid-3 {
