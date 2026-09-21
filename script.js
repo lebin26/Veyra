@@ -59,29 +59,36 @@ const Calculator = {
     },
 
     /**
-     * Reverse-Deduce Maximum Safe Leverage (防爆仓最高安全杠杆)
-     * Must use Math.floor (downward integer) so that:
-     * - Leverage <= 1 / (slPct + MMR)
-     * This mathematically guarantees that the liquidation price will NEVER precede or exceed Stop Loss.
+     * Reverse-Deduce Maximum Safe Leverage (防爆仓最高安全杠杆 - 保守估算)
+     * 计入交易所阶梯维持保证金率 (0.33%-0.5%) + 强平平仓手续费与滑点安全冗余 (0.2%)
+     * 主动降低推荐杠杆，100% 确保强平价绝不先于止损线触发。
+     * Formula: floor(1 / (slPct + MMR + FeeBuffer))
      */
-    calculateMaxSafeLeverage(entryPrice, slPrice, mmr = 0.005) {
+    calculateMaxSafeLeverage(entryPrice, slPrice, mmr = 0.004, feeBuffer = 0.002) {
         if (entryPrice <= 0 || slPrice <= 0 || entryPrice === slPrice) {
             return 50;
         }
         const slDistance = Math.abs(entryPrice - slPrice);
         const slPct = slDistance / entryPrice;
-        const rawLev = 1 / (slPct + mmr);
+        // Total reserve = MMR + Fee & Slippage Buffer (直接降低杠杆，保守预估)
+        const totalReserve = mmr + feeBuffer;
+        const rawLev = 1 / (slPct + totalReserve);
         const safeLev = Math.floor(rawLev);
         return Math.min(150, Math.max(1, safeLev));
     },
 
-    calculateLiqPrice(entryPrice, leverage, side, mmr = 0.005) {
+    /**
+     * Estimated Liquidation Price (对齐 Bybit 逐仓实盘强平模型)
+     * 真实计入维持保证金率与平仓 Taker 预留费率 (约 0.0033)
+     */
+    calculateLiqPrice(entryPrice, leverage, side, totalReserve = 0.0033) {
         if (entryPrice <= 0 || leverage <= 0) return 0;
         if (side === "long") {
-            const liq = entryPrice * (1 - (1 / leverage) + mmr);
+            const liq = entryPrice * (1 - (1 / leverage) + totalReserve);
             return liq > 0 ? liq : 0;
         } else {
-            return entryPrice * (1 + (1 / leverage) - mmr);
+            const liq = entryPrice * (1 + (1 / leverage) - totalReserve);
+            return liq > 0 ? liq : 0;
         }
     }
 };
