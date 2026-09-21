@@ -109,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         modeCustomLot: document.getElementById("mode-custom-lot"),
         modeRiskGrid: document.getElementById("mode-risk-grid"),
         modeLotGrid: document.getElementById("mode-lot-grid"),
+        riskPresetsBar: document.getElementById("risk-presets-bar"),
         lotPresetsBar: document.getElementById("lot-presets-bar"),
         riskSummaryBar: document.getElementById("risk-summary-bar"),
         accountSectionTitle: document.getElementById("account-section-title"),
@@ -345,6 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
             elements.modeCustomLot.setAttribute("aria-selected", "false");
 
             elements.modeRiskGrid.classList.remove("hidden");
+            if (elements.riskPresetsBar) elements.riskPresetsBar.classList.remove("hidden");
             elements.riskSummaryBar.classList.remove("hidden");
             elements.modeLotGrid.classList.add("hidden");
             elements.lotPresetsBar.classList.add("hidden");
@@ -367,6 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
             elements.modeRiskSizing.setAttribute("aria-selected", "false");
 
             elements.modeRiskGrid.classList.add("hidden");
+            if (elements.riskPresetsBar) elements.riskPresetsBar.classList.add("hidden");
             elements.riskSummaryBar.classList.add("hidden");
             elements.modeLotGrid.classList.remove("hidden");
             elements.lotPresetsBar.classList.remove("hidden");
