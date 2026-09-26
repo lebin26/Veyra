@@ -6,7 +6,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const elements = {
         themeToggleBtn: document.getElementById("theme-toggle-btn"),
-        comingSoonCards: document.querySelectorAll(".app-card-coming-soon"),
+        comingSoonCards: document.querySelectorAll(".app-coming-soon, .app-card-coming-soon"),
         launcherToast: document.getElementById("launcher-toast"),
         launcherToastMessage: document.getElementById("launcher-toast-message")
     };

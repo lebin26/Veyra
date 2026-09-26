@@ -108,6 +108,8 @@ body {
     transition: background-color 200ms ease, color 200ms ease;
     min-height: 100vh;
     min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
 }
 
 :focus-visible {
@@ -126,8 +128,14 @@ body {
 
 .app-shell {
     max-width: 1040px;
+    width: 100%;
     margin: 0 auto;
-    padding: 32px 20px 64px;
+    padding: 32px 20px 32px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 /* Header: Static title + 36px Ghost Theme Button */
@@ -216,227 +224,133 @@ body {
 }
 
 /* ==========================================================================
-   SECTION & APPS GRID
-   Conforming 1:1 to calculator's .calc-section and card architecture
+   MINIMALIST APP LAUNCHER GRID (Icon + Name Only)
+   Conforming to Veyra Design System with zero card borders
    ========================================================================== */
 
 .calc-section {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--space-field);
-}
-
-.section-header-row {
-    display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    min-height: 28px;
+    width: 100%;
+    margin-top: 0;
+    padding: 24px 0;
 }
 
-.section-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.005em;
-}
-
-.section-subtitle {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-/* 2x2 Grid of Cards */
-.apps-grid {
+.apps-icon-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(4, 140px);
+    justify-content: center;
+    gap: 40px 24px;
     width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
 }
 
-.app-card {
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-panel);
-    padding: 24px;
+.app-icon-tile {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 18px;
-    text-decoration: none;
-    color: inherit;
-    transition: border-color var(--dur-hover), transform var(--dur-hover), box-shadow var(--dur-hover), background-color var(--dur-hover);
-    position: relative;
-}
-
-.active-app-card {
-    cursor: pointer;
-}
-
-.active-app-card:hover {
-    border-color: var(--color-brand);
-    box-shadow: 0 4px 16px var(--color-brand-ring);
-    transform: translateY(-2px);
-}
-
-.active-app-card:active {
-    transform: translateY(0) scale(0.99);
-}
-
-.app-card-coming-soon {
-    cursor: pointer;
-    opacity: 0.88;
-}
-
-.app-card-coming-soon:hover {
-    border-color: var(--text-placeholder);
-    opacity: 1;
-    transform: translateY(-2px);
-}
-
-.app-card-header {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    text-align: center;
+    gap: 12px;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    padding: 8px 4px;
+    border-radius: var(--radius-panel);
+    cursor: pointer;
+    outline: none;
+    transition: transform var(--dur-hover) var(--ease-out);
     width: 100%;
 }
 
-.app-card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+button.app-icon-tile {
+    font-family: inherit;
+    color: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.app-icon-tile:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 4px;
+}
+
+.app-icon-squircle {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+    color: #FFFFFF;
 }
 
 .icon-calculator {
     background: linear-gradient(145deg, #3B82F6 0%, #1D4ED8 100%);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
 }
 
 [data-theme="dark"] .icon-calculator {
     background: linear-gradient(145deg, #4F75FF 0%, #1E40AF 100%);
-    box-shadow: 0 4px 14px rgba(79, 117, 255, 0.3);
+    box-shadow: 0 8px 22px rgba(79, 117, 255, 0.35);
 }
 
 .icon-risk {
     background: linear-gradient(145deg, #F59E0B 0%, #D97706 100%);
-    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
-    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(217, 119, 6, 0.25);
 }
 
 .icon-journal {
     background: linear-gradient(145deg, #10B981 0%, #059669 100%);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
 }
 
 .icon-radar {
     background: linear-gradient(145deg, #8B5CF6 0%, #6D28D9 100%);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
-    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
 }
 
 .app-svg-glyph {
-    width: 26px;
-    height: 26px;
-}
-
-.app-status-badge {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 3px 8px;
-    border-radius: var(--radius-chip);
-}
-
-.badge-active {
-    color: var(--color-brand);
-    background-color: var(--color-brand-subtle);
-    border: 1px solid var(--color-brand-ring);
-}
-
-.badge-soon {
-    color: var(--text-secondary);
-    background-color: var(--fill-subtle);
-    border: 1px solid var(--border-default);
-}
-
-.app-card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.app-card-title {
-    font-size: 17px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--text-primary);
-    line-height: 1.25;
-}
-
-.app-card-desc {
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-secondary);
-}
-
-.app-card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-default);
-}
-
-.app-tag-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.app-tag {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background-color: var(--fill-subtle);
-    padding: 2px 7px;
-    border-radius: 4px;
-}
-
-.app-launch-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-brand);
-}
-
-.launch-arrow-svg {
-    width: 14px;
-    height: 14px;
+    width: 34px;
+    height: 34px;
     stroke: currentColor;
-    stroke-width: 2.2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    fill: none;
-    transition: transform var(--dur-hover) ease;
 }
 
-.active-app-card:hover .launch-arrow-svg {
-    transform: translateX(3px);
-}
-
-.app-coming-label {
-    font-size: 12px;
-    color: var(--text-placeholder);
+.app-icon-name {
+    font-size: 13px;
     font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    transition: color var(--dur-hover) ease;
+    max-width: 130px;
+    word-break: break-word;
+}
+
+/* Hover & Active Interactions */
+.app-icon-tile:hover .app-icon-squircle {
+    transform: translateY(-4px) scale(1.05);
+}
+
+.app-icon-tile:hover .app-icon-name {
+    color: var(--color-brand);
+}
+
+.app-icon-tile:active .app-icon-squircle {
+    transform: translateY(0) scale(0.95);
+}
+
+.app-coming-soon {
+    opacity: 0.85;
+}
+
+.app-coming-soon:hover {
+    opacity: 1;
 }
 
 /* ==========================================================================
@@ -444,7 +358,7 @@ body {
    ========================================================================== */
 
 .page-trust-footer {
-    margin-top: 56px;
+    margin-top: auto;
     padding-top: 24px;
     border-top: 1px solid var(--border-default);
     display: flex;
@@ -452,6 +366,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 16px;
+    width: 100%;
 }
 
 .desktop-shortcuts-hint {
@@ -524,15 +439,16 @@ body {
    ========================================================================== */
 
 @media (max-width: 768px) {
-    .apps-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
+    .apps-icon-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 28px 16px;
+        max-width: 600px;
     }
 }
 
 @media (max-width: 639px) {
     .app-shell {
-        padding: 16px 14px calc(92px + env(safe-area-inset-bottom, 0px));
+        padding: 16px 14px calc(24px + env(safe-area-inset-bottom, 0px));
     }
 
     .desktop-shortcuts-hint {
@@ -543,15 +459,33 @@ body {
         width: 44px;
         height: 44px;
     }
+
+    .apps-icon-grid {
+        grid-template-columns: repeat(2, minmax(110px, 140px));
+        gap: 32px 20px;
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    .app-icon-squircle {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+    }
+
+    .app-svg-glyph {
+        width: 30px;
+        height: 30px;
+    }
+
+    .app-icon-name {
+        font-size: 12px;
+    }
 }
 
 @media (max-width: 480px) {
     .function-title {
         font-size: 19px;
-    }
-
-    .app-card {
-        padding: 18px 16px;
     }
 }
 
