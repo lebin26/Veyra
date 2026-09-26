@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Veyra Trading · Apps Portal</title>
+    <meta name="description" content="Veyra Trading quantitative platform application portal.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="apps-portal-screen" role="region" aria-label="Veyra Apps">
+        <!-- Minimal Top Brand Bar with Theme Switcher -->
+        <header class="apps-portal-header">
+            <div class="header-brand-group">
+                <div class="brand-eyebrow">
+                    <span class="brand-logo-mark"></span>
+                    <span class="brand-title">Veyra Trading</span>
+                </div>
+            </div>
+            <button type="button" id="theme-toggle-btn" class="theme-ghost-btn" aria-label="Toggle theme" title="Toggle theme">
+                <svg id="theme-icon-svg" class="theme-icon-svg" viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Main Blank Workspace with Grid of Apps -->
+        <main class="apps-portal-body">
+            <div class="apps-portal-container">
+                <div class="apps-portal-hero">
+                    <h1 class="apps-portal-title">Apps</h1>
+                </div>
+
+                <!-- Responsive App Grid (like mobile / Launchpad) -->
+                <div class="apps-grid" role="list" aria-label="Applications">
+                    <!-- App 1: Position Size Calculator (Active First App) -->
+                    <a href="../calculator/index.html" id="app-btn-calculator" class="app-card-btn active-app" role="listitem" aria-label="Open Position Size Calculator">
+                        <div class="app-icon-squircle icon-calculator">
+                            <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none">
+                                <rect x="8" y="6" width="32" height="36" rx="8" stroke="currentColor" stroke-width="2.5" />
+                                <rect x="14" y="12" width="20" height="7" rx="3" fill="currentColor" fill-opacity="0.2" stroke="currentColor" stroke-width="1.8" />
+                                <circle cx="16" cy="26" r="2.2" fill="currentColor" />
+                                <circle cx="24" cy="26" r="2.2" fill="currentColor" />
+                                <circle cx="32" cy="26" r="2.2" fill="currentColor" />
+                                <circle cx="16" cy="34" r="2.2" fill="currentColor" />
+                                <circle cx="24" cy="34" r="2.2" fill="currentColor" />
+                                <circle cx="32" cy="34" r="2.2" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <span class="app-label">Position Size Calculator</span>
+                    </a>
+
+                    <!-- App 2: Risk Planner (Coming Soon) -->
+                    <button type="button" class="app-card-btn app-coming-soon" role="listitem" data-app-name="Risk Planner" aria-label="Risk Planner (Coming Soon)">
+                        <div class="app-icon-squircle icon-risk">
+                            <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M24 6l15 6v13c0 9.5-6.5 17-15 19-8.5-2-15-9.5-15-19V12l15-6z" />
+                                <path d="M18 24l4 4 8-8" />
+                            </svg>
+                        </div>
+                        <span class="app-label">Risk Planner</span>
+                        <span class="app-badge-tag">Soon</span>
+                    </button>
+
+                    <!-- App 3: Trade Journal (Coming Soon) -->
+                    <button type="button" class="app-card-btn app-coming-soon" role="listitem" data-app-name="Trade Journal" aria-label="Trade Journal (Coming Soon)">
+                        <div class="app-icon-squircle icon-journal">
+                            <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="10" y="8" width="28" height="32" rx="4" />
+                                <line x1="16" y1="16" x2="32" y2="16" />
+                                <line x1="16" y1="23" x2="32" y2="23" />
+                                <line x1="16" y1="30" x2="26" y2="30" />
+                            </svg>
+                        </div>
+                        <span class="app-label">Trade Journal</span>
+                        <span class="app-badge-tag">Soon</span>
+                    </button>
+
+                    <!-- App 4: Market Radar (Coming Soon) -->
+                    <button type="button" class="app-card-btn app-coming-soon" role="listitem" data-app-name="Market Radar" aria-label="Market Radar (Coming Soon)">
+                        <div class="app-icon-squircle icon-radar">
+                            <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="24" cy="24" r="16" />
+                                <circle cx="24" cy="24" r="9" />
+                                <circle cx="24" cy="24" r="2.5" fill="currentColor" />
+                                <line x1="24" y1="8" x2="24" y2="24" />
+                            </svg>
+                        </div>
+                        <span class="app-label">Market Radar</span>
+                        <span class="app-badge-tag">Soon</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast Notification for Coming Soon apps -->
+        <div id="launcher-toast" class="launcher-toast hidden" role="status" aria-live="polite">
+            <span id="launcher-toast-message">Application under development</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

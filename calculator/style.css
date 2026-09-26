@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    DESIGN TOKENS & VARIABLES
    Trading Lot & Leverage Calculator - Minimalist Flat Visual System
    ========================================================================== */
@@ -145,13 +145,64 @@ input, button, table, .tabular-nums, .result-hero-val, .readout-val, .metric-val
     padding: 32px 20px 64px;
 }
 
-/* Header: Static title + Segmented Asset Switcher + 36px Ghost Theme Button */
+/* Header: Static title + Navigation + Segmented Asset Switcher + 36px Ghost Theme Button */
 .app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 32px;
     gap: 16px;
+}
+
+.header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.header-left-nav {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Back to Apps Launcher Button */
+.header-launcher-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px 7px 8px;
+    border-radius: var(--radius-chip);
+    background: var(--fill-subtle);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color var(--dur-hover) ease, border-color var(--dur-hover) ease, transform 100ms ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.header-launcher-btn:hover {
+    background: var(--border-default);
+    border-color: var(--text-secondary);
+}
+
+.header-launcher-btn:active {
+    transform: scale(0.96);
+}
+
+.launcher-nav-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.launcher-nav-text {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
 }
 
 .header-brand-group {
@@ -1512,6 +1563,11 @@ button, input, select, textarea, .lot-preset-btn, .risk-preset-btn, .stepper-btn
 }
 
 @media (max-width: 480px) {
+    .header-launcher-btn {
+        padding: 6px 10px 6px 6px;
+        font-size: 12px;
+    }
+
     .app-header {
         flex-direction: column;
         align-items: stretch;
@@ -1540,6 +1596,19 @@ button, input, select, textarea, .lot-preset-btn, .risk-preset-btn, .stepper-btn
 }
 
 @media (max-width: 360px) {
+    .apps-grid {
+        gap: 20px 14px;
+    }
+
+    .app-icon-squircle {
+        width: 62px;
+        height: 62px;
+    }
+
+    .app-label {
+        font-size: 12px;
+    }
+
     .app-shell {
         padding: 12px 10px calc(96px + env(safe-area-inset-bottom, 0px));
     }

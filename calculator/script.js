@@ -1381,6 +1381,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (e.key === "Escape") {
+            window.location.href = "../main-page/index.html";
+            return;
+        }
+
         if (e.key === "1") {
             setInstrument("XAUUSD");
         } else if (e.key === "2") {

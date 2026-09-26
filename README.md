@@ -96,9 +96,12 @@ $$\text{Short Liq Price} = \text{Entry Price} \times \left(1 + \frac{1}{\text{Le
 
 ## 💻 Architecture & Technology Stack
 
-* **Structure**: Semantic HTML5 (`index.html`)
-* **Styling**: Pure Modular CSS3 (`style.css`) with curated design tokens, dynamic dark mode, and responsive CSS Grid / Flexbox layouts.
-* **Logic**: Vanilla ES6+ JavaScript (`script.js`) with isolated pure functional calculation engines.
+* **Modular Platform Structure**:
+  - `index.html`: Root entry point with instant routing to the Apps Portal.
+  - `main-page/`: Dedicated Apps Portal folder (`index.html`, `style.css`, `script.js`) presenting a clean workspace with an intuitive app grid.
+  - `calculator/`: Dedicated Position Size Calculator folder (`index.html`, `style.css`, `script.js`) with isolated calculation engines and navigation back to Apps.
+* **Styling**: Pure Modular CSS3 with curated design tokens, synchronized dark/light modes, and responsive CSS Grid / Flexbox layouts.
+* **Logic**: Vanilla ES6+ JavaScript with isolated pure functional calculation engines and state persistence.
 * **Dependencies**: Zero external npm packages, frameworks, or runtime CDNs.
 
 ---
