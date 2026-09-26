@@ -232,11 +232,11 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     width: 100%;
     margin-top: 0;
-    padding: 24px 0;
+    padding: 0 0 24px;
 }
 
 .apps-icon-grid {
@@ -246,7 +246,7 @@ body {
     gap: 40px 24px;
     width: 100%;
     max-width: 720px;
-    margin: 0 auto;
+    margin: 8px auto 0;
 }
 
 .app-icon-tile {
@@ -449,6 +449,10 @@ button.app-icon-tile {
 @media (max-width: 639px) {
     .app-shell {
         padding: 16px 12px calc(24px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-header {
+        margin-bottom: 20px;
     }
 
     .desktop-shortcuts-hint {
