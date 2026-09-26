@@ -3,39 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Veyra Trading · Apps Portal</title>
-    <meta name="description" content="Veyra Trading quantitative platform application portal.">
+    <title>Veyra Trading · Trading Applications</title>
+    <meta name="description" content="Veyra Trading proprietary quantitative trading applications suite.">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="apps-portal-screen" role="region" aria-label="Veyra Apps">
-        <!-- Minimal Top Brand Bar with Theme Switcher -->
-        <header class="apps-portal-header">
-            <div class="header-brand-group">
-                <div class="brand-eyebrow">
-                    <span class="brand-logo-mark"></span>
-                    <span class="brand-title">Veyra Trading</span>
+    <main class="app-shell" role="main">
+        <!-- 1. Header & Brand Suite -->
+        <header class="app-header">
+            <div class="header-top-row">
+                <div class="header-brand-group">
+                    <div class="brand-eyebrow">
+                        <span class="brand-logo-mark"></span>
+                        <span class="brand-title">Veyra Trading</span>
+                    </div>
+                    <h1 id="app-title" class="function-title">Trading Applications</h1>
                 </div>
+                <button type="button" id="theme-toggle-btn" class="theme-ghost-btn" aria-label="Toggle theme" title="Toggle theme (T)">
+                    <svg id="theme-icon-svg" class="theme-icon-svg" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
             </div>
-            <button type="button" id="theme-toggle-btn" class="theme-ghost-btn" aria-label="Toggle theme" title="Toggle theme">
-                <svg id="theme-icon-svg" class="theme-icon-svg" viewBox="0 0 24 24">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-            </button>
         </header>
 
-        <!-- Main Blank Workspace with Grid of Apps -->
-        <main class="apps-portal-body">
-            <div class="apps-portal-container">
-                <div class="apps-portal-hero">
-                    <h1 class="apps-portal-title">Apps</h1>
-                </div>
+        <!-- 2. Section Header & App Grid -->
+        <section class="calc-section">
+            <div class="section-header-row">
+                <span class="section-title">Application Suite</span>
+                <span class="section-subtitle">Quantitative execution & risk engines</span>
+            </div>
 
-                <!-- Responsive App Grid (like mobile / Launchpad) -->
-                <div class="apps-grid" role="list" aria-label="Applications">
-                    <!-- App 1: Position Size Calculator (Active First App) -->
-                    <a href="../calculator/index.html" id="app-btn-calculator" class="app-card-btn active-app" role="listitem" aria-label="Open Position Size Calculator">
-                        <div class="app-icon-squircle icon-calculator">
+            <!-- Responsive 2x2 App Grid conforming to calculator card architecture -->
+            <div class="apps-grid" role="list" aria-label="Available Applications">
+                <!-- App 1: Position Size Calculator (Primary Active App) -->
+                <a href="../calculator/index.html" id="app-link-calculator" class="app-card active-app-card" role="listitem" aria-label="Open Position Size Calculator">
+                    <div class="app-card-header">
+                        <div class="app-card-icon icon-calculator">
                             <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none">
                                 <rect x="8" y="6" width="32" height="36" rx="8" stroke="currentColor" stroke-width="2.5" />
                                 <rect x="14" y="12" width="20" height="7" rx="3" fill="currentColor" fill-opacity="0.2" stroke="currentColor" stroke-width="1.8" />
@@ -47,24 +51,57 @@
                                 <circle cx="32" cy="34" r="2.2" fill="currentColor" />
                             </svg>
                         </div>
-                        <span class="app-label">Position Size Calculator</span>
-                    </a>
+                        <span class="app-status-badge badge-active">PRO · ACTIVE</span>
+                    </div>
+                    <div class="app-card-content">
+                        <h2 class="app-card-title">Position Size Calculator</h2>
+                        <p class="app-card-desc">
+                            Precision reverse-deduction lot sizing and liquidation-safe leverage engine for Gold (XAUUSD) and Bitcoin (BTCUSDT).
+                        </p>
+                    </div>
+                    <div class="app-card-footer">
+                        <div class="app-tag-group">
+                            <span class="app-tag">XAUUSD</span>
+                            <span class="app-tag">BTCUSDT</span>
+                            <span class="app-tag">MT5 & Bybit</span>
+                        </div>
+                        <div class="app-launch-btn">
+                            <span>Open</span>
+                            <svg class="launch-arrow-svg" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </div>
+                </a>
 
-                    <!-- App 2: Risk Planner (Coming Soon) -->
-                    <button type="button" class="app-card-btn app-coming-soon" role="listitem" data-app-name="Risk Planner" aria-label="Risk Planner (Coming Soon)">
-                        <div class="app-icon-squircle icon-risk">
+                <!-- App 2: Risk Planner (Coming Soon) -->
+                <div class="app-card app-card-coming-soon" role="listitem" data-app-name="Risk & Reward Planner" aria-label="Risk & Reward Planner (Coming Soon)">
+                    <div class="app-card-header">
+                        <div class="app-card-icon icon-risk">
                             <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M24 6l15 6v13c0 9.5-6.5 17-15 19-8.5-2-15-9.5-15-19V12l15-6z" />
                                 <path d="M18 24l4 4 8-8" />
                             </svg>
                         </div>
-                        <span class="app-label">Risk Planner</span>
-                        <span class="app-badge-tag">Soon</span>
-                    </button>
+                        <span class="app-status-badge badge-soon">COMING SOON</span>
+                    </div>
+                    <div class="app-card-content">
+                        <h2 class="app-card-title">Risk & Reward Planner</h2>
+                        <p class="app-card-desc">
+                            Multi-position drawdown simulator, portfolio exposure balancing, and dynamic capital allocation.
+                        </p>
+                    </div>
+                    <div class="app-card-footer">
+                        <div class="app-tag-group">
+                            <span class="app-tag">Portfolio</span>
+                            <span class="app-tag">Drawdown</span>
+                        </div>
+                        <span class="app-coming-label">In Development · V2.0</span>
+                    </div>
+                </div>
 
-                    <!-- App 3: Trade Journal (Coming Soon) -->
-                    <button type="button" class="app-card-btn app-coming-soon" role="listitem" data-app-name="Trade Journal" aria-label="Trade Journal (Coming Soon)">
-                        <div class="app-icon-squircle icon-journal">
+                <!-- App 3: Trade Journal (Coming Soon) -->
+                <div class="app-card app-card-coming-soon" role="listitem" data-app-name="Trading Journal" aria-label="Trading Journal (Coming Soon)">
+                    <div class="app-card-header">
+                        <div class="app-card-icon icon-journal">
                             <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="10" y="8" width="28" height="32" rx="4" />
                                 <line x1="16" y1="16" x2="32" y2="16" />
@@ -72,13 +109,27 @@
                                 <line x1="16" y1="30" x2="26" y2="30" />
                             </svg>
                         </div>
-                        <span class="app-label">Trade Journal</span>
-                        <span class="app-badge-tag">Soon</span>
-                    </button>
+                        <span class="app-status-badge badge-soon">COMING SOON</span>
+                    </div>
+                    <div class="app-card-content">
+                        <h2 class="app-card-title">Trading Journal</h2>
+                        <p class="app-card-desc">
+                            Automated trade logging, behavioral expectancy tracking, and execution performance analytics.
+                        </p>
+                    </div>
+                    <div class="app-card-footer">
+                        <div class="app-tag-group">
+                            <span class="app-tag">Analytics</span>
+                            <span class="app-tag">Journal</span>
+                        </div>
+                        <span class="app-coming-label">In Development · V2.0</span>
+                    </div>
+                </div>
 
-                    <!-- App 4: Market Radar (Coming Soon) -->
-                    <button type="button" class="app-card-btn app-coming-soon" role="listitem" data-app-name="Market Radar" aria-label="Market Radar (Coming Soon)">
-                        <div class="app-icon-squircle icon-radar">
+                <!-- App 4: Market Radar (Coming Soon) -->
+                <div class="app-card app-card-coming-soon" role="listitem" data-app-name="Market Sentiment Radar" aria-label="Market Sentiment Radar (Coming Soon)">
+                    <div class="app-card-header">
+                        <div class="app-card-icon icon-radar">
                             <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="24" cy="24" r="16" />
                                 <circle cx="24" cy="24" r="9" />
@@ -86,18 +137,41 @@
                                 <line x1="24" y1="8" x2="24" y2="24" />
                             </svg>
                         </div>
-                        <span class="app-label">Market Radar</span>
-                        <span class="app-badge-tag">Soon</span>
-                    </button>
+                        <span class="app-status-badge badge-soon">COMING SOON</span>
+                    </div>
+                    <div class="app-card-content">
+                        <h2 class="app-card-title">Market Sentiment Radar</h2>
+                        <p class="app-card-desc">
+                            Multi-exchange funding rate heatmaps, liquidation aggregate feeds, and institutional volume radar.
+                        </p>
+                    </div>
+                    <div class="app-card-footer">
+                        <div class="app-tag-group">
+                            <span class="app-tag">Funding</span>
+                            <span class="app-tag">Orderflow</span>
+                        </div>
+                        <span class="app-coming-label">In Development · V2.0</span>
+                    </div>
                 </div>
             </div>
-        </main>
+        </section>
+
+        <!-- 3. Page Trust & Keyboard Shortcuts Footer -->
+        <footer class="page-trust-footer">
+            <div class="desktop-shortcuts-hint" aria-label="Keyboard Shortcuts">
+                <span class="shortcuts-title">Shortcuts:</span>
+                <span class="shortcut-tag"><kbd>1</kbd> Calculator</span>
+                <span class="shortcut-tag"><kbd>T</kbd> Theme</span>
+            </div>
+            <div class="footer-brand">Veyra Trading</div>
+            <div class="disclaimer-text">Quantitative Trading Suite · Proprietary Platform</div>
+        </footer>
 
         <!-- Toast Notification for Coming Soon apps -->
         <div id="launcher-toast" class="launcher-toast hidden" role="status" aria-live="polite">
             <span id="launcher-toast-message">Application under development</span>
         </div>
-    </div>
+    </main>
 
     <script src="script.js"></script>
 </body>

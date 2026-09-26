@@ -1,16 +1,17 @@
 /**
  * Veyra Trading - Main Page App Portal Controller
+ * Conforming 1:1 to Calculator UI & Interaction Standards
  */
 
 document.addEventListener("DOMContentLoaded", () => {
     const elements = {
         themeToggleBtn: document.getElementById("theme-toggle-btn"),
-        comingSoonApps: document.querySelectorAll(".app-coming-soon"),
+        comingSoonCards: document.querySelectorAll(".app-card-coming-soon"),
         launcherToast: document.getElementById("launcher-toast"),
         launcherToastMessage: document.getElementById("launcher-toast-message")
     };
 
-    // Theme Switcher Icons
+    // Theme Switcher (Identical SVG Icons to Calculator)
     const SVG_MOON = `<svg class="theme-icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
     const SVG_SUN = `<svg class="theme-icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
 
@@ -19,14 +20,14 @@ document.addEventListener("DOMContentLoaded", () => {
             document.documentElement.setAttribute("data-theme", "dark");
             if (elements.themeToggleBtn) {
                 elements.themeToggleBtn.innerHTML = SVG_SUN;
-                elements.themeToggleBtn.setAttribute("title", "Switch to light theme");
+                elements.themeToggleBtn.setAttribute("title", "Switch to light theme (T)");
                 elements.themeToggleBtn.setAttribute("aria-label", "Switch to light theme");
             }
         } else {
             document.documentElement.removeAttribute("data-theme");
             if (elements.themeToggleBtn) {
                 elements.themeToggleBtn.innerHTML = SVG_MOON;
-                elements.themeToggleBtn.setAttribute("title", "Switch to dark theme");
+                elements.themeToggleBtn.setAttribute("title", "Switch to dark theme (T)");
                 elements.themeToggleBtn.setAttribute("aria-label", "Switch to dark theme");
             }
         }
@@ -57,9 +58,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Keyboard shortcut: T for theme toggle
+    // Desktop Keyboard Shortcuts: 1 for Calculator, T for Theme
     window.addEventListener("keydown", (e) => {
-        if (e.key === "t" || e.key === "T") {
+        const activeTag = document.activeElement ? document.activeElement.tagName.toUpperCase() : "";
+        const isInputActive = activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT";
+
+        if (isInputActive) {
+            if (e.key === "Escape") {
+                document.activeElement.blur();
+            }
+            return;
+        }
+
+        if (e.key === "1") {
+            window.location.href = "../calculator/index.html";
+        } else if (e.key === "t" || e.key === "T") {
             toggleTheme();
         }
     });
@@ -82,16 +95,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 2200);
     }
 
-    if (elements.comingSoonApps) {
-        elements.comingSoonApps.forEach(btn => {
-            btn.addEventListener("click", () => {
-                const appName = btn.dataset.appName || "Application";
+    if (elements.comingSoonCards) {
+        elements.comingSoonCards.forEach(card => {
+            card.addEventListener("click", () => {
+                const appName = card.dataset.appName || "Application";
                 showToast(`${appName} is coming soon in V2.0`);
             });
         });
     }
 
-    // Initial Theme Load
+    // Initial Theme Load (Synchronized with Calculator)
     try {
         const savedTheme = localStorage.getItem("calc_theme");
         if (savedTheme) {
@@ -103,4 +116,16 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {
         applyTheme("light");
     }
+
+    // Accidental Mobile Zoom Prevention
+    document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+    document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
+    document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
+
+    // Prevent text selection across displayed text
+    document.addEventListener("selectstart", (e) => {
+        if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+            e.preventDefault();
+        }
+    });
 });

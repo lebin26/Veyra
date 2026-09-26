@@ -117,7 +117,13 @@ $$\text{Short Liq Price} = \text{Entry Price} \times \left(1 + \frac{1}{\text{Le
 3. **No Unsanctioned Rewrites**: AI must never rewrite existing functionality without explicit user direction.
 4. **No Stack Changes**: AI must never introduce frameworks (React, Vue, Tailwind, Bootstrap, Node backends) unless explicitly commanded by the user.
 5. **Preserve Existing Features**: Existing features, calculations, and shortcuts must remain functional.
-6. **Maintain Design Cohesion**: Any new UI element must adhere to the design system in `style.css`.
+6. **Mandatory Calculator UI Design Language (Supreme Visual Contract)**:
+   - **All modules, pages, and components**—including `main-page`, future tool modules, settings, journals, and radars—**MUST strictly adhere to the UI development language of `calculator/`**. No standalone page may introduce conflicting visual styling.
+   - **Identical Design Tokens**: Must use the exact CSS design token system from `calculator/style.css` (`--bg-page`, `--bg-panel`, `--border-default`, `--fill-subtle`, `--text-primary`, `--text-secondary`, `--color-brand`, etc.).
+   - **Identical Header Hierarchy**: Header must use the standard `.app-header` structure: `.header-top-row`, `.brand-eyebrow` (8px brand square + 13px bold uppercase tracking brand name), `.function-title` (21px bold -0.02em), and 36px `.theme-ghost-btn` with SVG moon/sun icons.
+   - **Identical Component & Card Architecture**: Cards and panels must use `.app-shell` (1040px max-width), `1px solid var(--border-default)`, `--radius-panel: 12px`, crisp quantitative minimalism, and structured grid layouts. Avoid gaudy fake device frames or disconnected themes.
+   - **Identical Typography & Feedback**: Native font stack (`Inter, -apple-system`), unselectable static text (`user-select: none;`), 140ms hover transitions, 0.96 scale active feedback, and shared footer trust layout (`.page-trust-footer`).
+   - **Shared Theme Synchronization**: Dark and light modes must remain 100% color-calibrated and synchronized across all applications via `localStorage.getItem("calc_theme")`.
 7. **Zero Mobile Regressions**: Viewport scaling restrictions, touch targets ($\ge 44\text{px}$), and unselectable text rules must be maintained.
 
 ### 2. Development Philosophy
