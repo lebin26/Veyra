@@ -148,11 +148,17 @@
                 : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         });
 
-        // Check if unconfigured
+        // Check if unconfigured (Hide banner if Cloudflare D1 /api/auth/me is available)
         const config = getSupabaseConfig();
-        if (!config.isConfigured) {
-            elements.setupBanner.classList.remove('hidden');
-        }
+        fetch('/api/auth/me').then(res => {
+            if (res.status === 404 && !config.isConfigured) {
+                elements.setupBanner.classList.remove('hidden');
+            }
+        }).catch(() => {
+            if (!config.isConfigured) {
+                elements.setupBanner.classList.remove('hidden');
+            }
+        });
 
         elements.btnQuickConfig.addEventListener('click', (e) => {
             e.preventDefault();

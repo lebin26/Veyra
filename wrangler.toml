@@ -1,0 +1,8 @@
+name = "veyra"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "veyra-db"
+database_id = "0f431065-816e-41e4-b428-43d59ac1a090"
