@@ -3,7 +3,7 @@
  * Conforming 1:1 to Calculator UI & Interaction Standards
  */
 
-import { getCurrentUserAndProfile, signOut } from "../js/auth/authState.js";
+import { getCurrentUserAndProfile, signOut } from "../js/auth/authState.js?v=3";
 
 document.addEventListener("DOMContentLoaded", () => {
     const elements = {
