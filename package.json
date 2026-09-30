@@ -1,0 +1,13 @@
+{
+  "name": "veyra",
+  "version": "1.0.0",
+  "description": "Veyra Trading Platform",
+  "type": "module",
+  "scripts": {
+    "db:status": "powershell -ExecutionPolicy Bypass -File scripts/db-status.ps1",
+    "db:backup": "powershell -ExecutionPolicy Bypass -File scripts/db-backup.ps1",
+    "db:pull": "powershell -ExecutionPolicy Bypass -File scripts/db-pull.ps1",
+    "db:push": "powershell -ExecutionPolicy Bypass -File scripts/db-push.ps1",
+    "db:replace": "powershell -ExecutionPolicy Bypass -File scripts/db-replace.ps1"
+  }
+}

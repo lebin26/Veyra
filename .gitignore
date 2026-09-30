@@ -30,7 +30,14 @@ dist/
 *.db
 *.sqlite
 *.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+database/local.sqlite
+database/local.sqlite*
+database/backups/
+database/.tmp/
 d1/local_data.sql
 d1/seed.sql
 d1/export.sql
 d1/backup.sql
+d1/remote_export.sql

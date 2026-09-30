@@ -1,6 +1,6 @@
 -- ==========================================================================
 -- Cloudflare D1 SQLite Database Schema
--- Database ID: 0f431065-816e-41e4-b428-43d59ac1a090
+-- Database configuration and bindings are managed by wrangler.toml
 -- Admin Bootstrap: Configure via Cloudflare Pages Environment Variables:
 --   ADMIN_INITIAL_USERNAME and ADMIN_INITIAL_PASSWORD
 -- ==========================================================================

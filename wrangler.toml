@@ -8,5 +8,5 @@ directory = "."
 
 [[d1_databases]]
 binding = "DB"
-database_name = "veyra-db"
+database_name = "veyra"
 database_id = "0f431065-816e-41e4-b428-43d59ac1a090"
