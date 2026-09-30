@@ -302,6 +302,10 @@ body {
     margin-bottom: 16px;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .alert-banner.hidden {
     display: none !important;
 }

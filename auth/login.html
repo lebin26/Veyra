@@ -98,7 +98,7 @@
 
     <!-- Client Logic -->
     <script type="module">
-        import { signIn, getCurrentUserAndProfile } from '../js/auth/authState.js?v=4';
+        import { signIn, getCurrentUserAndProfile } from '../js/auth/authState.js?v=5';
 
         const elements = {
             form: document.getElementById('login-form'),
@@ -149,6 +149,13 @@
             } catch (e) {}
         })();
 
+        // Helper to reset button state
+        function resetLoadingState() {
+            elements.btnSubmit.disabled = false;
+            elements.btnText.textContent = 'Sign In';
+            elements.btnSpinner.classList.add('hidden');
+        }
+
         // Form Submission
         elements.form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -167,11 +174,9 @@
                 const result = await signIn(email, password);
 
                 if (!result.success) {
-                    elements.errorText.textContent = 'Invalid credentials. Please try again.';
+                    resetLoadingState();
+                    elements.errorText.textContent = result.error || 'Invalid credentials. Please try again.';
                     elements.errorBanner.classList.remove('hidden');
-                    elements.btnSubmit.disabled = false;
-                    elements.btnText.textContent = 'Sign In';
-                    elements.btnSpinner.classList.add('hidden');
                     return;
                 }
 
@@ -188,11 +193,9 @@
                 const target = rawTarget.startsWith('http') ? '../main-page/index.html' : rawTarget;
                 window.location.replace(target);
             } catch (err) {
-                elements.errorText.textContent = 'Network error. Please try again.';
+                resetLoadingState();
+                elements.errorText.textContent = (err && err.message) ? err.message : 'Network error. Please try again.';
                 elements.errorBanner.classList.remove('hidden');
-                elements.btnSubmit.disabled = false;
-                elements.btnText.textContent = 'Sign In';
-                elements.btnSpinner.classList.add('hidden');
             }
         });
     </script>

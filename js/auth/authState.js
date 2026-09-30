@@ -20,15 +20,24 @@ export async function signIn(identifier, password) {
 
     // 1. Try Cloudflare D1 Native Edge API
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
         const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: cleanIdentifier, password, remember: true })
+            body: JSON.stringify({ identifier: cleanIdentifier, password, remember: true }),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (response.status !== 404) {
-            const data = await response.json();
-            if (response.ok && data.success) {
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (_) {}
+
+            if (response.ok && data && data.success) {
                 if (data.token && typeof localStorage !== 'undefined') {
                     localStorage.setItem('veyra_session_token', data.token);
                 }
@@ -42,15 +51,24 @@ export async function signIn(identifier, password) {
             } else {
                 return {
                     success: false,
-                    error: data.error || 'Invalid email or password'
+                    error: (data && data.error) ? data.error : 'Invalid credentials. Please try again.'
                 };
             }
         }
     } catch (apiErr) {
-        console.warn('[Veyra Auth] Cloudflare D1 API unreachable, falling back to Supabase client:', apiErr);
+        console.warn('[Veyra Auth] Cloudflare D1 API unreachable:', apiErr);
     }
 
-    // 2. Supabase Fallback (if configured)
+    // 2. Supabase Fallback (ONLY if Supabase is actually configured)
+    const { getSupabaseConfig } = await import('./supabaseConfig.js');
+    const config = getSupabaseConfig();
+    if (!config || !config.isConfigured) {
+        return {
+            success: false,
+            error: 'Invalid credentials or server unavailable.'
+        };
+    }
+
     const supabase = await getSupabase();
     if (!supabase) {
         return {
