@@ -1,42 +1,38 @@
 @echo off
-title Veyra - Push Local Database to Cloudflare D1
+title Veyra - Push veyra.db to Cloudflare D1
 echo ===================================================
-echo   Veyra D1 Database Sync - Push to Remote Cloud
+echo   Veyra - Push Local veyra.db to Cloudflare Remote D1
 echo ===================================================
 
-set "PATH=C:\Program Files\nodejs;%APPDATA%\npm;C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python312;%PATH%"
+set "PYTHON_EXE=C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python312\python.exe"
+set "WRANGLER_CMD=%APPDATA%\npm\wrangler.cmd"
 
-if not exist "%~dp0d1\local_data.sql" (
-    echo [!] d1\local_data.sql does not exist yet.
-    echo Please run: python scripts/db_manage.py add-user ^<username^> ^<password^>
-    echo or create d1\local_data.sql with your SQL statements.
+if not exist "%~dp0veyra.db" (
+    echo [ERROR] veyra.db not found!
     pause
     exit /b 1
 )
 
-echo [1/2] Applying schema structure to Cloudflare D1 (veyra-db)...
-call "%APPDATA%\npm\wrangler.cmd" d1 execute veyra-db --remote --file="%~dp0d1\schema.sql"
+echo [1/2] Converting veyra.db into Cloudflare SQL dump...
+"%PYTHON_EXE%" "%~dp0scripts\dump_db.py"
 if %ERRORLEVEL% neq 0 (
-    echo.
-    echo [ERROR] Failed to execute schema.
-    echo If you have not logged in yet, run: wrangler login
+    echo [ERROR] Failed to read veyra.db.
     pause
     exit /b %ERRORLEVEL%
 )
 
 echo.
-echo [2/2] Overwriting/Inserting local data into Cloudflare D1 (veyra-db)...
-call "%APPDATA%\npm\wrangler.cmd" d1 execute veyra-db --remote --file="%~dp0d1\local_data.sql"
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo [ERROR] Failed to push local data.
-    pause
-    exit /b %ERRORLEVEL%
-)
+echo [2/2] Overwriting Cloudflare Remote D1 (veyra-db)...
+call "%WRANGLER_CMD%" d1 execute veyra-db --remote --file="%~dp0d1\local_data.sql"
 
-echo.
-echo ===================================================
-echo [SUCCESS] Local database successfully pushed to Cloudflare D1!
-echo You can now log in at your live website.
-echo ===================================================
+if %ERRORLEVEL% equ 0 (
+    echo.
+    echo ===================================================
+    echo [SUCCESS] veyra.db successfully pushed to Cloudflare D1!
+    echo ===================================================
+) else (
+    echo.
+    echo [!] Push failed.
+    echo If you are not logged in, double click 'cloudflare-login.bat' first!
+)
 pause
