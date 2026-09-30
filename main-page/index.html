@@ -53,8 +53,8 @@
                     <span class="app-icon-name">Position Size Calculator</span>
                 </a>
 
-                <!-- App 2: Trade Journal (Active) -->
-                <a href="../Journal/index.html" id="app-link-journal" class="app-icon-tile active-app" role="listitem" aria-label="Trade Journal">
+                <!-- App 2: Trade Journal (members only — lock applied by JS if not logged in) -->
+                <div id="app-link-journal" class="app-icon-tile active-app" role="listitem" aria-label="Trade Journal" tabindex="0">
                     <div class="app-icon-squircle icon-journal">
                         <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="10" y="8" width="28" height="32" rx="4" />
@@ -64,7 +64,7 @@
                         </svg>
                     </div>
                     <span class="app-icon-name">Trade Journal</span>
-                </a>
+                </div>
 
                 <!-- App 3: Risk Planner (Coming Soon) -->
                 <button type="button" class="app-icon-tile app-coming-soon" role="listitem" data-app-name="Risk Planner" aria-label="Risk Planner">
@@ -97,14 +97,13 @@
             <div class="desktop-shortcuts-hint" aria-label="Keyboard Shortcuts">
                 <span class="shortcuts-title">Shortcuts:</span>
                 <span class="shortcut-tag"><kbd>1</kbd> Calculator</span>
-                <span class="shortcut-tag"><kbd>2</kbd> Journal</span>
                 <span class="shortcut-tag"><kbd>T</kbd> Theme</span>
             </div>
             <div class="footer-brand">Veyra Trading</div>
             <div class="disclaimer-text">Quantitative Trading Suite · Proprietary Platform</div>
         </footer>
 
-        <!-- Toast Notification for Coming Soon apps -->
+        <!-- Toast Notification -->
         <div id="launcher-toast" class="launcher-toast hidden" role="status" aria-live="polite">
             <span id="launcher-toast-message">Application under development</span>
         </div>

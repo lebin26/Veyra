@@ -675,3 +675,83 @@ button.app-icon-tile {
         scroll-behavior: auto !important;
     }
 }
+
+/* ==========================================================================
+   APP TILE LOCK OVERLAY (Members-Only Apps)
+   ========================================================================== */
+
+.app-tile-locked {
+    position: relative;
+    cursor: pointer;
+}
+
+.app-tile-locked .app-icon-squircle {
+    filter: grayscale(0.3);
+    opacity: 0.7;
+}
+
+.tile-lock-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-panel);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background 140ms ease;
+    pointer-events: none;
+}
+
+[data-theme="dark"] .tile-lock-overlay {
+    background: rgba(11, 11, 12, 0.55);
+}
+
+.tile-lock-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-default);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-popover);
+}
+
+.tile-lock-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+}
+
+.app-tile-locked:hover .tile-lock-overlay {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="dark"] .app-tile-locked:hover .tile-lock-overlay {
+    background: rgba(11, 11, 12, 0.4);
+}
+
+.app-tile-locked:hover .tile-lock-icon {
+    color: var(--color-brand);
+    border-color: var(--color-brand);
+}
+
+/* Lock toast variant (shown on click of locked tile) */
+.launcher-toast.lock-toast-variant {
+    background: var(--bg-panel);
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+}
+
+.launcher-toast.lock-toast-variant::before {
+    content: "🔒  ";
+}

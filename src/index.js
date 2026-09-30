@@ -44,9 +44,12 @@ export default {
             return changePasswordPost(context);
         }
 
-        // Admin Management Endpoint
+        // Admin Management Endpoints
         if (path === '/api/admin/users') {
             return adminUsersHandler(context);
+        }
+        if (path === '/api/admin/app-overrides') {
+            return adminUsersHandler(context); // handled within same file
         }
 
         // Trades Endpoints

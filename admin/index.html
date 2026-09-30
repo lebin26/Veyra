@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Console · Veyra Trading</title>
+    <meta name="description" content="Veyra Admin — Manage users, access, and plans">
+    <link rel="stylesheet" href="../auth/auth.css">
+    <script src="../config.js"></script>
+    <script>
+        try {
+            const saved = localStorage.getItem("calc_theme");
+            if (saved === "dark" || (!saved && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+                document.documentElement.setAttribute("data-theme", "dark");
+            }
+        } catch (e) {}
+    </script>
+    <style>
+        /* Admin-specific styles layered on auth.css */
+        .admin-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-page);
+            font-family: var(--font-stack, Inter, -apple-system, sans-serif);
+        }
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--bg-panel);
+        }
+        .admin-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .admin-brand {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .admin-badge {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+        }
+        .admin-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-back-btn {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-default);
+            background: var(--fill-subtle);
+            transition: color 140ms;
+        }
+        .admin-back-btn:hover { color: var(--text-primary); }
+
+        .admin-content {
+            flex: 1;
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 28px 24px;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-default);
+            border-radius: 10px;
+            padding: 16px 18px;
+        }
+        .stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* User Table */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .btn-primary-sm {
+            font-size: 12.5px;
+            font-weight: 600;
+            padding: 7px 14px;
+            border-radius: 7px;
+            background: var(--color-brand);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: opacity 140ms;
+        }
+        .btn-primary-sm:hover { opacity: 0.87; }
+
+        .user-table-wrap {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-default);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead { background: var(--fill-subtle); }
+        th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border-default);
+        }
+        td {
+            padding: 11px 14px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-default);
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--fill-subtle); }
+
+        .role-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 999px;
+            letter-spacing: 0.04em;
+        }
+        .role-admin { background: rgba(245,158,11,0.15); color: #F59E0B; }
+        .role-user  { background: rgba(47,91,255,0.1); color: var(--color-brand); }
+
+        .status-badge {
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+        .status-active     { background: rgba(34,197,94,0.12); color: #16A34A; }
+        .status-suspended  { background: rgba(239,68,68,0.12); color: #DC2626; }
+
+        .plan-tag {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .btn-ghost-sm {
+            font-size: 11.5px;
+            font-weight: 500;
+            padding: 4px 9px;
+            border-radius: 5px;
+            border: 1px solid var(--border-default);
+            background: var(--fill-subtle);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 120ms, border-color 120ms;
+        }
+        .btn-ghost-sm:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+        .btn-danger-sm {
+            font-size: 11.5px;
+            font-weight: 500;
+            padding: 4px 9px;
+            border-radius: 5px;
+            border: 1px solid rgba(239,68,68,0.25);
+            background: rgba(239,68,68,0.07);
+            color: #DC2626;
+            cursor: pointer;
+            transition: opacity 120ms;
+        }
+        .btn-danger-sm:hover { opacity: 0.8; }
+        .btn-warn-sm {
+            font-size: 11.5px;
+            font-weight: 500;
+            padding: 4px 9px;
+            border-radius: 5px;
+            border: 1px solid rgba(245,158,11,0.25);
+            background: rgba(245,158,11,0.08);
+            color: #D97706;
+            cursor: pointer;
+            transition: opacity 120ms;
+        }
+        .btn-warn-sm:hover { opacity: 0.8; }
+
+        /* Loading / Empty */
+        .table-loading {
+            text-align: center;
+            padding: 36px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 200; padding: 20px;
+        }
+        .modal-backdrop.hidden { display: none; }
+        .modal-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-default);
+            border-radius: 14px;
+            padding: 28px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 18px;
+        }
+        .modal-field {
+            margin-bottom: 14px;
+        }
+        .modal-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            display: block;
+        }
+        .modal-input, .modal-select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border-default);
+            border-radius: 7px;
+            background: var(--fill-subtle);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 140ms;
+        }
+        .modal-input:focus, .modal-select:focus { border-color: var(--color-brand); }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .btn-cancel {
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 7px;
+            border: 1px solid var(--border-default);
+            background: var(--fill-subtle);
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .btn-confirm {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 7px;
+            background: var(--color-brand);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            opacity: 1;
+            transition: opacity 140ms;
+        }
+        .btn-confirm:hover { opacity: 0.87; }
+        .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Toast */
+        .admin-toast {
+            position: fixed;
+            bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: var(--bg-panel);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 200ms, transform 200ms;
+            z-index: 300;
+            white-space: nowrap;
+        }
+        .admin-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .admin-toast.success { border-color: rgba(34,197,94,0.4); color: #16A34A; }
+        .admin-toast.error { border-color: rgba(239,68,68,0.4); color: #DC2626; }
+    </style>
+</head>
+<body>
+<div class="admin-shell">
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="admin-header-left">
+            <span class="admin-brand">Veyra Trading</span>
+            <span class="admin-badge">ADMIN CONSOLE</span>
+        </div>
+        <div class="admin-header-actions">
+            <a href="../main-page/index.html" class="admin-back-btn">← Back to Apps</a>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="admin-content">
+        <!-- Stats -->
+        <div class="stats-row" id="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" id="stat-total">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active</div>
+                <div class="stat-value" id="stat-active">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Suspended</div>
+                <div class="stat-value" id="stat-suspended">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Admins</div>
+                <div class="stat-value" id="stat-admins">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pro Plan</div>
+                <div class="stat-value" id="stat-pro">—</div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="section-header">
+            <span class="section-title">Users</span>
+            <button class="btn-primary-sm" id="btn-create-user">+ Add User</button>
+        </div>
+        <div class="user-table-wrap">
+            <table id="users-table" aria-label="User management table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Plan</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-tbody">
+                    <tr>
+                        <td colspan="7" class="table-loading" id="table-loading">Loading users…</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- ── Create User Modal ── -->
+<div class="modal-backdrop hidden" id="modal-create" role="dialog" aria-modal="true" aria-labelledby="modal-create-title">
+    <div class="modal-card">
+        <div class="modal-title" id="modal-create-title">Add New User</div>
+        <div class="modal-field">
+            <label class="modal-label" for="new-username">Username <span style="color:var(--color-brand)">*</span></label>
+            <input class="modal-input" id="new-username" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. trader01">
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="new-email">Email (optional)</label>
+            <input class="modal-input" id="new-email" type="text" autocomplete="off" spellcheck="false" placeholder="user@domain.com (leave blank = username@veyra.app)">
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="new-password">Initial Password</label>
+            <input class="modal-input" id="new-password" type="text" autocomplete="off" placeholder="VeyraTemp123! (default)">
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="new-role">Role</label>
+            <select class="modal-select" id="new-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="new-plan">Plan</label>
+            <select class="modal-select" id="new-plan">
+                <option value="pro">Pro</option>
+                <option value="free">Free</option>
+            </select>
+        </div>
+        <div class="modal-field" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="new-must-change" style="width:14px;height:14px;cursor:pointer;">
+            <label for="new-must-change" class="modal-label" style="margin-bottom:0;cursor:pointer;">Require password change on first login</label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" id="btn-cancel-create">Cancel</button>
+            <button class="btn-confirm" id="btn-confirm-create">Create User</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Edit User Modal ── -->
+<div class="modal-backdrop hidden" id="modal-edit" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
+    <div class="modal-card">
+        <div class="modal-title" id="modal-edit-title">Edit User</div>
+        <input type="hidden" id="edit-user-id">
+        <div class="modal-field">
+            <label class="modal-label">Username</label>
+            <div id="edit-username-display" style="font-size:13.5px;font-weight:600;color:var(--text-primary);padding:4px 0;"></div>
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="edit-role">Role</label>
+            <select class="modal-select" id="edit-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="edit-status">Status</label>
+            <select class="modal-select" id="edit-status">
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+            </select>
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="edit-plan">Plan</label>
+            <select class="modal-select" id="edit-plan">
+                <option value="pro">Pro</option>
+                <option value="free">Free</option>
+            </select>
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="edit-reset-password">Reset Password (leave blank to keep current)</label>
+            <input class="modal-input" id="edit-reset-password" type="text" autocomplete="off" placeholder="New password…">
+        </div>
+        <div class="modal-field">
+            <label class="modal-label">App Access Overrides</label>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--fill-subtle);border:1px solid var(--border-default);border-radius:7px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">📓 Trading Journal</span>
+                    <select class="modal-select" id="edit-journal-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">✅ Grant Access</option>
+                        <option value="revoke">🚫 Revoke Access</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" id="btn-cancel-edit">Cancel</button>
+            <button class="btn-confirm" id="btn-confirm-edit">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Toast -->
+<div class="admin-toast" id="admin-toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import { getCurrentUserAndProfile } from "../js/auth/authState.js?v=4";
+
+// ── Auth Guard: Admin only ──
+(async () => {
+    const { user, profile } = await getCurrentUserAndProfile();
+    if (!user || !profile || profile.role !== "admin") {
+        window.location.replace("../main-page/index.html");
+        return;
+    }
+    await loadUsers();
+})();
+
+// ── Toast Helper ──
+let toastTimer;
+function toast(msg, type = "") {
+    const el = document.getElementById("admin-toast");
+    el.textContent = msg;
+    el.className = "admin-toast show" + (type ? ` ${type}` : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = "admin-toast"; }, 2800);
+}
+
+// ── Format date ──
+function fmtDate(str) {
+    if (!str) return "—";
+    try { return new Date(str).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); } catch { return str; }
+}
+
+// ── Load Users ──
+let allUsers = [];
+async function loadUsers() {
+    const token = localStorage.getItem("veyra_session_token") || "";
+    const res = await fetch("/api/admin/users", {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+    });
+    if (!res.ok) { document.getElementById("table-loading").textContent = "Failed to load users."; return; }
+    const data = await res.json();
+    allUsers = data.users || [];
+    renderStats(allUsers);
+    renderTable(allUsers);
+}
+
+function renderStats(users) {
+    document.getElementById("stat-total").textContent = users.length;
+    document.getElementById("stat-active").textContent = users.filter(u => u.status === "active").length;
+    document.getElementById("stat-suspended").textContent = users.filter(u => u.status === "suspended").length;
+    document.getElementById("stat-admins").textContent = users.filter(u => u.role === "admin").length;
+    document.getElementById("stat-pro").textContent = users.filter(u => u.plan_id === "pro").length;
+}
+
+function renderTable(users) {
+    const tbody = document.getElementById("users-tbody");
+    if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="table-loading">No users found.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td style="font-weight:600">${u.username || "—"}</td>
+            <td style="color:var(--text-secondary)">${u.email || "—"}</td>
+            <td><span class="role-badge role-${u.role}">${u.role?.toUpperCase()}</span></td>
+            <td><span class="status-badge status-${u.status}">${u.status === "active" ? "Active" : "Suspended"}</span></td>
+            <td><span class="plan-tag">${(u.plan_id || "free").toUpperCase()}</span></td>
+            <td style="color:var(--text-secondary);font-size:12px;">${fmtDate(u.created_at)}</td>
+            <td>
+                <div class="row-actions">
+                    <button class="btn-ghost-sm" data-action="edit" data-id="${u.id}">Edit</button>
+                    ${u.status === "active"
+                        ? `<button class="btn-danger-sm" data-action="suspend" data-id="${u.id}">Suspend</button>`
+                        : `<button class="btn-warn-sm" data-action="unsuspend" data-id="${u.id}">Unsuspend</button>`}
+                </div>
+            </td>
+        </tr>
+    `).join("");
+
+    // Row action events
+    tbody.querySelectorAll("[data-action]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.action;
+            const userId = btn.dataset.id;
+            const user = allUsers.find(u => u.id === userId);
+            if (action === "edit") openEditModal(user);
+            else if (action === "suspend") quickUpdate(userId, { status: "suspended" }, "User suspended");
+            else if (action === "unsuspend") quickUpdate(userId, { status: "active" }, "User reactivated");
+        });
+    });
+}
+
+async function quickUpdate(userId, payload, successMsg) {
+    const token = localStorage.getItem("veyra_session_token") || "";
+    payload.userId = userId;
+    const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    if (res.ok) { toast(successMsg, "success"); await loadUsers(); }
+    else { const d = await res.json(); toast(d.error || "Update failed", "error"); }
+}
+
+// ── Create User Modal ──
+document.getElementById("btn-create-user").addEventListener("click", () => {
+    document.getElementById("new-username").value = "";
+    document.getElementById("new-email").value = "";
+    document.getElementById("new-password").value = "";
+    document.getElementById("new-role").value = "user";
+    document.getElementById("new-plan").value = "pro";
+    document.getElementById("new-must-change").checked = true;
+    document.getElementById("modal-create").classList.remove("hidden");
+    document.getElementById("new-username").focus();
+});
+
+document.getElementById("btn-cancel-create").addEventListener("click", () => {
+    document.getElementById("modal-create").classList.add("hidden");
+});
+
+document.getElementById("btn-confirm-create").addEventListener("click", async () => {
+    const btn = document.getElementById("btn-confirm-create");
+    const username = document.getElementById("new-username").value.trim();
+    if (!username) { toast("Username is required", "error"); return; }
+    btn.disabled = true;
+    btn.textContent = "Creating…";
+    const token = localStorage.getItem("veyra_session_token") || "";
+    const payload = {
+        username,
+        email: document.getElementById("new-email").value.trim() || undefined,
+        password: document.getElementById("new-password").value.trim() || undefined,
+        role: document.getElementById("new-role").value,
+        plan_id: document.getElementById("new-plan").value,
+        must_change_password: document.getElementById("new-must-change").checked
+    };
+    const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    btn.disabled = false;
+    btn.textContent = "Create User";
+    const data = await res.json();
+    if (res.ok) {
+        toast(`User @${data.username} created! Initial password: ${data.initialPassword}`, "success");
+        document.getElementById("modal-create").classList.add("hidden");
+        await loadUsers();
+    } else {
+        toast(data.error || "Failed to create user", "error");
+    }
+});
+
+// ── Edit User Modal ──
+function openEditModal(user) {
+    document.getElementById("edit-user-id").value = user.id;
+    document.getElementById("edit-username-display").textContent = `@${user.username} (${user.email || "—"})`;
+    document.getElementById("edit-role").value = user.role || "user";
+    document.getElementById("edit-status").value = user.status || "active";
+    document.getElementById("edit-plan").value = user.plan_id || "free";
+    document.getElementById("edit-reset-password").value = "";
+
+    // Set Journal access override
+    const journalOverride = user.app_overrides && user.app_overrides["trading_journal"];
+    const journalSelect = document.getElementById("edit-journal-access");
+    if (journalOverride === 1) journalSelect.value = "grant";
+    else if (journalOverride === 0) journalSelect.value = "revoke";
+    else journalSelect.value = "plan";
+
+    document.getElementById("modal-edit").classList.remove("hidden");
+}
+
+document.getElementById("btn-cancel-edit").addEventListener("click", () => {
+    document.getElementById("modal-edit").classList.add("hidden");
+});
+
+document.getElementById("btn-confirm-edit").addEventListener("click", async () => {
+    const btn = document.getElementById("btn-confirm-edit");
+    btn.disabled = true; btn.textContent = "Saving…";
+    const token = localStorage.getItem("veyra_session_token") || "";
+    const userId = document.getElementById("edit-user-id").value;
+    const payload = {
+        userId,
+        role: document.getElementById("edit-role").value,
+        status: document.getElementById("edit-status").value,
+        plan_id: document.getElementById("edit-plan").value
+    };
+    const newPwd = document.getElementById("edit-reset-password").value.trim();
+    if (newPwd) payload.resetPassword = newPwd;
+
+    // App overrides
+    const journalVal = document.getElementById("edit-journal-access").value;
+    payload.app_overrides = {
+        trading_journal: journalVal === "grant" ? true : journalVal === "revoke" ? false : null
+    };
+
+    const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    btn.disabled = false; btn.textContent = "Save Changes";
+    if (res.ok) {
+        toast("User updated successfully", "success");
+        document.getElementById("modal-edit").classList.add("hidden");
+        await loadUsers();
+    } else {
+        const d = await res.json();
+        toast(d.error || "Update failed", "error");
+    }
+});
+
+// Close modals on backdrop click
+["modal-create", "modal-edit"].forEach(id => {
+    document.getElementById(id).addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) document.getElementById(id).classList.add("hidden");
+    });
+});
+
+// Escape key to close modals
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        document.getElementById("modal-create").classList.add("hidden");
+        document.getElementById("modal-edit").classList.add("hidden");
+    }
+});
+</script>
+</body>
+</html>
