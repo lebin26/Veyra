@@ -3,6 +3,8 @@
  * Conforming 1:1 to Calculator UI & Interaction Standards
  */
 
+import { getCurrentUserAndProfile, signOut } from "../js/auth/authState.js";
+
 document.addEventListener("DOMContentLoaded", () => {
     const elements = {
         themeToggleBtn: document.getElementById("theme-toggle-btn"),
@@ -72,6 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (e.key === "1") {
             window.location.href = "../calculator/index.html";
+        } else if (e.key === "2") {
+            window.location.href = "../Journal/index.html";
         } else if (e.key === "t" || e.key === "T") {
             toggleTheme();
         }
@@ -117,6 +121,46 @@ document.addEventListener("DOMContentLoaded", () => {
         applyTheme("light");
     }
 
+    // User Authentication Status Synchronization
+    const authContainer = document.getElementById("auth-status-container");
+    async function syncHeaderAuthState() {
+        if (!authContainer) return;
+        try {
+            const { user, profile } = await getCurrentUserAndProfile();
+            if (user && profile && profile.status === "active") {
+                const initial = (profile.display_name || profile.email || "U").charAt(0).toUpperCase();
+                const isAdmin = profile.role === "admin";
+                const planTag = (profile.plan_id || "free").toUpperCase();
+
+                authContainer.innerHTML = `
+                    <div class="user-badge-pill">
+                        <span class="user-avatar-dot">${initial}</span>
+                        <span class="user-name-text" title="${profile.email}">${profile.display_name || profile.email}</span>
+                        ${isAdmin ? `<span class="user-role-tag user-role-admin">ADMIN</span>` : `<span class="user-role-tag">${planTag}</span>`}
+                        ${isAdmin ? `<a href="../admin/index.html" class="btn-admin-nav" title="Admin Console">Admin</a>` : ""}
+                        <button type="button" id="btn-header-signout" class="btn-header-signout" title="Sign Out">Sign out</button>
+                    </div>
+                `;
+
+                const signoutBtn = document.getElementById("btn-header-signout");
+                if (signoutBtn) {
+                    signoutBtn.addEventListener("click", async () => {
+                        await signOut();
+                        window.location.reload();
+                    });
+                }
+            } else {
+                authContainer.innerHTML = `
+                    <a href="../auth/login.html" id="btn-header-signin" class="btn-header-signin">Sign In</a>
+                `;
+            }
+        } catch (e) {
+            console.warn("[Veyra Auth] Header status error:", e);
+        }
+    }
+
+    syncHeaderAuthState();
+
     // Accidental Mobile Zoom Prevention
     document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
     document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
@@ -129,3 +173,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+

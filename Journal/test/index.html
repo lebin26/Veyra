@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VEYRA - Automated Verification Suite</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #111; color: #eee; }
+    .pass { color: #4ade80; }
+    .fail { color: #f87171; font-weight: bold; }
+    .card { background: #1f2937; padding: 12px; margin-bottom: 8px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>VEYRA Automated Verification & Isolation Tests</h2>
+  <div id="test-results">Running tests...</div>
+
+  <script type="module">
+    import { runAllUnitTests } from './unitTests.js';
+
+    const results = runAllUnitTests();
+    const container = document.getElementById('test-results');
+    container.innerHTML = '';
+
+    let passedCount = 0;
+    results.forEach(r => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      if (r.pass) {
+        passedCount++;
+        el.innerHTML = `<span class="pass">[PASS]</span> ${r.name}`;
+      } else {
+        el.innerHTML = `<span class="fail">[FAIL]</span> ${r.name}: ${r.error}`;
+      }
+      container.appendChild(el);
+    });
+
+    const summary = document.createElement('h3');
+    summary.style.marginTop = '16px';
+    summary.innerHTML = passedCount === results.length 
+      ? `<span class="pass">ALL ${results.length} TESTS PASSED PERFECTLY!</span>`
+      : `<span class="fail">${results.length - passedCount} OF ${results.length} TESTS FAILED!</span>`;
+    container.prepend(summary);
+  </script>
+</body>
+</html>

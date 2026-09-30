@@ -1,0 +1,148 @@
+/* ==========================================================================
+   charts.css - Flat SVG Equity Curve, Daily Bar Chart, Trading Calendar
+   ========================================================================== */
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chart-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+}
+
+.chart-svg-container {
+  width: 100%;
+  height: 220px;
+  position: relative;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Tooltip for chart points */
+.chart-tooltip {
+  position: absolute;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translate(-50%, -120%);
+  display: none;
+  z-index: 50;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Calendar Styles */
+.calendar-card {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-month-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day-header {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.calendar-day-cell {
+  background: var(--surface-alt);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  height: 52px;
+  padding: 3px 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 10px;
+  transition: background-color 0.1s ease;
+}
+
+.calendar-day-cell.empty {
+  background: transparent;
+  border: none;
+}
+
+.calendar-day-cell.has-trades {
+  cursor: pointer;
+}
+
+.calendar-day-cell.profit-day {
+  background: var(--profit-bg);
+  border-color: var(--profit-border);
+}
+
+.calendar-day-cell.loss-day {
+  background: var(--loss-bg);
+  border-color: var(--loss-border);
+}
+
+.calendar-day-num {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.calendar-day-pnl {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 10px;
+  text-align: right;
+}

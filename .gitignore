@@ -1,0 +1,23 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+node_modules/
+package-lock.json
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / IDE
+.vscode/
+.idea/
+*.suo
+*.user
