@@ -33,3 +33,4 @@ dist/
 d1/local_data.sql
 d1/seed.sql
 d1/export.sql
+d1/backup.sql
