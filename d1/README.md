@@ -16,11 +16,11 @@
 
 执行成功后，数据库将自动完成：
 - 所有数据表创建（用户表、会话表、权限表、实盘与回测隔离交易表、审计日志等）；
-- 初始化真实管理员账号：
-  - **用户名**：`lebin26`
-  - **初始密码**：`12141214@Aa`
-  - **角色**：`admin`
-  - **套餐**：`pro`
+- 初始管理员账号安全引导：
+  - 在 Cloudflare Pages 控制台的 **Settings → Environment Variables** 中设置：
+    - `ADMIN_INITIAL_USERNAME`: 您的管理员用户名
+    - `ADMIN_INITIAL_PASSWORD`: 您的专属强密码
+  - 首次以此凭据登录时系统将通过 310,000 次 PBKDF2-SHA256 算法安全加密存入 D1。
 
 ---
 

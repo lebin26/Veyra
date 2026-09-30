@@ -1,7 +1,7 @@
 -- ==========================================================================
 -- Migration: 0002_seed_initial_admin.sql
 -- Administrative helper to promote or verify initial Admin
--- Seed Administrator: lebin26 (Password: 12141214@Aa, Role: Admin, Plan: Pro)
+-- Seed Administrator Setup Template (Do NOT commit real passwords)
 -- ==========================================================================
 
 -- 1. Helper function to look up user email by username for sign-in
@@ -61,14 +61,14 @@ END;
 $$;
 
 
--- 3. Direct Seed for Initial Administrator: lebin26 (12141214@Aa)
--- Running this block will ensure lebin26 exists with credentials ready to log in immediately.
+-- 3. Template Seed for Initial Administrator
+-- Set target_password before executing locally in private SQL editor
 DO $$
 DECLARE
     admin_id UUID := gen_random_uuid();
-    target_email TEXT := 'lebin26@veyra.app';
-    target_username TEXT := 'lebin26';
-    target_password TEXT := '12141214@Aa';
+    target_email TEXT := 'admin@veyra.app';
+    target_username TEXT := 'admin';
+    target_password TEXT := 'REPLACE_WITH_SECURE_PASSWORD';
     existing_user_id UUID;
 BEGIN
     -- Check if user exists in auth.users by email or username

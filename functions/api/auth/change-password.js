@@ -9,7 +9,7 @@ export async function onRequestPost(context) {
     const db = env.DB;
 
     if (!db) {
-        return error("Database unconfigured", 500);
+        return error("Service unavailable", 503);
     }
 
     try {
@@ -21,8 +21,8 @@ export async function onRequestPost(context) {
         const body = await request.json();
         const newPassword = body.newPassword || '';
 
-        if (!newPassword || newPassword.length < 8) {
-            return error("Password must be at least 8 characters long", 400);
+        if (!newPassword || newPassword.length < 8 || newPassword.length > 256) {
+            return error("Password must be 8–256 characters", 400);
         }
 
         const { hash, salt } = await hashPassword(newPassword);
@@ -33,9 +33,8 @@ export async function onRequestPost(context) {
             WHERE id = ?
         `).bind(hash, salt, user.id).run();
 
-        return json({ success: true, message: "Password updated successfully" });
+        return json({ success: true });
     } catch (err) {
-        console.error('[API /auth/change-password] Error:', err);
         return error("Failed to update password", 500);
     }
 }

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy · Veyra Trading</title>
+    <meta name="description" content="Veyra Trading Privacy Policy — What data we collect and how we protect it.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="../auth/auth.css">
+    <script>
+        try {
+            const s = localStorage.getItem("calc_theme");
+            if (s === "dark" || (!s && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+                document.documentElement.setAttribute("data-theme", "dark");
+            }
+        } catch(e) {}
+    </script>
+    <style>
+        .legal-shell { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+        .legal-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary, #6B6B73); text-decoration: none; margin-bottom: 32px; }
+        .legal-back:hover { color: var(--color-brand, #2F5BFF); }
+        .legal-brand { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-secondary, #6B6B73); text-transform: uppercase; margin-bottom: 8px; }
+        .legal-title { font-size: 28px; font-weight: 800; color: var(--text-primary, #111); margin-bottom: 8px; letter-spacing: -0.02em; }
+        .legal-updated { font-size: 13px; color: var(--text-secondary, #6B6B73); margin-bottom: 40px; }
+        .legal-body { font-size: 14.5px; line-height: 1.7; color: var(--text-primary, #111); }
+        .legal-body h2 { font-size: 16px; font-weight: 700; margin: 32px 0 10px; }
+        .legal-body p { margin-bottom: 14px; }
+        .legal-body ul { margin: 0 0 14px 20px; }
+        .legal-body li { margin-bottom: 6px; }
+        .legal-body a { color: var(--color-brand, #2F5BFF); }
+        .legal-divider { border: none; border-top: 1px solid var(--border-default, #E8E8EA); margin: 32px 0; }
+        body { background: var(--bg-page, #FAFAFA); font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
+    </style>
+</head>
+<body>
+<div class="legal-shell">
+    <a href="../main-page/index.html" class="legal-back">← Back to Applications</a>
+    <div class="legal-brand">Veyra Trading</div>
+    <h1 class="legal-title">Privacy Policy</h1>
+    <p class="legal-updated">Last updated: 30 September 2026</p>
+
+    <div class="legal-body">
+
+        <h2>1. Who We Are</h2>
+        <p>Veyra Trading ("we", "us") operates a private, invite-only quantitative trading tools platform. This policy explains what personal data we collect, why, and how we protect it.</p>
+
+        <h2>2. Data We Collect</h2>
+        <p>We collect only what is necessary to operate the Platform:</p>
+        <ul>
+            <li><strong>Account data:</strong> Username and email address (used for identification and communication).</li>
+            <li><strong>Credentials:</strong> Password stored as a salted PBKDF2 hash — your plaintext password is never stored or transmitted in recoverable form.</li>
+            <li><strong>Session tokens:</strong> Cryptographically random 64-character hex tokens stored in the database and sent as HttpOnly cookies. Tokens expire after 30 days or on logout.</li>
+            <li><strong>Trade journal data:</strong> Trade entries, notes, and backtest records you create on the Platform.</li>
+            <li><strong>Usage metadata:</strong> Cloudflare infrastructure may collect access logs including IP addresses and request timestamps as part of standard CDN operations. We do not use this for profiling.</li>
+        </ul>
+
+        <h2>3. Data We Do Not Collect</h2>
+        <ul>
+            <li>We do not use tracking pixels, third-party analytics scripts, or advertising cookies.</li>
+            <li>We do not collect financial account numbers, brokerage credentials, or any actual trading account information.</li>
+            <li>We do not collect payment information (the Platform has no payment system).</li>
+        </ul>
+
+        <h2>4. How We Use Your Data</h2>
+        <ul>
+            <li>To authenticate you and maintain your session;</li>
+            <li>To store and display your trade journal entries;</li>
+            <li>To enforce access controls and platform security;</li>
+            <li>To allow the administrator to manage user accounts.</li>
+        </ul>
+        <p>We do not sell, rent, or share your personal data with any third party for commercial purposes.</p>
+
+        <h2>5. Data Storage &amp; Security</h2>
+        <p>Your data is stored in a Cloudflare D1 SQLite database hosted in Cloudflare's global infrastructure, subject to <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's Privacy Policy</a>.</p>
+        <p>Security measures include:</p>
+        <ul>
+            <li>PBKDF2-SHA256 password hashing (310,000 iterations);</li>
+            <li>HttpOnly, Secure, SameSite=Strict session cookies;</li>
+            <li>Strict Content Security Policy headers;</li>
+            <li>All connections encrypted via HTTPS/TLS;</li>
+            <li>No client-side storage of sensitive credentials.</li>
+        </ul>
+
+        <h2>6. Data Retention</h2>
+        <p>Your account data is retained for as long as your account is active. Expired sessions are periodically purged. If your account is deleted by the administrator, all associated data will be removed.</p>
+
+        <h2>7. Your Rights</h2>
+        <p>Depending on your jurisdiction, you may have the right to access, correct, or request deletion of your personal data. To exercise these rights, contact the Platform administrator directly.</p>
+
+        <h2>8. Cookies</h2>
+        <p>We set one functional cookie:</p>
+        <ul>
+            <li><code>veyra_session</code> — an HttpOnly, Secure session authentication cookie. It is strictly necessary for the Platform to function.</li>
+        </ul>
+        <p>We do not use any tracking, advertising, or analytics cookies.</p>
+
+        <h2>9. Children</h2>
+        <p>The Platform is not directed at children under the age of 18. We do not knowingly collect data from minors.</p>
+
+        <h2>10. Changes</h2>
+        <p>We may update this policy. Material changes will be communicated to users. Continued use constitutes acceptance.</p>
+
+        <hr class="legal-divider">
+        <p style="font-size:13px;color:var(--text-secondary);">Questions about your data? Contact the Platform administrator.</p>
+    </div>
+</div>
+</body>
+</html>

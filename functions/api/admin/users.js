@@ -8,45 +8,65 @@ import { json, error, getUserFromRequest, hashPassword } from '../_utils.js';
 
 export async function onRequest(context) {
     const { request, env } = context;
-    const db = env.DB;
 
+    if (request.method === 'OPTIONS') {
+        return new Response(null, {
+            status: 204,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            }
+        });
+    }
+
+    const db = env.DB;
     if (!db) {
         return error("Database unconfigured", 500);
     }
 
     const currentUser = await getUserFromRequest(request, db);
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser) {
+        return error("Unauthorized: Active session required", 401);
+    }
+    if (currentUser.role !== 'admin') {
         return error("Forbidden: Administrator access required", 403);
     }
 
     const method = request.method;
-    const url = new URL(request.url);
 
     // GET /api/admin/users: List all users with their app overrides
     if (method === 'GET') {
-        const users = await db.prepare(`
-            SELECT id, username, email, display_name, role, status, plan_id, plan_expires_at, must_change_password, created_at, updated_at
-            FROM users
-            ORDER BY created_at DESC
-        `).all();
+        try {
+            const users = await db.prepare(`
+                SELECT id, username, email, display_name, role, status, plan_id, plan_expires_at, must_change_password, created_at, updated_at
+                FROM users
+                ORDER BY created_at DESC
+            `).all();
 
-        // Fetch app overrides for all users in one query
-        const overrides = await db.prepare(`
-            SELECT user_id, app_key, is_enabled FROM user_app_overrides
-        `).all();
+            // Fetch app overrides safely (table might not exist yet)
+            const overrideMap = {};
+            try {
+                const overrides = await db.prepare(`
+                    SELECT user_id, app_key, is_enabled FROM user_app_overrides
+                `).all();
+                (overrides.results || []).forEach(o => {
+                    if (!overrideMap[o.user_id]) overrideMap[o.user_id] = {};
+                    overrideMap[o.user_id][o.app_key] = o.is_enabled;
+                });
+            } catch (_) {
+                // Ignore if user_app_overrides table is not yet created
+            }
 
-        const overrideMap = {};
-        (overrides.results || []).forEach(o => {
-            if (!overrideMap[o.user_id]) overrideMap[o.user_id] = {};
-            overrideMap[o.user_id][o.app_key] = o.is_enabled;
-        });
+            const result = (users.results || []).map(u => ({
+                ...u,
+                app_overrides: overrideMap[u.id] || {}
+            }));
 
-        const result = (users.results || []).map(u => ({
-            ...u,
-            app_overrides: overrideMap[u.id] || {}
-        }));
-
-        return json({ users: result });
+            return json({ users: result });
+        } catch (dbErr) {
+            return error("Failed to load users: " + (dbErr.message || "Database query failed"), 500);
+        }
     }
 
     // POST /api/admin/users: Create new user

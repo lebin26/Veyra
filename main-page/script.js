@@ -160,36 +160,41 @@ document.addEventListener("DOMContentLoaded", () => {
         // ── App Tile Lock: Trade Journal requires login ──
         const journalTile = document.getElementById("app-link-journal");
         if (journalTile) {
+            const squircle = journalTile.querySelector(".app-icon-squircle");
             if (isLoggedIn) {
                 // Remove lock overlay if any, make it a real link
                 journalTile.classList.remove("app-tile-locked");
                 journalTile.removeAttribute("data-locked");
-                const overlay = journalTile.querySelector(".tile-lock-overlay");
-                if (overlay) overlay.remove();
-                journalTile.addEventListener("click", (e) => {
+                journalTile.querySelectorAll(".tile-lock-overlay").forEach(el => el.remove());
+                journalTile.onclick = () => {
                     window.location.href = "../Journal/index.html";
-                });
+                };
             } else {
-                // Apply lock: prevent navigation, show overlay
+                // Apply lock: prevent navigation, show overlay covering logo only
                 journalTile.classList.add("app-tile-locked");
                 journalTile.setAttribute("data-locked", "true");
-                if (!journalTile.querySelector(".tile-lock-overlay")) {
-                    journalTile.insertAdjacentHTML("beforeend", `
+                
+                // Clear any legacy root overlay if present
+                const rootOverlay = journalTile.querySelector(":scope > .tile-lock-overlay");
+                if (rootOverlay) rootOverlay.remove();
+
+                if (squircle && !squircle.querySelector(".tile-lock-overlay")) {
+                    squircle.insertAdjacentHTML("beforeend", `
                         <div class="tile-lock-overlay" aria-hidden="true">
                             <div class="tile-lock-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                 </svg>
                             </div>
-                            <span class="tile-lock-label">Sign in required</span>
+                            <span class="tile-lock-label">Sign in<br>required</span>
                         </div>
                     `);
                 }
-                journalTile.addEventListener("click", (e) => {
+                journalTile.onclick = (e) => {
                     e.preventDefault();
-                    showToast("Sign in to access Trading Journal", true);
-                });
+                    showToast("Sign in to access Trade Journal", true);
+                };
             }
         }
     }

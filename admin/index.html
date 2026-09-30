@@ -416,11 +416,11 @@
         </div>
         <div class="modal-field">
             <label class="modal-label" for="new-email">Email (optional)</label>
-            <input class="modal-input" id="new-email" type="text" autocomplete="off" spellcheck="false" placeholder="user@domain.com (leave blank = username@veyra.app)">
+            <input class="modal-input" id="new-email" type="text" autocomplete="off" spellcheck="false" placeholder="user@example.com (optional)">
         </div>
         <div class="modal-field">
             <label class="modal-label" for="new-password">Initial Password</label>
-            <input class="modal-input" id="new-password" type="text" autocomplete="off" placeholder="VeyraTemp123! (default)">
+            <input class="modal-input" id="new-password" type="text" autocomplete="off" placeholder="Leave blank for random temp password">
         </div>
         <div class="modal-field">
             <label class="modal-label" for="new-role">Role</label>
@@ -537,14 +537,32 @@ function fmtDate(str) {
 let allUsers = [];
 async function loadUsers() {
     const token = localStorage.getItem("veyra_session_token") || "";
-    const res = await fetch("/api/admin/users", {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-    });
-    if (!res.ok) { document.getElementById("table-loading").textContent = "Failed to load users."; return; }
-    const data = await res.json();
-    allUsers = data.users || [];
-    renderStats(allUsers);
-    renderTable(allUsers);
+    try {
+        const res = await fetch("/api/admin/users", {
+            credentials: "include",
+            headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                "Content-Type": "application/json"
+            }
+        });
+        if (!res.ok) {
+            let detail = "";
+            try {
+                const errData = await res.json();
+                if (errData && errData.error) detail = `: ${errData.error}`;
+            } catch (_) {}
+            document.getElementById("table-loading").textContent = `Failed to load users (${res.status}${detail})`;
+            console.error("[Veyra Admin] Failed to load users:", res.status, detail);
+            return;
+        }
+        const data = await res.json();
+        allUsers = data.users || [];
+        renderStats(allUsers);
+        renderTable(allUsers);
+    } catch (networkErr) {
+        document.getElementById("table-loading").textContent = "Network error: Failed to connect to admin API.";
+        console.error("[Veyra Admin] Network error loading users:", networkErr);
+    }
 }
 
 function renderStats(users) {
@@ -555,6 +573,16 @@ function renderStats(users) {
     document.getElementById("stat-pro").textContent = users.filter(u => u.plan_id === "pro").length;
 }
 
+function escapeHtml(str) {
+    if (!str) return "—";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function renderTable(users) {
     const tbody = document.getElementById("users-tbody");
     if (!users.length) {
@@ -563,11 +591,11 @@ function renderTable(users) {
     }
     tbody.innerHTML = users.map(u => `
         <tr>
-            <td style="font-weight:600">${u.username || "—"}</td>
-            <td style="color:var(--text-secondary)">${u.email || "—"}</td>
-            <td><span class="role-badge role-${u.role}">${u.role?.toUpperCase()}</span></td>
-            <td><span class="status-badge status-${u.status}">${u.status === "active" ? "Active" : "Suspended"}</span></td>
-            <td><span class="plan-tag">${(u.plan_id || "free").toUpperCase()}</span></td>
+            <td style="font-weight:600">${escapeHtml(u.username)}</td>
+            <td style="color:var(--text-secondary)">${escapeHtml(u.email)}</td>
+            <td><span class="role-badge role-${escapeHtml(u.role)}">${escapeHtml(u.role?.toUpperCase())}</span></td>
+            <td><span class="status-badge status-${escapeHtml(u.status)}">${u.status === "active" ? "Active" : "Suspended"}</span></td>
+            <td><span class="plan-tag">${escapeHtml((u.plan_id || "free").toUpperCase())}</span></td>
             <td style="color:var(--text-secondary);font-size:12px;">${fmtDate(u.created_at)}</td>
             <td>
                 <div class="row-actions">
@@ -598,7 +626,11 @@ async function quickUpdate(userId, payload, successMsg) {
     payload.userId = userId;
     const res = await fetch("/api/admin/users", {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        credentials: "include",
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(payload)
     });
     if (res.ok) { toast(successMsg, "success"); await loadUsers(); }
@@ -638,7 +670,11 @@ document.getElementById("btn-confirm-create").addEventListener("click", async ()
     };
     const res = await fetch("/api/admin/users", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        credentials: "include",
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(payload)
     });
     btn.disabled = false;
@@ -698,7 +734,11 @@ document.getElementById("btn-confirm-edit").addEventListener("click", async () =
 
     const res = await fetch("/api/admin/users", {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        credentials: "include",
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(payload)
     });
     btn.disabled = false; btn.textContent = "Save Changes";

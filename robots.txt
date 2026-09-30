@@ -1,0 +1,7 @@
+# Veyra Trading - robots.txt
+# This is a private, invite-only platform. Indexing is not permitted.
+
+User-agent: *
+Disallow: /
+
+# Sitemap: none

@@ -1,15 +1,16 @@
 /**
  * POST /api/auth/login
  * Authenticates against Cloudflare D1 users table.
+ * Security: No hardcoded credentials. All auth goes through DB.
  */
-import { json, error, verifyPassword, createSession } from '../_utils.js';
+import { json, error, verifyPassword, createSession, hashPassword } from '../_utils.js';
 
 export async function onRequestPost(context) {
     const { request, env } = context;
     const db = env.DB;
 
     if (!db) {
-        return error("Cloudflare D1 database binding 'DB' is not configured in Cloudflare Pages.", 500);
+        return error("Service unavailable", 503);
     }
 
     try {
@@ -18,30 +19,42 @@ export async function onRequestPost(context) {
         const password = body.password || '';
         const remember = Boolean(body.remember ?? true);
 
+        // Validate inputs without revealing which field is wrong
         if (!identifier || !password) {
-            return error("Invalid email or password", 401);
+            return error("Invalid credentials", 401);
         }
 
-        const isMasterAdmin = (identifier === 'lebin26' || identifier === 'lebin26@veyra.app') && password === '12141214@Aa';
+        // Input length limits (prevent DoS via huge payloads)
+        if (identifier.length > 254 || password.length > 256) {
+            return error("Invalid credentials", 401);
+        }
 
-        // Search user by username or email in D1
+        // Lookup user by username or email
         let user = null;
-        if (db) {
-            try {
-                user = await db.prepare(`
-                    SELECT id, username, email, password_hash, password_salt, display_name, role, status, plan_id, plan_expires_at, must_change_password
-                    FROM users
-                    WHERE lower(username) = ? OR lower(email) = ?
-                `).bind(identifier, identifier).first();
-            } catch (queryErr) {
-                console.warn('[Veyra Auth] Query users table failed:', queryErr);
-            }
+        try {
+            user = await db.prepare(`
+                SELECT id, username, email, password_hash, password_salt, display_name, role, status, plan_id, plan_expires_at, must_change_password
+                FROM users
+                WHERE lower(username) = ? OR lower(email) = ?
+                LIMIT 1
+            `).bind(identifier, identifier).first();
+        } catch (queryErr) {
+            // Don't expose internal DB errors
+            return error("Service unavailable", 503);
         }
 
-        // Auto-provision and heal master admin if not found in D1
-        if (!user && isMasterAdmin) {
-            if (db) {
+        // Auto-provision admin from Cloudflare environment variables only (zero hardcoded secrets)
+        if (!user) {
+            const adminEnvUsername = (env.ADMIN_INITIAL_USERNAME || env.ADMIN_USERNAME || '').trim().toLowerCase();
+            const adminEnvPassword = env.ADMIN_INITIAL_PASSWORD || env.ADMIN_PASSWORD || '';
+
+            if (adminEnvUsername && adminEnvPassword &&
+                identifier === adminEnvUsername &&
+                password === adminEnvPassword) {
+                const matchedUsername = adminEnvUsername;
+                const matchedPassword = adminEnvPassword;
                 try {
+                    // Ensure tables exist
                     await db.prepare(`
                         CREATE TABLE IF NOT EXISTS users (
                             id TEXT PRIMARY KEY,
@@ -69,79 +82,87 @@ export async function onRequestPost(context) {
                         )
                     `).run();
 
-                    const { hash, salt } = await hashPassword('12141214@Aa');
+                    const { hash, salt } = await hashPassword(matchedPassword);
+                    const adminId = 'usr_admin_' + matchedUsername;
                     await db.prepare(`
                         INSERT OR REPLACE INTO users (
                             id, username, email, password_hash, password_salt, display_name, role, status, plan_id, must_change_password, created_at, updated_at
                         ) VALUES (
-                            'usr_admin_lebin26', 'lebin26', 'lebin26@veyra.app', ?, ?, 'lebin26', 'admin', 'active', 'pro', 0, datetime('now'), datetime('now')
+                            ?, ?, ?, ?, ?, ?, 'admin', 'active', 'pro', 0, datetime('now'), datetime('now')
                         )
-                    `).bind(hash, salt).run();
+                    `).bind(
+                        adminId,
+                        matchedUsername,
+                        `${matchedUsername}@veyra.app`,
+                        hash, salt,
+                        matchedUsername
+                    ).run();
+
+                    user = await db.prepare(
+                        "SELECT id, username, email, password_hash, password_salt, display_name, role, status, plan_id, plan_expires_at, must_change_password FROM users WHERE lower(username) = ? LIMIT 1"
+                    ).bind(matchedUsername).first();
                 } catch (provisionErr) {
-                    console.warn('[Veyra Auth] Auto-provision warning:', provisionErr);
+                    return error("Service unavailable", 503);
                 }
             }
-
-            user = {
-                id: 'usr_admin_lebin26',
-                username: 'lebin26',
-                email: 'lebin26@veyra.app',
-                display_name: 'lebin26',
-                role: 'admin',
-                status: 'active',
-                plan_id: 'pro',
-                must_change_password: 0
-            };
         }
 
+        // User not found — return same error as wrong password (prevent username enumeration)
         if (!user) {
-            return error("Invalid email or password", 401);
+            return error("Invalid credentials", 401);
         }
 
         if (user.status === 'suspended') {
-            return error("Your account has been suspended. Please contact platform administrator.", 403);
+            return error("Account suspended. Contact administrator.", 403);
         }
 
-        // Verify password (bypass if matched master admin credentials)
-        if (!isMasterAdmin) {
-            if (!user.password_hash || !user.password_salt) {
-                return error("Invalid email or password", 401);
-            }
-            const isValid = await verifyPassword(password, user.password_hash, user.password_salt);
-            if (!isValid) {
-                return error("Invalid email or password", 401);
-            }
+        // Verify password
+        if (!user.password_hash || !user.password_salt) {
+            return error("Invalid credentials", 401);
         }
 
-        // Create 30-day or 1-day session
+        const isValid = await verifyPassword(password, user.password_hash, user.password_salt);
+        if (!isValid) {
+            return error("Invalid credentials", 401);
+        }
+
+        // Create cryptographically random session token
         const sessionDays = remember ? 30 : 1;
-        let token = 'admin_token_lebin26_' + crypto.randomUUID();
-        if (db) {
-            try {
-                const sessionRes = await createSession(db, user.id, sessionDays);
-                token = sessionRes.token;
-            } catch (sessErr) {
-                console.warn('[Veyra Auth] D1 session create warning, using signed token:', sessErr);
-            }
+        let token;
+        try {
+            const sessionRes = await createSession(db, user.id, sessionDays);
+            token = sessionRes.token;
+        } catch (sessErr) {
+            return error("Service unavailable", 503);
         }
 
-        // Remove sensitive fields from response
-        const { password_hash, password_salt, ...safeUser } = user;
+        // Strip sensitive fields before responding
+        const safeProfile = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            display_name: user.display_name,
+            role: user.role,
+            status: user.status,
+            plan_id: user.plan_id,
+            plan_expires_at: user.plan_expires_at,
+            must_change_password: user.must_change_password
+        };
 
         const maxAge = sessionDays * 24 * 60 * 60;
-        const cookieStr = `veyra_session=${token}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax; Secure`;
+        const cookieStr = `veyra_session=${token}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Strict; Secure`;
 
         return json({
             success: true,
             token,
-            user: { id: safeUser.id, email: safeUser.email },
-            profile: safeUser,
-            mustChangePassword: Boolean(safeUser.must_change_password)
+            user: { id: safeProfile.id, email: safeProfile.email },
+            profile: safeProfile,
+            mustChangePassword: Boolean(safeProfile.must_change_password)
         }, 200, {
             'Set-Cookie': cookieStr
         });
     } catch (err) {
-        console.error('[API /auth/login] Exception:', err);
-        return error("Authentication error: " + (err.message || 'please try again'), 500);
+        // Never expose internal error messages
+        return error("Authentication failed", 500);
     }
 }

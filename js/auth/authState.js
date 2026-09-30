@@ -55,7 +55,7 @@ export async function signIn(identifier, password) {
     if (!supabase) {
         return {
             success: false,
-            error: 'Database connection unconfigured. Please configure Cloudflare D1 or Supabase credentials.'
+            error: 'Authentication service unavailable. Please try again later.'
         };
     }
 

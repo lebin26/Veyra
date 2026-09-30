@@ -14,9 +14,15 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const email = process.argv[2] || process.env.INITIAL_ADMIN_EMAIL || 'lebin26@veyra.app';
-const password = process.argv[3] || process.env.INITIAL_ADMIN_PASSWORD || '12141214@Aa';
-const username = process.argv[4] || process.env.INITIAL_ADMIN_USERNAME || 'lebin26';
+const email = process.argv[2] || process.env.INITIAL_ADMIN_EMAIL;
+const password = process.argv[3] || process.env.INITIAL_ADMIN_PASSWORD;
+const username = process.argv[4] || process.env.INITIAL_ADMIN_USERNAME;
+
+if (!email || !password || !username) {
+    console.error('Usage: node scripts/seed-admin.js <email> <password> <username>');
+    console.error('Or set INITIAL_ADMIN_EMAIL, INITIAL_ADMIN_PASSWORD, INITIAL_ADMIN_USERNAME in your private .env');
+    process.exit(1);
+}
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error('Error: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment.');

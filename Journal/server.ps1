@@ -23,6 +23,27 @@ if (Test-Path (Join-Path $parentDir "main-page\index.html")) {
     $baseDir = $PSScriptRoot
 }
 
+$localAdminUser = if ($env:ADMIN_USERNAME) { $env:ADMIN_USERNAME } else { "admin" }
+$localAdminPass = if ($env:ADMIN_PASSWORD) { $env:ADMIN_PASSWORD } else { "admin" }
+
+$localUsersList = [System.Collections.ArrayList]@(
+    @{
+        id = "usr_local_admin"
+        username = $localAdminUser
+        email = "$localAdminUser@veyra.app"
+        display_name = $localAdminUser
+        role = "admin"
+        status = "active"
+        plan_id = "pro"
+        must_change_password = 0
+        created_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        updated_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        app_overrides = @{
+            trading_journal = $true
+        }
+    }
+)
+
 while ($listener.IsListening) {
     try {
         $context = $listener.GetContext()
@@ -50,19 +71,19 @@ while ($listener.IsListening) {
                 $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
                 $bodyStr = $reader.ReadToEnd()
                 $jsonBody = ConvertFrom-Json $bodyStr
-                $id = if ($jsonBody.identifier) { $jsonBody.identifier.Trim() } else { "" }
+                $id = if ($jsonBody.identifier) { $jsonBody.identifier.Trim().ToLower() } else { "" }
                 $pwd = if ($jsonBody.password) { $jsonBody.password } else { "" }
 
-                if (($id -eq "lebin26" -or $id -eq "lebin26@veyra.app") -and $pwd -eq "12141214@Aa") {
+                if (($id -eq $localAdminUser.ToLower() -or $id -eq "$($localAdminUser.ToLower())@veyra.app") -and ($pwd -eq $localAdminPass)) {
                     $resObj = @{
                         success = $true
-                        token = "local_admin_token_lebin26"
-                        user = @{ id = "usr_admin_lebin26"; email = "lebin26@veyra.app" }
+                        token = "local_admin_token"
+                        user = @{ id = "usr_local_admin"; email = "$localAdminUser@veyra.app" }
                         profile = @{
-                            id = "usr_admin_lebin26"
-                            username = "lebin26"
-                            email = "lebin26@veyra.app"
-                            display_name = "lebin26"
+                            id = "usr_local_admin"
+                            username = $localAdminUser
+                            email = "$localAdminUser@veyra.app"
+                            display_name = $localAdminUser
                             role = "admin"
                             status = "active"
                             plan_id = "pro"
@@ -84,14 +105,14 @@ while ($listener.IsListening) {
             }
             elseif ($pathOnly -eq "/api/auth/me" -and $request.HttpMethod -eq "GET") {
                 $authH = $request.Headers["Authorization"]
-                if ($authH -like "*local_admin_token_lebin26*") {
+                if ($authH -like "*local_admin_token*") {
                     $resObj = @{
-                        user = @{ id = "usr_admin_lebin26"; email = "lebin26@veyra.app" }
+                        user = @{ id = "usr_local_admin"; email = "$localAdminUser@veyra.app" }
                         profile = @{
-                            id = "usr_admin_lebin26"
-                            username = "lebin26"
-                            email = "lebin26@veyra.app"
-                            display_name = "lebin26"
+                            id = "usr_local_admin"
+                            username = $localAdminUser
+                            email = "$localAdminUser@veyra.app"
+                            display_name = $localAdminUser
                             role = "admin"
                             status = "active"
                             plan_id = "pro"
@@ -112,6 +133,64 @@ while ($listener.IsListening) {
                 $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
                 $response.StatusCode = 200
                 $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                $response.OutputStream.Close()
+                continue
+            }
+            elseif ($pathOnly -eq "/api/admin/users") {
+                if ($request.HttpMethod -eq "GET") {
+                    $resObj = @{ users = $localUsersList }
+                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj -Depth 5))
+                    $response.StatusCode = 200
+                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                }
+                elseif ($request.HttpMethod -eq "POST") {
+                    $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                    $bodyStr = $reader.ReadToEnd()
+                    $jsonBody = ConvertFrom-Json $bodyStr
+                    $newU = @{
+                        id = "usr_" + [System.Guid]::NewGuid().ToString()
+                        username = if ($jsonBody.username) { $jsonBody.username } else { "user_" + (Get-Random) }
+                        email = if ($jsonBody.email) { $jsonBody.email } else { $jsonBody.username + "@veyra.app" }
+                        role = if ($jsonBody.role) { $jsonBody.role } else { "user" }
+                        status = "active"
+                        plan_id = if ($jsonBody.plan_id) { $jsonBody.plan_id } else { "pro" }
+                        must_change_password = if ($jsonBody.must_change_password) { 1 } else { 0 }
+                        created_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+                        updated_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+                        app_overrides = @{}
+                    }
+                    [void]$localUsersList.Add($newU)
+                    $resObj = @{
+                        success = $true
+                        userId = $newU.id
+                        username = $newU.username
+                        initialPassword = if ($jsonBody.password) { $jsonBody.password } else { "VeyraTemp123!" }
+                    }
+                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
+                    $response.StatusCode = 200
+                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                }
+                elseif ($request.HttpMethod -eq "PATCH") {
+                    $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                    $bodyStr = $reader.ReadToEnd()
+                    $jsonBody = ConvertFrom-Json $bodyStr
+                    $target = $localUsersList | Where-Object { $_.id -eq $jsonBody.userId }
+                    if ($target) {
+                        if ($jsonBody.status) { $target.status = $jsonBody.status }
+                        if ($jsonBody.role) { $target.role = $jsonBody.role }
+                        if ($jsonBody.plan_id) { $target.plan_id = $jsonBody.plan_id }
+                        if ($jsonBody.app_overrides) {
+                            if (-not $target.app_overrides) { $target.app_overrides = @{} }
+                            if ($null -ne $jsonBody.app_overrides.trading_journal) {
+                                $target.app_overrides["trading_journal"] = $jsonBody.app_overrides.trading_journal
+                            }
+                        }
+                    }
+                    $resObj = @{ success = $true }
+                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
+                    $response.StatusCode = 200
+                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                }
                 $response.OutputStream.Close()
                 continue
             }

@@ -1,7 +1,8 @@
 -- ==========================================================================
 -- Cloudflare D1 SQLite Database Schema
 -- Database ID: 0f431065-816e-41e4-b428-43d59ac1a090
--- Pre-seeded Admin: lebin26 (Password: 12141214@Aa, Role: admin, Plan: pro)
+-- Admin Bootstrap: Configure via Cloudflare Pages Environment Variables:
+--   ADMIN_INITIAL_USERNAME and ADMIN_INITIAL_PASSWORD
 -- ==========================================================================
 
 -- 1. Users Table
@@ -140,42 +141,12 @@ CREATE TABLE IF NOT EXISTS daily_journals (
 );
 
 -- ==========================================================================
--- Seed Initial Administrator Account: lebin26 (12141214@Aa)
--- Salt: e2f3089e417bad4111ad52983e4af032
--- PBKDF2-SHA256 (100k iters): ff7d0398cfb196ac58481c63adb544b20a5b8e62f14561605f43669d9eeb4add
+-- Initial Administrator Bootstrap
+-- DO NOT seed hardcoded credentials here. Instead:
+-- 1. Deploy the Worker with ADMIN_USERNAME and ADMIN_PASSWORD set as
+--    Cloudflare Worker Secrets (wrangler secret put ADMIN_USERNAME etc.).
+-- 2. On first login with those credentials, the Worker auto-provisions
+--    the admin account in D1 with a securely hashed password.
+-- 3. After first login, delete the secrets from Cloudflare dashboard
+--    (they are no longer needed).
 -- ==========================================================================
-INSERT INTO users (
-    id,
-    username,
-    email,
-    password_hash,
-    password_salt,
-    display_name,
-    role,
-    status,
-    plan_id,
-    must_change_password,
-    created_at,
-    updated_at
-) VALUES (
-    'usr_admin_lebin26',
-    'lebin26',
-    'lebin26@veyra.app',
-    'ff7d0398cfb196ac58481c63adb544b20a5b8e62f14561605f43669d9eeb4add',
-    'e2f3089e417bad4111ad52983e4af032',
-    'lebin26',
-    'admin',
-    'active',
-    'pro',
-    0,
-    datetime('now'),
-    datetime('now')
-)
-ON CONFLICT(username) DO UPDATE SET
-    password_hash = EXCLUDED.password_hash,
-    password_salt = EXCLUDED.password_salt,
-    role = 'admin',
-    status = 'active',
-    plan_id = 'pro',
-    must_change_password = 0,
-    updated_at = datetime('now');

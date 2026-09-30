@@ -1,7 +1,7 @@
 /**
  * functions/api/_utils.js
- * Native Web Crypto security utilities and D1 session handlers for Cloudflare Pages.
- * Zero npm dependencies, runs directly in Cloudflare edge V8 isolate.
+ * Native Web Crypto security utilities and D1 session handlers for Cloudflare Workers.
+ * Zero npm dependencies — runs directly in Cloudflare edge V8 isolate.
  */
 
 export function json(data, status = 200, headers = {}) {
@@ -9,19 +9,22 @@ export function json(data, status = 200, headers = {}) {
         status,
         headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            // Restrict CORS to same origin only — no wildcard in production
+            'Access-Control-Allow-Origin': 'same-origin',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Content-Type-Options': 'nosniff',
             ...headers
         }
     });
 }
 
 export function error(message, status = 400) {
+    // Never leak internal details — return only the message passed by the caller
     return json({ success: false, error: message }, status);
 }
 
 /**
- * Hash password with PBKDF2 HMAC-SHA256 (100,000 iterations)
+ * Hash password with PBKDF2 HMAC-SHA256 (310,000 iterations — OWASP 2023 recommendation)
  */
 export async function hashPassword(password, saltHex = null) {
     const enc = new TextEncoder();
@@ -29,7 +32,7 @@ export async function hashPassword(password, saltHex = null) {
     if (saltHex) {
         saltBytes = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
     } else {
-        saltBytes = crypto.getRandomValues(new Uint8Array(16));
+        saltBytes = crypto.getRandomValues(new Uint8Array(32)); // 256-bit salt
     }
 
     const keyMaterial = await crypto.subtle.importKey(
@@ -44,7 +47,7 @@ export async function hashPassword(password, saltHex = null) {
         {
             name: "PBKDF2",
             salt: saltBytes,
-            iterations: 100000,
+            iterations: 310000,
             hash: "SHA-256"
         },
         keyMaterial,
@@ -62,20 +65,29 @@ export async function hashPassword(password, saltHex = null) {
 }
 
 /**
- * Verify password against stored hash and salt
+ * Constant-time password comparison (prevent timing attacks)
  */
 export async function verifyPassword(password, storedHash, storedSalt) {
     const { hash } = await hashPassword(password, storedSalt);
-    return hash === storedHash;
+    // Constant-time comparison using crypto.subtle
+    const enc = new TextEncoder();
+    const a = enc.encode(hash);
+    const b = enc.encode(storedHash);
+    if (a.length !== b.length) return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) {
+        diff |= a[i] ^ b[i];
+    }
+    return diff === 0;
 }
 
 /**
- * Create a session token in D1
+ * Create a cryptographically random session token in D1
  */
 export async function createSession(db, userId, days = 30) {
     const tokenBytes = crypto.getRandomValues(new Uint8Array(32));
     const token = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-    
+
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + days);
     const expiresAt = expiryDate.toISOString();
@@ -88,7 +100,8 @@ export async function createSession(db, userId, days = 30) {
 }
 
 /**
- * Extract authenticated user and profile from request
+ * Extract authenticated user from request — validates against D1 session store only.
+ * NO hardcoded credentials or token bypass — all auth goes through the database.
  */
 export async function getUserFromRequest(request, db) {
     let token = null;
@@ -96,43 +109,30 @@ export async function getUserFromRequest(request, db) {
     // 1. Check Authorization: Bearer <token>
     const authHeader = request.headers.get('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7).trim();
+        const candidate = authHeader.substring(7).trim();
+        if (candidate) token = candidate;
     }
 
-    // 2. Check Cookie: veyra_session=<token>
+    // 2. Check HttpOnly cookie: veyra_session=<token>
     if (!token) {
         const cookieHeader = request.headers.get('Cookie');
         if (cookieHeader) {
-            const match = cookieHeader.match(/veyra_session=([a-zA-Z0-9_\-]+)/);
+            const match = cookieHeader.match(/veyra_session=([a-zA-Z0-9_-]{16,64})/);
             if (match) token = match[1];
         }
     }
 
-    if (!token) return null;
+    if (!token || !db) return null;
 
-    // Direct token recognition for master admin
-    if (token.includes('admin_token_lebin26') || token.includes('local_admin_token')) {
-        return {
-            id: 'usr_admin_lebin26',
-            username: 'lebin26',
-            email: 'lebin26@veyra.app',
-            display_name: 'lebin26',
-            role: 'admin',
-            status: 'active',
-            plan_id: 'pro',
-            must_change_password: 0
-        };
-    }
-
-    if (!db) return null;
+    // Validate token format (alphanumeric up to 64 chars)
+    if (!/^[a-zA-Z0-9_-]{16,64}$/.test(token)) return null;
 
     try {
-        // Look up session and active user in D1
         const row = await db.prepare(`
             SELECT u.id, u.username, u.email, u.display_name, u.role, u.status, u.plan_id, u.plan_expires_at, u.must_change_password
             FROM sessions s
             JOIN users u ON s.user_id = u.id
-            WHERE s.id = ? AND s.expires_at > datetime('now')
+            WHERE s.id = ? AND s.expires_at > datetime('now') AND u.status = 'active'
         `).bind(token).first();
 
         return row || null;

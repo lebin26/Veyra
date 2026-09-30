@@ -46,25 +46,15 @@
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                <span id="error-text">Invalid email or password</span>
-            </div>
-
-            <!-- Setup Notice (displayed only if Supabase credentials not set) -->
-            <div id="setup-banner" class="alert-banner alert-error hidden" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: var(--text-primary);">
-                <div>
-                    <div style="font-weight: 600; font-size: 12px; margin-bottom: 2px;">Database Connection Required</div>
-                    <div style="font-size: 11.5px; color: var(--text-secondary);">
-                        Please configure your Supabase project credentials in <code>.env</code> or click <a href="#" id="btn-quick-config" style="color: var(--color-brand); font-weight: 600;">here to set them in browser</a>.
-                    </div>
-                </div>
+                <span id="error-text">Invalid credentials</span>
             </div>
 
             <!-- Sign In Form -->
             <form id="login-form" class="auth-form" autocomplete="on">
                 <div class="form-group">
-                    <label for="email" class="form-label">Username or Email</label>
+                    <label for="email" class="form-label">Username</label>
                     <div class="input-wrapper">
-                        <input type="text" id="email" class="form-input" placeholder="lebin26 or you@domain.com" required autocomplete="username" autocapitalize="none" spellcheck="false">
+                        <input type="text" id="email" class="form-input" placeholder="Username" required autocomplete="username" autocapitalize="none" spellcheck="false">
                     </div>
                 </div>
 
@@ -96,7 +86,7 @@
             </form>
 
             <div class="auth-notice">
-                Registration is by invitation only. If you need access, please contact your team administrator.
+                Registration is by invitation only. If you need access, please contact your administrator.
             </div>
         </div>
     </main>
@@ -108,8 +98,7 @@
 
     <!-- Client Logic -->
     <script type="module">
-        import { getSupabaseConfig, setSupabaseConfig } from '../js/auth/supabaseConfig.js?v=3';
-        import { signIn, getCurrentUserAndProfile } from '../js/auth/authState.js?v=3';
+        import { signIn, getCurrentUserAndProfile } from '../js/auth/authState.js?v=4';
 
         const elements = {
             form: document.getElementById('login-form'),
@@ -121,8 +110,6 @@
             btnSpinner: document.getElementById('btn-spinner'),
             errorBanner: document.getElementById('error-banner'),
             errorText: document.getElementById('error-text'),
-            setupBanner: document.getElementById('setup-banner'),
-            btnQuickConfig: document.getElementById('btn-quick-config'),
             themeToggleBtn: document.getElementById('theme-toggle-btn')
         };
 
@@ -143,43 +130,23 @@
         elements.btnTogglePassword.addEventListener('click', () => {
             showPassword = !showPassword;
             elements.password.type = showPassword ? 'text' : 'password';
-            elements.btnTogglePassword.innerHTML = showPassword 
+            elements.btnTogglePassword.innerHTML = showPassword
                 ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
                 : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         });
 
-        // Check if unconfigured (Hide banner if Cloudflare D1 /api/auth/me is available)
-        const config = getSupabaseConfig();
-        fetch('/api/auth/me').then(res => {
-            if (res.status === 404 && !config.isConfigured) {
-                elements.setupBanner.classList.remove('hidden');
-            }
-        }).catch(() => {
-            if (!config.isConfigured) {
-                elements.setupBanner.classList.remove('hidden');
-            }
-        });
-
-        elements.btnQuickConfig.addEventListener('click', (e) => {
-            e.preventDefault();
-            const url = prompt('Enter your Supabase Project URL (e.g. https://xyz.supabase.co):', config.url);
-            if (url) {
-                const key = prompt('Enter your Supabase Anon Public Key:', config.anonKey);
-                if (key) {
-                    setSupabaseConfig(url, key);
-                    window.location.reload();
-                }
-            }
-        });
-
         // Auto-redirect if already signed in
         (async () => {
-            const { user, profile } = await getCurrentUserAndProfile();
-            if (user && profile && profile.status === 'active') {
-                const params = new URLSearchParams(window.location.search);
-                const returnUrl = params.get('redirect') || '../main-page/index.html';
-                window.location.replace(returnUrl);
-            }
+            try {
+                const { user, profile } = await getCurrentUserAndProfile();
+                if (user && profile && profile.status === 'active') {
+                    const params = new URLSearchParams(window.location.search);
+                    const returnUrl = params.get('redirect') || '../main-page/index.html';
+                    // Validate redirect URL is same-origin
+                    const safeUrl = returnUrl.startsWith('http') ? '../main-page/index.html' : returnUrl;
+                    window.location.replace(safeUrl);
+                }
+            } catch (e) {}
         })();
 
         // Form Submission
@@ -192,7 +159,6 @@
 
             if (!email || !password) return;
 
-            // UI Loading state
             elements.btnSubmit.disabled = true;
             elements.btnText.textContent = 'Signing in...';
             elements.btnSpinner.classList.remove('hidden');
@@ -201,7 +167,7 @@
                 const result = await signIn(email, password);
 
                 if (!result.success) {
-                    elements.errorText.textContent = result.error || 'Invalid email or password';
+                    elements.errorText.textContent = 'Invalid credentials. Please try again.';
                     elements.errorBanner.classList.remove('hidden');
                     elements.btnSubmit.disabled = false;
                     elements.btnText.textContent = 'Sign In';
@@ -209,7 +175,6 @@
                     return;
                 }
 
-                // Check forced password change
                 if (result.mustChangePassword) {
                     const params = new URLSearchParams(window.location.search);
                     const originalTarget = params.get('redirect') || '../main-page/index.html';
@@ -217,9 +182,10 @@
                     return;
                 }
 
-                // Success redirect
                 const params = new URLSearchParams(window.location.search);
-                const target = params.get('redirect') || '../main-page/index.html';
+                const rawTarget = params.get('redirect') || '../main-page/index.html';
+                // Validate redirect URL is safe (same-origin relative path only)
+                const target = rawTarget.startsWith('http') ? '../main-page/index.html' : rawTarget;
                 window.location.replace(target);
             } catch (err) {
                 elements.errorText.textContent = 'Network error. Please try again.';

@@ -1,38 +1,36 @@
-# Veyra Trading · Position Size Calculator
+# Veyra Trading · Quantitative Trading Platform & Risk Engine
 
-> **Precision quantitative reverse-deduction lot sizing and liquidation-safe leverage engine for Gold (XAUUSD) and Bitcoin (BTCUSDT).**  
-> Built with zero runtime dependencies using high-performance Vanilla Web Technologies.
+> **Precision quantitative reverse-deduction lot sizing, liquidation-safe leverage engine, and unified application portal for Gold (XAUUSD) and Bitcoin (BTCUSDT).**  
+> Built with zero frontend runtime dependencies using Vanilla Web Technologies, powered by Cloudflare Pages and Cloudflare D1 SQLite.
 
 ---
 
 ## 📖 Table of Contents
 
-1. [Project Overview](#-project-overview)
+1. [Platform Overview](#-platform-overview)
 2. [Core Mathematical Engines](#-core-mathematical-engines)
 3. [Supported Instruments & Specifications](#-supported-instruments--specifications)
-4. [User Experience & Platform Features](#-user-experience--platform-features)
-5. [Architecture & Technology Stack](#-architecture--technology-stack)
-6. [AI Agent Development Contract](#-ai-agent-development-contract)
-   - [1. Project Rules](#1-project-rules)
-   - [2. Development Philosophy](#2-development-philosophy)
-   - [3. Information Classification](#3-information-classification)
-   - [4. Secrets Management](#4-secrets-management)
-   - [5. Git Security Rules](#5-git-security-rules)
-   - [6. User Data Protection](#6-user-data-protection)
-   - [7. Code Quality & Component Rules](#7-code-quality--component-rules)
-   - [8. Frontend & Mobile UX Rules](#8-frontend--mobile-ux-rules)
-   - [9. Testing & Verification](#9-testing--verification)
-   - [10. Change Scope & Forbidden Actions](#10-change-scope--forbidden-actions)
-   - [11. AI Response Standard](#11-ai-response-standard)
-   - [12. Golden Rule & Precedence](#12-golden-rule--precedence)
+4. [Application Modules & User Experience](#-application-modules--user-experience)
+   - [Position Size Calculator](#1-position-size-calculator)
+   - [Applications Portal](#2-applications-portal)
+   - [Administrative Control Panel (RBAC)](#3-administrative-control-panel-rbac)
+   - [Access Control & Soft Lock Overlays](#4-access-control--soft-lock-overlays)
+   - [Legal Compliance & Privacy](#5-legal-compliance--privacy)
+5. [Architecture & Cloudflare Stack](#-architecture--cloudflare-stack)
+6. [Security & Zero Information Leakage](#-security--zero-information-leakage)
+7. [AI Agent Development Rules](#-ai-agent-development-rules)
+8. [Setup & Deployment Guide](#-setup--deployment-guide)
+9. [License & Disclaimer](#-license--disclaimer)
 
 ---
 
-## ⚡ Project Overview
+## ⚡ Platform Overview
 
-**Veyra Trading** is a proprietary quantitative trading utility platform. The **Position Size Calculator** serves as its foundational tool, engineered for professional multi-asset risk management. 
+**Veyra Trading** is a proprietary quantitative trading utility platform designed for disciplined risk management. 
 
 Instead of simplistic static percentage tools, Veyra calculates reverse-deduced execution volume across multiple broker account types (MT5 Standard, MT5 Cent/USC, and Bybit Crypto) with exact step rounding, margin requirements, and a liquidation-safe leverage algorithm that guarantees liquidation price never precedes stop-loss execution.
+
+The platform includes an **Application Portal**, **Admin RBAC Management**, **Cloudflare D1-backed Authentication**, and **Soft Lock Overlays** for unauthenticated access.
 
 ---
 
@@ -75,15 +73,16 @@ $$\text{Short Liq Price} = \text{Entry Price} \times \left(1 + \frac{1}{\text{Le
 
 ---
 
-## 🎨 User Experience & Platform Features
+## 🎨 Application Modules & User Experience
 
+### 1. Position Size Calculator
 * **Dual Operating Modes**:
-  - **Risk Sizing**: Input Equity + Risk % + Stop Loss $\to$ Automated Lot Sizes, Margin, and Liquidation Protection. Features quick risk preset chips (`1%`, `2%`, `3%`, `5%`, `10%`).
-  - **Custom Lot**: Input Equity + Specific Lot + Stop Loss + Take Profit $\to$ Calculates exact dollar PnL, % Equity Growth, Risk:Reward ratio, and leverage metrics. Equipped with intelligent steppers starting from `0.001` (BTCUSDT) and `0.01` (XAUUSD).
+  - **Risk Sizing**: Input Equity + Risk % + Stop Loss $\to$ Automated Lot Sizes, Margin, and Liquidation Protection. Quick risk preset chips (`1%`, `2%`, `3%`, `5%`, `10%`).
+  - **Custom Lot**: Input Equity + Specific Lot + Stop Loss + Take Profit $\to$ Calculates exact dollar PnL, % Equity Growth, Risk:Reward ratio, and leverage metrics. Steppers start from `0.001` (BTCUSDT) and `0.01` (XAUUSD).
 * **1-Tap Clipboard Copying**: Every computed lot tier and PnL metric features instant 1-tap clipboard copying with animated visual confirmation badges.
-* **Mobile Floating Sticky Bar**: Pinned, elevated quick-summary pill on mobile devices with safe-area clearance (`bottom: calc(24px + safe-area)`) that never gets clipped by rounded phone bezels. Automatically hides when the main result card is in viewport via `IntersectionObserver`.
+* **Mobile Floating Sticky Bar**: Pinned, elevated quick-summary pill on mobile devices with safe-area clearance (`bottom: calc(24px + env(safe-area-inset-bottom))`). Hides automatically when the main result card is in viewport via `IntersectionObserver`.
 * **Zero Mobile Zoom Jitter**: Hardened against accidental pinch, double-tap, and multi-touch gesture scaling via strict viewport constraints and CSS touch-action rules.
-* **Non-Selectable Displayed Text**: All static labels and typography enforce `user-select: none`, providing a native application feel while keeping form input fields fully interactive and editable.
+* **Non-Selectable Displayed Text**: All static labels and typography enforce `user-select: none`, while form input fields remain fully interactive and editable.
 * **Desktop Single-Key Shortcuts**:
   - `1`: Switch to **XAUUSD**
   - `2`: Switch to **BTCUSDT**
@@ -92,116 +91,97 @@ $$\text{Short Liq Price} = \text{Entry Price} \times \left(1 + \frac{1}{\text{Le
   - `T`: Toggle **Dark / Light Theme**
   - `Enter` / `Esc`: Confirm and dismiss virtual/desktop focus
 
+### 2. Applications Portal (`main-page/`)
+* Central workspace hub featuring unified application cards, permission badges, user greeting, and direct links to tools.
+* Dynamically indicates which tools are accessible, locked, or restricted.
+
+### 3. Administrative Control Panel (RBAC) (`admin/`)
+* Accessible only to accounts with `role === 'admin'`.
+* **User Management**: Search, view user status (Active / Inactive), reset user passwords, and toggle account states.
+* **Per-App Access Control**: Granular matrix granting or revoking individual application access (`calculator`, `journal`, `radar`, etc.) per user.
+* **Bulk Permissions**: Grant or revoke access to all applications across user accounts.
+
+### 4. Access Control & Soft Lock Overlays
+* **No Abrupt Redirects**: When an unauthenticated or unauthorized user accesses a protected app, the page remains stable and displays a frosted semi-transparent backdrop overlay with a lock icon, status explanation, and a clean login call-to-action.
+
+### 5. Legal Compliance & Privacy (`legal/`)
+* **Terms of Service (`legal/terms.html`)**: Clear terms of use, intellectual property clauses, no-financial-advice disclaimers, and limitation of liability.
+* **Privacy Policy (`legal/privacy.html`)**: Data minimization commitments, session cookie usage details, and zero third-party telemetry or ad tracking.
+
 ---
 
-## 💻 Architecture & Technology Stack
+## 💻 Architecture & Cloudflare Stack
 
-* **Modular Platform Structure**:
-  - `index.html`: Root entry point with instant routing to the Apps Portal.
-  - `main-page/`: Dedicated Apps Portal folder (`index.html`, `style.css`, `script.js`) presenting a clean workspace with an intuitive app grid.
-  - `calculator/`: Dedicated Position Size Calculator folder (`index.html`, `style.css`, `script.js`) with isolated calculation engines and navigation back to Apps.
-* **Styling**: Pure Modular CSS3 with curated design tokens, synchronized dark/light modes, and responsive CSS Grid / Flexbox layouts.
-* **Logic**: Vanilla ES6+ JavaScript with isolated pure functional calculation engines and state persistence.
-* **Dependencies**: Zero external npm packages, frameworks, or runtime CDNs.
+* **Frontend**: Pure Vanilla Web (HTML5, Modular CSS3, Modern ES6+ JavaScript). Zero npm packages, zero runtime frameworks, zero frontend build overhead.
+* **Cloudflare Pages & Functions**: Serverless edge endpoints in `functions/api/`:
+  - `functions/api/auth/` — Login, Logout, Session Verification (`me`), Password Change.
+  - `functions/api/admin/` — User management, RBAC inspection, per-app access updates.
+  - `functions/api/trades/` — Trade journal records and quantitative logs.
+* **Database**: Cloudflare D1 (Serverless SQLite at the edge):
+  - `users` — Unique usernames, PBKDF2 password hashes, salts, and roles (`admin`, `user`).
+  - `sessions` — Cryptographically random tokens with 30-day expiration and automatic renewal.
+  - `apps` & `user_app_access` — Granular application permission control matrix.
+  - `trades` & `audit_logs` — Trading journal entries and administrative security audits.
+* **Cryptography**: Web Crypto API (`crypto.subtle`) using PBKDF2-SHA256 with 100,000 iterations and 16-byte random salts.
+* **Local Offline Environment**: Offline fallback support via `start_veyra.bat` and `Journal/server.ps1`.
 
 ---
 
-## 🛡️ AI Agent Development Contract
+## 🔒 Security & Zero Information Leakage
 
-> **MANDATORY NOTICE FOR AI AGENTS & VIBE CODING WORKFLOWS:**  
-> This specification represents the supreme operating contract for any AI assistant, LLM, or automated developer modifying, extending, or maintaining this repository.
+The platform is hardened for public production deployment:
+1. **Zero Secret Exposure**: Passwords, hashes, and internal connection strings are removed from git-tracked schemas and client assets. Initial administrator credentials are dynamically bootstrapped via environment variables.
+2. **Sanitized User Errors**: All API endpoints and client views display generic, secure error messages without revealing internal stack traces, SQL syntax, or filesystem paths.
+3. **Crawler Protection**: `robots.txt` blocks web search crawlers (`User-agent: *`, `Disallow: /`), protecting private trading utilities from indexing.
+4. **Git Hygiene**: Environment files (`.env*`) and Cloudflare build artifacts (`.wrangler/`, `dist/`) are strictly ignored in `.gitignore`.
 
-### 1. Project Rules
-1. AI must thoroughly inspect the existing codebase before modifying or creating code.
-2. AI must prioritize reusing existing functions, styles, and design tokens over writing redundant code.
-3. **No Unsanctioned Rewrites**: AI must never rewrite existing functionality without explicit user direction.
-4. **No Stack Changes**: AI must never introduce frameworks (React, Vue, Tailwind, Bootstrap, Node backends) unless explicitly commanded by the user.
-5. **Preserve Existing Features**: Existing features, calculations, and shortcuts must remain functional.
-6. **Mandatory Calculator UI Design Language (Supreme Visual Contract)**:
-   - **All modules, pages, and components**—including `main-page`, future tool modules, settings, journals, and radars—**MUST strictly adhere to the UI development language of `calculator/`**. No standalone page may introduce conflicting visual styling.
-   - **Identical Design Tokens**: Must use the exact CSS design token system from `calculator/style.css` (`--bg-page`, `--bg-panel`, `--border-default`, `--fill-subtle`, `--text-primary`, `--text-secondary`, `--color-brand`, etc.).
-   - **Identical Header Hierarchy**: Header must use the standard `.app-header` structure: `.header-top-row`, `.brand-eyebrow` (8px brand square + 13px bold uppercase tracking brand name), `.function-title` (21px bold -0.02em), and 36px `.theme-ghost-btn` with SVG moon/sun icons.
-   - **Identical Component & Card Architecture**: Cards and panels must use `.app-shell` (1040px max-width), `1px solid var(--border-default)`, `--radius-panel: 12px`, crisp quantitative minimalism, and structured grid layouts. Avoid gaudy fake device frames or disconnected themes.
-   - **Identical Typography & Feedback**: Native font stack (`Inter, -apple-system`), unselectable static text (`user-select: none;`), 140ms hover transitions, 0.96 scale active feedback, and shared footer trust layout (`.page-trust-footer`).
-   - **Shared Theme Synchronization**: Dark and light modes must remain 100% color-calibrated and synchronized across all applications via `localStorage.getItem("calc_theme")`.
-7. **Zero Mobile Regressions**: Viewport scaling restrictions, touch targets ($\ge 44\text{px}$), and unselectable text rules must be maintained.
+---
 
-### 2. Development Philosophy
-AI follows a rigorous 5-step engineering lifecycle:
-$$\text{Understand} \longrightarrow \text{Plan} \longrightarrow \text{Implement} \longrightarrow \text{Verify} \longrightarrow \text{Report}$$
+## 🛡️ AI Agent Development Rules
 
-1. **Understand**: Read code files, locate calculations, map event listeners.
-2. **Plan**: Identify the exact minimal diff needed.
-3. **Implement**: Smallest safe change; no dead code or unneeded abstractions.
-4. **Verify**: Run syntactic checks, verify formulas, confirm edge cases ($0$, blank, negative inputs).
-5. **Report**: Concisely document modified files and verification results.
+All AI assistants, LLMs, and automated contributors must adhere to the **AI Agent Operating Contract**. Detailed guidelines are maintained in [AGENTS.md](file:///c:/Users/lebin/OneDrive/Documents/Dev/GitHub/Veyra/AGENTS.md).
 
-### 3. Information Classification
+### Core Pillars
+1. **Supreme Visual Contract (`calculator/` Standard)**: All new modules, views, and components must strictly mirror the styling tokens, card borders, typography, header hierarchy, and 140ms hover transitions of `calculator/`.
+2. **Access Control Rule**: Never perform jarring, unprompted redirects when access is denied; always display a frosted glass lock overlay.
+3. **Smallest Safe Change**: Modify only lines directly requested. Never perform unprompted architectural rewrites or add heavy frameworks (React, Vue, Tailwind).
+4. **Input & Invariant Resilience**: Always verify formulas, rounding invariants, and edge cases ($0$, blank, negative inputs).
 
-| Level | Where It Can Appear | Permitted Contents |
-| :--- | :--- | :--- |
-| **PUBLIC** | README, HTML/CSS/JS, Git Commits | Brand name, math formulas, styling tokens, UI labels, public documentation. |
-| **INTERNAL** | Local private notes | Architecture thoughts, internal variable naming, scratch tests. |
-| **CONFIDENTIAL** | Environment Variables / Secret Manager | API keys, credentials, session tokens, user identities, database passwords. |
-| **NEVER COMMIT** | `.gitignore` excluded | `.env`, `.env.*`, `*.pem`, `*.key`, `credentials.json`, `token.json`. |
+$$\text{User's Explicit Instruction} > \text{Security Standards} > \text{Existing Architecture} > \text{Contract} > \text{AI Preference}$$
 
-### 4. Secrets Management
-* Any future server-side secrets must reside in environment variables (`process.env.SECRET`).
-* **Frontend Code is Public**: Any variable shipped to the browser (`script.js`, `index.html`) is public. Never place private keys or exchange secret keys in client-side code.
+---
 
-### 5. Git Security Rules
-The AI is strictly prohibited from committing:
-* Environment files (`.env`, `.env.local`)
-* API keys, secret credentials, private tokens
-* Real personal user identities, account numbers, or real wallet seeds
-* Production database dumps or internal connection strings
+## 🚀 Setup & Deployment Guide
 
-### 6. User Data Protection
-* Never hardcode real personal or financial account data in code, tests, or documentation.
-* Use synthetic test mocks (`500 USD`, `5.00%`, `3400.00 Entry`, `3385.00 SL`).
+### 1. Cloudflare Pages Deployment
+1. Connect the GitHub repository to **Cloudflare Pages**.
+2. **Build Settings**:
+   - Framework preset: `None`
+   - Build output directory: `/` (Root)
+3. **Cloudflare D1 Binding**:
+   - In Cloudflare Pages Settings $\to$ Functions $\to$ D1 Database Bindings:
+   - Variable name: `DB`
+   - Bound database: Your created D1 database (e.g. `veyra-db`).
+4. **Execute Database Schema**:
+   ```bash
+   npx wrangler d1 execute veyra-db --file=./d1/schema.sql --remote
+   ```
+5. **Initial Administrator Bootstrap**:
+   - Set environment variables in Cloudflare Pages dashboard:
+     - `ADMIN_INITIAL_USERNAME`: (Your desired admin username)
+     - `ADMIN_INITIAL_PASSWORD`: (Your strong admin password)
+   - On the first login with these credentials, the system automatically creates the admin account in D1 with a PBKDF2 hash.
 
-### 7. Code Quality & Component Rules
-* **Smallest Safe Change**: Modify only lines directly tied to the user request.
-* **No Bloatware**: Avoid heavy helper libraries for math or date formatting; standard native JavaScript APIs (`Math`, `Intl.NumberFormat`) must be used.
-* **Input Resilience**: Form inputs must gracefully handle empty strings, non-numeric characters, `NaN`, and zero division.
-
-### 8. Frontend & Mobile UX Rules
-* **Display Text Unselectable**: Keep `user-select: none;` active globally on display elements (`*, *::before, *::after`), while explicitly preserving `user-select: text !important;` on `input, textarea`.
-* **Prevent Accidental Mobile Zoom**: Maintain `user-scalable=no, maximum-scale=1.0` and keep touch gesture preventers (`gesturestart`, `touches.length > 1`) active.
-* **Safe Floating Margins**: Ensure bottom floating bars maintain `bottom: calc(24px + env(safe-area-inset-bottom))` clearance to avoid curved screen corner clipping.
-
-### 9. Testing & Verification
-Before declaring a task complete, verify:
-* [x] **Normal Case**: Standard inputs generate mathematically accurate outputs.
-* [x] **Blank / Reset Case**: Blank inputs display placeholders (`—`) without throwing console errors.
-* [x] **Stepper Invariants**: Custom lot `+` starts from `0.001` (BTCUSDT) and `0.01` (XAUUSD) when blank.
-* [x] **Safety Leverage Invariant**: Liquidation price is always lower than Long SL (or higher than Short SL).
-* [x] **Responsive Layout**: Verified down to $320\text{px}$ viewport width.
-
-### 10. Change Scope & Forbidden Actions
-Unless explicitly commanded by the user, the AI will NEVER:
-* Delete git history or force push (`git push -f`).
-* Rename repository files without reason.
-* Remove existing calculation options or formula explanations.
-* Weaken mobile touch constraints or security settings.
-* Guess API endpoints or business rules.
-
-### 11. AI Response Standard
-Upon completing any development task, the AI reports:
-* **Summary**: High-level explanation of user requirements fulfilled.
-* **Files Changed**: Clickable list of modified or created files.
-* **Implementation Details**: Clear rationale for mathematical or visual updates.
-* **Verification**: Testing and validation results across devices.
-* **Git Status**: Commit hash and remote push confirmation.
-
-### 12. Golden Rule & Precedence
-$$\text{User's Explicit Instruction} > \text{Security Standards} > \text{Existing Architecture} > \text{This Specification} > \text{AI Preference}$$
-
-> *"Understand the system before changing it. Make the smallest safe change. Verify before reporting."*
+### 2. Local Development
+Double-click `start_veyra.bat` or run:
+```powershell
+powershell -ExecutionPolicy Bypass -File Journal/server.ps1
+```
+Navigate to `http://localhost:8080/main-page/` in your browser.
 
 ---
 
 ## 📄 License & Disclaimer
 
-* **Disclaimer**: Veyra Trading is a quantitative calculation instrument. All outputs are mathematical estimations based on user-supplied inputs and standard broker contract parameters. This software does not constitute financial, investment, or trading advice.
+* **Disclaimer**: Veyra Trading is a quantitative calculation and risk management instrument. All outputs are mathematical estimations based on user-supplied inputs and standard broker contract parameters. This software does not constitute financial, investment, or trading advice.
 * **Copyright**: © 2026 Veyra Trading. All rights reserved.
