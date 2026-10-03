@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE,
     password_hash TEXT NOT NULL,
     password_salt TEXT NOT NULL,
+    password_plain TEXT DEFAULT NULL,
     display_name TEXT,
     role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended')),
@@ -46,8 +47,9 @@ CREATE TABLE IF NOT EXISTS apps (
 );
 
 INSERT OR IGNORE INTO apps (key, name, access_level, is_active) VALUES
-    ('lot_size_calculator', 'Lot Size Calculator', 'public', 1),
-    ('trading_journal', 'Trading Journal', 'members_only', 1);
+    ('lot_size_calculator', 'Position Size Calculator', 'public', 1),
+    ('trading_journal', 'Trading Journal', 'members_only', 1),
+    ('wealth_tracker', 'Wealth Tracker', 'members_only', 1);
 
 -- 4. User App Overrides (Admin Entitlements)
 CREATE TABLE IF NOT EXISTS user_app_overrides (
@@ -135,9 +137,152 @@ CREATE TABLE IF NOT EXISTS daily_journals (
     pre_market_notes TEXT,
     post_market_notes TEXT,
     daily_rating INTEGER,
+    mood TEXT,
+    market_condition TEXT,
+    lessons TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (user_id, date)
+);
+
+-- 11. Trading Playbooks (Strategy rulebook & setup definitions)
+CREATE TABLE IF NOT EXISTS playbooks (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    market TEXT NOT NULL DEFAULT 'ALL',
+    timeframe TEXT NOT NULL DEFAULT '5M',
+    direction TEXT NOT NULL DEFAULT 'BOTH' CHECK (direction IN ('LONG', 'SHORT', 'BOTH')),
+    rules TEXT,
+    risk_model TEXT DEFAULT '1R',
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'archived')),
+    is_shared INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_playbooks_user ON playbooks(user_id);
+
+-- 12. Notebook Entries (Trading psychology, mistakes, lessons, research)
+CREATE TABLE IF NOT EXISTS notebook_entries (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general' CHECK (category IN ('general', 'mistakes', 'psychology', 'market', 'lessons')),
+    tags TEXT,
+    linked_trade_id TEXT,
+    is_pinned INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_notebook_user ON notebook_entries(user_id);
+
+-- 13. Progress Tracker Goals
+CREATE TABLE IF NOT EXISTS progress_goals (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    metric_type TEXT NOT NULL,
+    target_value REAL NOT NULL,
+    current_value REAL NOT NULL DEFAULT 0.0,
+    unit TEXT DEFAULT '%',
+    deadline TEXT,
+    status TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'achieved', 'behind')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_goals_user ON progress_goals(user_id);
+
+-- 14. Broker Connections (Sync accounts)
+CREATE TABLE IF NOT EXISTS broker_connections (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    broker TEXT NOT NULL,
+    account_name TEXT NOT NULL,
+    account_number TEXT,
+    status TEXT NOT NULL DEFAULT 'connected' CHECK (status IN ('connected', 'syncing', 'failed', 'disconnected')),
+    last_sync TEXT,
+    next_sync TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_broker_connections_user ON broker_connections(user_id);
+
+-- ==========================================================================
+-- 11. Wealth Tracker (Multi-tenant isolated by user_id)
+-- ==========================================================================
+
+-- Live Portfolio Holdings
+CREATE TABLE IF NOT EXISTS wealth_accounts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform TEXT NOT NULL,
+    product TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'bank' CHECK (category IN ('cash', 'bank', 'crypto', 'investment', 'trading')),
+    currency TEXT NOT NULL DEFAULT 'MYR',
+    amount REAL NOT NULL DEFAULT 0.0,
+    apr REAL NOT NULL DEFAULT 0.0,
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_wealth_accounts_user ON wealth_accounts(user_id);
+
+-- Monthly Net Worth Snapshots
+CREATE TABLE IF NOT EXISTS wealth_snapshots (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    month TEXT NOT NULL,
+    usd_rate REAL NOT NULL DEFAULT 4.08,
+    total_net_worth_myr REAL NOT NULL DEFAULT 0.0,
+    estimated_apr_myr REAL NOT NULL DEFAULT 0.0,
+    weighted_roi REAL NOT NULL DEFAULT 0.0,
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (user_id, month)
+);
+CREATE INDEX IF NOT EXISTS idx_wealth_snapshots_user_month ON wealth_snapshots(user_id, month);
+
+-- Monthly Snapshot Account Details
+CREATE TABLE IF NOT EXISTS wealth_snapshot_items (
+    id TEXT PRIMARY KEY,
+    snapshot_id TEXT NOT NULL REFERENCES wealth_snapshots(id) ON DELETE CASCADE,
+    platform TEXT NOT NULL,
+    product TEXT NOT NULL,
+    category TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    amount REAL NOT NULL DEFAULT 0.0,
+    amount_myr REAL NOT NULL DEFAULT 0.0,
+    apr REAL NOT NULL DEFAULT 0.0,
+    apr_amount_myr REAL NOT NULL DEFAULT 0.0
+);
+CREATE INDEX IF NOT EXISTS idx_wealth_snapshot_items_snap ON wealth_snapshot_items(snapshot_id);
+
+-- Monthly Cashflows (Income & Expenses)
+CREATE TABLE IF NOT EXISTS wealth_cashflows (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    month TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+    category TEXT NOT NULL,
+    amount REAL NOT NULL DEFAULT 0.0,
+    description TEXT,
+    entry_date TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_wealth_cashflows_user_month ON wealth_cashflows(user_id, month);
+
+-- User Wealth Settings
+CREATE TABLE IF NOT EXISTS wealth_settings (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    default_usd_rate REAL NOT NULL DEFAULT 4.08,
+    target_savings_rate REAL DEFAULT 40.0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ==========================================================================

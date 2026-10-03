@@ -28,9 +28,11 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 24px;
+            padding: 14px clamp(16px, 2.5vw, 40px);
             border-bottom: 1px solid var(--border-default);
             background: var(--bg-panel);
+            width: 100%;
+            box-sizing: border-box;
         }
         .admin-header-left {
             display: flex;
@@ -48,8 +50,9 @@
             letter-spacing: 0.06em;
             padding: 2px 7px;
             border-radius: 999px;
-            background: rgba(245, 158, 11, 0.15);
-            color: #F59E0B;
+            background: var(--fill-subtle);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
         }
         .admin-header-actions {
             display: flex;
@@ -71,18 +74,20 @@
 
         .admin-content {
             flex: 1;
-            max-width: 1100px;
             width: 100%;
-            margin: 0 auto;
-            padding: 28px 24px;
+            max-width: 100%;
+            margin: 0;
+            padding: 24px clamp(16px, 2.5vw, 40px);
+            box-sizing: border-box;
         }
 
         /* Stats Row */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-            margin-bottom: 28px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+            width: 100%;
         }
         .stat-card {
             background: var(--bg-panel);
@@ -133,26 +138,29 @@
             background: var(--bg-panel);
             border: 1px solid var(--border-default);
             border-radius: 10px;
-            overflow: hidden;
+            overflow-x: auto;
+            width: 100%;
         }
         table {
             width: 100%;
+            min-width: 960px;
             border-collapse: collapse;
             font-size: 13px;
         }
         thead { background: var(--fill-subtle); }
         th {
             text-align: left;
-            padding: 10px 14px;
+            padding: 12px 18px;
             font-size: 11px;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.04em;
             border-bottom: 1px solid var(--border-default);
+            white-space: nowrap;
         }
         td {
-            padding: 11px 14px;
+            padding: 12px 18px;
             color: var(--text-primary);
             border-bottom: 1px solid var(--border-default);
             vertical-align: middle;
@@ -167,8 +175,8 @@
             border-radius: 999px;
             letter-spacing: 0.04em;
         }
-        .role-admin { background: rgba(245,158,11,0.15); color: #F59E0B; }
-        .role-user  { background: rgba(47,91,255,0.1); color: var(--color-brand); }
+        .role-admin { background: rgba(47,91,255,0.08); color: var(--color-brand); border: 1px solid var(--color-brand-ring); }
+        .role-user  { background: var(--fill-subtle); color: var(--text-secondary); border: 1px solid var(--border-default); }
 
         .status-badge {
             font-size: 10.5px;
@@ -176,8 +184,8 @@
             padding: 2px 8px;
             border-radius: 999px;
         }
-        .status-active     { background: rgba(34,197,94,0.12); color: #16A34A; }
-        .status-suspended  { background: rgba(239,68,68,0.12); color: #DC2626; }
+        .status-active     { background: rgba(26,127,75,0.08); color: var(--color-profit); }
+        .status-suspended  { background: rgba(196,61,61,0.08); color: var(--color-loss); }
 
         .plan-tag {
             font-size: 11px;
@@ -226,13 +234,230 @@
             transition: opacity 120ms;
         }
         .btn-warn-sm:hover { opacity: 0.8; }
+        .btn-disabled {
+            opacity: 0.35 !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+        .self-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(47, 91, 255, 0.08);
+            color: var(--color-brand);
+            border: 1px solid var(--color-brand-ring);
+            margin-left: 6px;
+            vertical-align: middle;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .modal-note {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 7px;
+            background: var(--fill-subtle);
+            color: var(--color-warn);
+            border: 1px solid rgba(217, 119, 6, 0.25);
+            margin-bottom: 14px;
+        }
 
-        /* Loading / Empty */
+        /* App Access Badges */
+        .app-badges-wrap {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .badge-app-grant {
+            display: inline-flex;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(26, 127, 75, 0.08);
+            color: var(--color-profit);
+            border: 1px solid rgba(26, 127, 75, 0.2);
+            white-space: nowrap;
+        }
+        .badge-app-revoke {
+            display: inline-flex;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(196, 61, 61, 0.08);
+            color: var(--color-loss);
+            border: 1px solid rgba(196, 61, 61, 0.2);
+            text-decoration: line-through;
+            white-space: nowrap;
+        }
+        .badge-app-plan {
+            display: inline-flex;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: var(--fill-subtle);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
+            white-space: nowrap;
+        }
         .table-loading {
             text-align: center;
             padding: 36px;
             color: var(--text-secondary);
             font-size: 13px;
+        }
+
+        /* Search and Filter Toolbar */
+        .toolbar-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .search-input-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+            max-width: 380px;
+        }
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+        .search-input {
+            width: 100%;
+            height: 34px;
+            padding: 6px 30px 6px 32px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-default);
+            border-radius: 7px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 140ms, box-shadow 140ms;
+            user-select: text !important;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-brand);
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+        }
+        .search-clear-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 120ms;
+        }
+        .search-clear-btn:hover {
+            color: var(--text-primary);
+        }
+        .search-clear-btn.hidden {
+            display: none;
+        }
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .filter-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            user-select: none;
+        }
+        .filter-select {
+            height: 34px;
+            padding: 4px 8px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-default);
+            border-radius: 7px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 140ms;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--color-brand);
+        }
+        .toolbar-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            padding: 0 2px;
+        }
+        .results-count {
+            font-weight: 500;
+        }
+        .algo-indicator {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--color-brand);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        @media (max-width: 768px) {
+            .table-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-input-wrap {
+                max-width: 100%;
+                min-width: 100%;
+            }
+            .filter-controls {
+                flex-wrap: wrap;
+            }
+            .filter-group {
+                flex: 1 1 calc(50% - 8px);
+                min-width: 130px;
+            }
+            .filter-select {
+                width: 100%;
+            }
         }
 
         /* Modal */
@@ -383,6 +608,77 @@
             <span class="section-title">Users</span>
             <button class="btn-primary-sm" id="btn-create-user">+ Add User</button>
         </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="toolbar-wrap">
+            <div class="table-toolbar">
+                <div class="search-input-wrap">
+                    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="user-search-input" class="search-input" placeholder="Search username or email..." autocomplete="off" spellcheck="false">
+                    <button id="btn-clear-search" class="search-clear-btn hidden" type="button" title="Clear search">✕</button>
+                </div>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-role">Role:</label>
+                        <select id="filter-role" class="filter-select">
+                            <option value="all">All Roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="user">User</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-status">Status:</label>
+                        <select id="filter-status" class="filter-select">
+                            <option value="all">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="suspended">Suspended</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-plan">Plan:</label>
+                        <select id="filter-plan" class="filter-select">
+                            <option value="all">All Plans</option>
+                            <option value="pro">Pro</option>
+                            <option value="free">Free</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-app">App:</label>
+                        <select id="filter-app" class="filter-select">
+                            <option value="all">All Apps</option>
+                            <option value="trading_journal">Journal</option>
+                            <option value="lot_size_calculator">Calc</option>
+                            <option value="wealth_tracker">Wealth</option>
+                            <option value="risk_planner">Risk</option>
+                            <option value="market_radar">Radar</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-sort">Sort:</label>
+                        <select id="filter-sort" class="filter-select">
+                            <option value="username_asc">Username (A → Z)</option>
+                            <option value="username_desc">Username (Z → A)</option>
+                            <option value="created_desc">Joined (Newest)</option>
+                            <option value="created_asc">Joined (Oldest)</option>
+                            <option value="role_admin">Role (Admin First)</option>
+                            <option value="status_active">Status (Active First)</option>
+                        </select>
+                    </div>
+                    <button id="btn-reset-filters" class="btn-ghost-sm" style="height:34px;display:none;align-items:center;" type="button" title="Reset all filters">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+            <div class="toolbar-meta">
+                <span id="results-count" class="results-count">Showing 0 users</span>
+                <span class="algo-indicator" title="Optimized with Binary Search O(log N) prefix index and Merge Sort O(N log N)">
+                    Binary Search &amp; Merge Sort
+                </span>
+            </div>
+        </div>
+
         <div class="user-table-wrap">
             <table id="users-table" aria-label="User management table">
                 <thead>
@@ -392,13 +688,14 @@
                         <th>Role</th>
                         <th>Status</th>
                         <th>Plan</th>
+                        <th>App Access</th>
                         <th>Joined</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="users-tbody">
                     <tr>
-                        <td colspan="7" class="table-loading" id="table-loading">Loading users…</td>
+                        <td colspan="8" class="table-loading" id="table-loading">Loading users…</td>
                     </tr>
                 </tbody>
             </table>
@@ -440,6 +737,51 @@
             <input type="checkbox" id="new-must-change" style="width:14px;height:14px;cursor:pointer;">
             <label for="new-must-change" class="modal-label" style="margin-bottom:0;cursor:pointer;">Require password change on first login</label>
         </div>
+        <div class="modal-field">
+            <label class="modal-label">App Access Permissions</label>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--fill-subtle);border:1px solid var(--border-default);border-radius:7px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Trading Journal</span>
+                    <select class="modal-select" id="new-journal-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Position Calculator</span>
+                    <select class="modal-select" id="new-calculator-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Wealth Tracker</span>
+                    <select class="modal-select" id="new-wealth-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Risk Planner</span>
+                    <select class="modal-select" id="new-risk-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Market Radar</span>
+                    <select class="modal-select" id="new-radar-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+            </div>
+        </div>
         <div class="modal-actions">
             <button class="btn-cancel" id="btn-cancel-create">Cancel</button>
             <button class="btn-confirm" id="btn-confirm-create">Create User</button>
@@ -452,9 +794,16 @@
     <div class="modal-card">
         <div class="modal-title" id="modal-edit-title">Edit User</div>
         <input type="hidden" id="edit-user-id">
+        <div id="edit-sole-admin-note" class="modal-note hidden">
+            <strong>Sole Active Admin</strong>: You cannot suspend or demote this account.
+        </div>
         <div class="modal-field">
-            <label class="modal-label">Username</label>
-            <div id="edit-username-display" style="font-size:13.5px;font-weight:600;color:var(--text-primary);padding:4px 0;"></div>
+            <label class="modal-label" for="edit-username">Username <span style="color:var(--color-brand)">*</span></label>
+            <input class="modal-input" id="edit-username" type="text" autocomplete="off" spellcheck="false" required placeholder="Username">
+        </div>
+        <div class="modal-field">
+            <label class="modal-label" for="edit-email">Email</label>
+            <input class="modal-input" id="edit-email" type="email" autocomplete="off" spellcheck="false" placeholder="user@example.com">
         </div>
         <div class="modal-field">
             <label class="modal-label" for="edit-role">Role</label>
@@ -478,18 +827,50 @@
             </select>
         </div>
         <div class="modal-field">
-            <label class="modal-label" for="edit-reset-password">Reset Password (leave blank to keep current)</label>
-            <input class="modal-input" id="edit-reset-password" type="text" autocomplete="off" placeholder="New password…">
+            <label class="modal-label" for="edit-reset-password">Change Password (leave blank to keep current)</label>
+            <input class="modal-input" id="edit-reset-password" type="password" autocomplete="new-password" placeholder="New password (min 8 characters)…">
         </div>
         <div class="modal-field">
-            <label class="modal-label">App Access Overrides</label>
+            <label class="modal-label">App Access Permissions</label>
             <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--fill-subtle);border:1px solid var(--border-default);border-radius:7px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">📓 Trading Journal</span>
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Trading Journal</span>
                     <select class="modal-select" id="edit-journal-access" style="width:auto;min-width:130px;">
                         <option value="plan">Use Plan Default</option>
-                        <option value="grant">✅ Grant Access</option>
-                        <option value="revoke">🚫 Revoke Access</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Position Calculator</span>
+                    <select class="modal-select" id="edit-calculator-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Wealth Tracker</span>
+                    <select class="modal-select" id="edit-wealth-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Risk Planner</span>
+                    <select class="modal-select" id="edit-risk-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--text-primary);">Market Radar</span>
+                    <select class="modal-select" id="edit-radar-access" style="width:auto;min-width:130px;">
+                        <option value="plan">Use Plan Default</option>
+                        <option value="grant">Grant Access</option>
+                        <option value="revoke">Revoke Access</option>
                     </select>
                 </div>
             </div>
@@ -507,6 +888,8 @@
 <script type="module">
 import { getCurrentUserAndProfile } from "../js/auth/authState.js?v=4";
 
+let currentAdminUser = null;
+
 // ── Auth Guard: Admin only ──
 (async () => {
     const { user, profile } = await getCurrentUserAndProfile();
@@ -514,6 +897,7 @@ import { getCurrentUserAndProfile } from "../js/auth/authState.js?v=4";
         window.location.replace("../main-page/index.html");
         return;
     }
+    currentAdminUser = profile;
     await loadUsers();
 })();
 
@@ -558,11 +942,211 @@ async function loadUsers() {
         const data = await res.json();
         allUsers = data.users || [];
         renderStats(allUsers);
-        renderTable(allUsers);
+        applyFilterAndSearch();
     } catch (networkErr) {
         document.getElementById("table-loading").textContent = "Network error: Failed to connect to admin API.";
         console.error("[Veyra Admin] Network error loading users:", networkErr);
     }
+}
+
+// ── Divide-and-Conquer Merge Sort: Guaranteed O(N log N) Stable Sort ──
+function mergeSort(arr, compareFn) {
+    if (!arr || arr.length <= 1) return arr ? arr.slice() : [];
+    const mid = Math.floor(arr.length / 2);
+    const left = mergeSort(arr.slice(0, mid), compareFn);
+    const right = mergeSort(arr.slice(mid), compareFn);
+    return merge(left, right, compareFn);
+}
+
+function merge(left, right, compareFn) {
+    const result = new Array(left.length + right.length);
+    let i = 0, j = 0, k = 0;
+    while (i < left.length && j < right.length) {
+        if (compareFn(left[i], right[j]) <= 0) {
+            result[k++] = left[i++];
+        } else {
+            result[k++] = right[j++];
+        }
+    }
+    while (i < left.length) result[k++] = left[i++];
+    while (j < right.length) result[k++] = right[j++];
+    return result;
+}
+
+// ── Binary Search: Lower Bound for O(log N) Prefix & Exact Match ──
+function binarySearchLowerBound(sortedArr, targetPrefix, keyFn) {
+    let low = 0;
+    let high = sortedArr.length;
+    while (low < high) {
+        const mid = (low + high) >>> 1;
+        const midVal = keyFn(sortedArr[mid]);
+        if (midVal < targetPrefix) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    return low;
+}
+
+// Find all matches for a search query using Binary Search on sorted arrays
+function binarySearchUsers(users, query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return users;
+
+    // 1. Sort users by username and email using Merge Sort
+    const byUsername = mergeSort(users, (a, b) => (a.username || "").toLowerCase().localeCompare((b.username || "").toLowerCase()));
+    const byEmail = mergeSort(users, (a, b) => (a.email || "").toLowerCase().localeCompare((b.email || "").toLowerCase()));
+
+    const matchedIds = new Set();
+    const matchedUsers = [];
+
+    const addMatch = (u) => {
+        if (u && !matchedIds.has(u.id)) {
+            matchedIds.add(u.id);
+            matchedUsers.push(u);
+        }
+    };
+
+    // 2. Binary search username prefix in O(log N)
+    const uIdx = binarySearchLowerBound(byUsername, q, u => (u.username || "").toLowerCase());
+    for (let i = uIdx; i < byUsername.length; i++) {
+        const uname = (byUsername[i].username || "").toLowerCase();
+        if (uname.startsWith(q)) {
+            addMatch(byUsername[i]);
+        } else {
+            break; // Stop immediately since array is sorted
+        }
+    }
+
+    // 3. Binary search email prefix in O(log N)
+    const eIdx = binarySearchLowerBound(byEmail, q, u => (u.email || "").toLowerCase());
+    for (let i = eIdx; i < byEmail.length; i++) {
+        const email = (byEmail[i].email || "").toLowerCase();
+        if (email.startsWith(q)) {
+            addMatch(byEmail[i]);
+        } else {
+            break; // Stop immediately since array is sorted
+        }
+    }
+
+    // 4. Substring fallback to ensure full coverage (e.g. searching "@gmail" or substring)
+    for (let i = 0; i < users.length; i++) {
+        const u = users[i];
+        if (matchedIds.has(u.id)) continue;
+        const uname = (u.username || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        if (uname.includes(q) || email.includes(q)) {
+            addMatch(u);
+        }
+    }
+
+    return matchedUsers;
+}
+
+// ── App Access Evaluator ──
+function userHasAppAccess(u, appKey) {
+    const ov = (u.app_overrides || {})[appKey];
+    if (ov === 1 || ov === true) return true;
+    if (ov === 0 || ov === false) return false;
+    const isPro = u.plan_id === "pro";
+    const isDefaultPublic = (appKey === "lot_size_calculator");
+    return isDefaultPublic || isPro || u.role === "admin";
+}
+
+// ── Sorting Comparator Provider ──
+function getSortComparator(sortKey) {
+    switch (sortKey) {
+        case "username_asc":
+            return (a, b) => (a.username || "").localeCompare(b.username || "");
+        case "username_desc":
+            return (a, b) => (b.username || "").localeCompare(a.username || "");
+        case "created_desc":
+            return (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        case "created_asc":
+            return (a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        case "role_admin":
+            return (a, b) => {
+                const diff = (b.role === "admin" ? 1 : 0) - (a.role === "admin" ? 1 : 0);
+                return diff !== 0 ? diff : (a.username || "").localeCompare(b.username || "");
+            };
+        case "status_active":
+            return (a, b) => {
+                const diff = (b.status === "active" ? 1 : 0) - (a.status === "active" ? 1 : 0);
+                return diff !== 0 ? diff : (a.username || "").localeCompare(b.username || "");
+            };
+        default:
+            return (a, b) => (a.username || "").localeCompare(b.username || "");
+    }
+}
+
+// ── Search & Filter Pipeline ──
+function applyFilterAndSearch() {
+    const searchInput = document.getElementById("user-search-input");
+    const clearBtn = document.getElementById("btn-clear-search");
+    const resetBtn = document.getElementById("btn-reset-filters");
+    const query = (searchInput ? searchInput.value : "").trim();
+
+    const roleFilter = document.getElementById("filter-role")?.value || "all";
+    const statusFilter = document.getElementById("filter-status")?.value || "all";
+    const planFilter = document.getElementById("filter-plan")?.value || "all";
+    const appFilter = document.getElementById("filter-app")?.value || "all";
+    const sortVal = document.getElementById("filter-sort")?.value || "username_asc";
+
+    if (clearBtn) {
+        clearBtn.classList.toggle("hidden", query.length === 0);
+    }
+
+    const isFiltered = query.length > 0 || roleFilter !== "all" || statusFilter !== "all" || planFilter !== "all" || appFilter !== "all";
+    if (resetBtn) {
+        resetBtn.style.display = isFiltered ? "inline-flex" : "none";
+    }
+
+    // 1. Search via Binary Search O(log N)
+    let results = binarySearchUsers(allUsers, query);
+
+    // 2. Filter predicates
+    results = results.filter(u => {
+        if (roleFilter !== "all" && u.role !== roleFilter) return false;
+        if (statusFilter !== "all" && u.status !== statusFilter) return false;
+        if (planFilter !== "all" && (u.plan_id || "free") !== planFilter) return false;
+        if (appFilter !== "all" && !userHasAppAccess(u, appFilter)) return false;
+        return true;
+    });
+
+    // 3. Sort using Merge Sort O(N log N)
+    const comparator = getSortComparator(sortVal);
+    const sortedResults = mergeSort(results, comparator);
+
+    // 4. Update count display
+    const countEl = document.getElementById("results-count");
+    if (countEl) {
+        if (isFiltered) {
+            countEl.textContent = `Showing ${sortedResults.length} of ${allUsers.length} users`;
+        } else {
+            countEl.textContent = `Showing all ${allUsers.length} users`;
+        }
+    }
+
+    // 5. Render to table
+    renderTable(sortedResults);
+}
+
+function resetFilters() {
+    const searchInput = document.getElementById("user-search-input");
+    if (searchInput) searchInput.value = "";
+    const filterRole = document.getElementById("filter-role");
+    if (filterRole) filterRole.value = "all";
+    const filterStatus = document.getElementById("filter-status");
+    if (filterStatus) filterStatus.value = "all";
+    const filterPlan = document.getElementById("filter-plan");
+    if (filterPlan) filterPlan.value = "all";
+    const filterApp = document.getElementById("filter-app");
+    if (filterApp) filterApp.value = "all";
+    const filterSort = document.getElementById("filter-sort");
+    if (filterSort) filterSort.value = "username_asc";
+
+    applyFilterAndSearch();
 }
 
 function renderStats(users) {
@@ -586,27 +1170,80 @@ function escapeHtml(str) {
 function renderTable(users) {
     const tbody = document.getElementById("users-tbody");
     if (!users.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="table-loading">No users found.</td></tr>`;
+        const isFiltering = (document.getElementById("user-search-input")?.value.trim().length > 0) ||
+                            (document.getElementById("filter-role")?.value !== "all") ||
+                            (document.getElementById("filter-status")?.value !== "all") ||
+                            (document.getElementById("filter-plan")?.value !== "all") ||
+                            (document.getElementById("filter-app")?.value !== "all");
+        const msg = isFiltering ? "No users match your search and filter criteria." : "No users found.";
+        tbody.innerHTML = `<tr><td colspan="8" class="table-loading">${msg}</td></tr>`;
         return;
     }
-    tbody.innerHTML = users.map(u => `
+    const activeAdminsCount = users.filter(u => u.role === "admin" && u.status === "active").length;
+
+    tbody.innerHTML = users.map(u => {
+        const isSelf = currentAdminUser && (u.id === currentAdminUser.id || u.username.toLowerCase() === (currentAdminUser.username || "").toLowerCase());
+        const isSoleAdmin = (u.role === "admin" && u.status === "active" && activeAdminsCount <= 1);
+        const overrides = u.app_overrides || {};
+
+        let actionBtn = "";
+        if (u.status === "active") {
+            if (isSoleAdmin) {
+                actionBtn = `<button class="btn-danger-sm btn-disabled" disabled title="The sole active administrator cannot be suspended">Suspend</button>`;
+            } else {
+                actionBtn = `<button class="btn-danger-sm" data-action="suspend" data-id="${u.id}">Suspend</button>`;
+            }
+        } else {
+            actionBtn = `<button class="btn-warn-sm" data-action="unsuspend" data-id="${u.id}">Unsuspend</button>`;
+        }
+
+        // App badge generator helper
+        const renderBadge = (key, label, defaultPublic = false) => {
+            const ov = overrides[key];
+            if (ov === 1 || ov === true) {
+                return `<span class="badge-app-grant" title="${label}: Granted">${label}</span>`;
+            } else if (ov === 0 || ov === false) {
+                return `<span class="badge-app-revoke" title="${label}: Revoked">${label}</span>`;
+            } else {
+                const isPro = u.plan_id === "pro";
+                if (defaultPublic || isPro || u.role === "admin") {
+                    return `<span class="badge-app-plan" title="${label}: Plan Default (Active)">${label}</span>`;
+                } else {
+                    return `<span class="badge-app-revoke" style="opacity:0.6;" title="${label}: Plan Default (Locked)">${label}</span>`;
+                }
+            }
+        };
+
+        const appBadges = `
+            <div class="app-badges-wrap">
+                ${renderBadge("trading_journal", "Journal", false)}
+                ${renderBadge("lot_size_calculator", "Calc", true)}
+                ${renderBadge("wealth_tracker", "Wealth", false)}
+                ${renderBadge("risk_planner", "Risk", false)}
+                ${renderBadge("market_radar", "Radar", false)}
+            </div>
+        `;
+
+        return `
         <tr>
-            <td style="font-weight:600">${escapeHtml(u.username)}</td>
-            <td style="color:var(--text-secondary)">${escapeHtml(u.email)}</td>
+            <td style="font-weight:600">
+                ${escapeHtml(u.username)}
+                ${isSelf ? '<span class="self-tag">You</span>' : ''}
+            </td>
+            <td style="color:var(--text-secondary)">${escapeHtml(u.email || "—")}</td>
             <td><span class="role-badge role-${escapeHtml(u.role)}">${escapeHtml(u.role?.toUpperCase())}</span></td>
             <td><span class="status-badge status-${escapeHtml(u.status)}">${u.status === "active" ? "Active" : "Suspended"}</span></td>
             <td><span class="plan-tag">${escapeHtml((u.plan_id || "free").toUpperCase())}</span></td>
+            <td>${appBadges}</td>
             <td style="color:var(--text-secondary);font-size:12px;">${fmtDate(u.created_at)}</td>
             <td>
                 <div class="row-actions">
                     <button class="btn-ghost-sm" data-action="edit" data-id="${u.id}">Edit</button>
-                    ${u.status === "active"
-                        ? `<button class="btn-danger-sm" data-action="suspend" data-id="${u.id}">Suspend</button>`
-                        : `<button class="btn-warn-sm" data-action="unsuspend" data-id="${u.id}">Unsuspend</button>`}
+                    ${actionBtn}
                 </div>
             </td>
         </tr>
-    `).join("");
+    `;}).join("");
 
     // Row action events
     tbody.querySelectorAll("[data-action]").forEach(btn => {
@@ -614,9 +1251,18 @@ function renderTable(users) {
             const action = btn.dataset.action;
             const userId = btn.dataset.id;
             const user = allUsers.find(u => u.id === userId);
-            if (action === "edit") openEditModal(user);
-            else if (action === "suspend") quickUpdate(userId, { status: "suspended" }, "User suspended");
-            else if (action === "unsuspend") quickUpdate(userId, { status: "active" }, "User reactivated");
+            if (action === "edit") {
+                openEditModal(user);
+            } else if (action === "suspend") {
+                const activeAdmins = allUsers.filter(u => u.role === "admin" && u.status === "active").length;
+                if (user.role === "admin" && activeAdmins <= 1) {
+                    toast("The sole active administrator cannot be suspended", "error");
+                    return;
+                }
+                quickUpdate(userId, { status: "suspended" }, "User suspended");
+            } else if (action === "unsuspend") {
+                quickUpdate(userId, { status: "active" }, "User reactivated");
+            }
         });
     });
 }
@@ -645,6 +1291,12 @@ document.getElementById("btn-create-user").addEventListener("click", () => {
     document.getElementById("new-role").value = "user";
     document.getElementById("new-plan").value = "pro";
     document.getElementById("new-must-change").checked = true;
+
+    ["new-journal-access", "new-calculator-access", "new-risk-access", "new-radar-access"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "plan";
+    });
+
     document.getElementById("modal-create").classList.remove("hidden");
     document.getElementById("new-username").focus();
 });
@@ -652,6 +1304,14 @@ document.getElementById("btn-create-user").addEventListener("click", () => {
 document.getElementById("btn-cancel-create").addEventListener("click", () => {
     document.getElementById("modal-create").classList.add("hidden");
 });
+
+function getSelectOverride(elId) {
+    const el = document.getElementById(elId);
+    if (!el) return null;
+    if (el.value === "grant") return true;
+    if (el.value === "revoke") return false;
+    return null;
+}
 
 document.getElementById("btn-confirm-create").addEventListener("click", async () => {
     const btn = document.getElementById("btn-confirm-create");
@@ -666,7 +1326,14 @@ document.getElementById("btn-confirm-create").addEventListener("click", async ()
         password: document.getElementById("new-password").value.trim() || undefined,
         role: document.getElementById("new-role").value,
         plan_id: document.getElementById("new-plan").value,
-        must_change_password: document.getElementById("new-must-change").checked
+        must_change_password: document.getElementById("new-must-change").checked,
+        app_overrides: {
+            trading_journal: getSelectOverride("new-journal-access"),
+            lot_size_calculator: getSelectOverride("new-calculator-access"),
+            wealth_tracker: getSelectOverride("new-wealth-access"),
+            risk_planner: getSelectOverride("new-risk-access"),
+            market_radar: getSelectOverride("new-radar-access")
+        }
     };
     const res = await fetch("/api/admin/users", {
         method: "POST",
@@ -692,20 +1359,52 @@ document.getElementById("btn-confirm-create").addEventListener("click", async ()
 // ── Edit User Modal ──
 function openEditModal(user) {
     document.getElementById("edit-user-id").value = user.id;
-    document.getElementById("edit-username-display").textContent = `@${user.username} (${user.email || "—"})`;
+    document.getElementById("edit-username").value = user.username || "";
+    document.getElementById("edit-email").value = user.email || "";
     document.getElementById("edit-role").value = user.role || "user";
     document.getElementById("edit-status").value = user.status || "active";
     document.getElementById("edit-plan").value = user.plan_id || "free";
     document.getElementById("edit-reset-password").value = "";
 
-    // Set Journal access override
-    const journalOverride = user.app_overrides && user.app_overrides["trading_journal"];
-    const journalSelect = document.getElementById("edit-journal-access");
-    if (journalOverride === 1) journalSelect.value = "grant";
-    else if (journalOverride === 0) journalSelect.value = "revoke";
-    else journalSelect.value = "plan";
+    const activeAdminsCount = allUsers.filter(u => u.role === "admin" && u.status === "active").length;
+    const isSoleAdmin = (user.role === "admin" && user.status === "active" && activeAdminsCount <= 1);
+
+    const soleAdminNote = document.getElementById("edit-sole-admin-note");
+    const roleSelect = document.getElementById("edit-role");
+    const statusSelect = document.getElementById("edit-status");
+
+    if (isSoleAdmin) {
+        soleAdminNote.classList.remove("hidden");
+        roleSelect.disabled = true;
+        roleSelect.title = "The sole active admin cannot be demoted";
+        statusSelect.disabled = true;
+        statusSelect.title = "The sole active admin cannot be suspended";
+    } else {
+        soleAdminNote.classList.add("hidden");
+        roleSelect.disabled = false;
+        roleSelect.title = "";
+        statusSelect.disabled = false;
+        statusSelect.title = "";
+    }
+
+    // Set all 4 App access overrides
+    const setOverrideField = (elId, key) => {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        const val = user.app_overrides && user.app_overrides[key];
+        if (val === 1 || val === true) el.value = "grant";
+        else if (val === 0 || val === false) el.value = "revoke";
+        else el.value = "plan";
+    };
+
+    setOverrideField("edit-journal-access", "trading_journal");
+    setOverrideField("edit-calculator-access", "lot_size_calculator");
+    setOverrideField("edit-wealth-access", "wealth_tracker");
+    setOverrideField("edit-risk-access", "risk_planner");
+    setOverrideField("edit-radar-access", "market_radar");
 
     document.getElementById("modal-edit").classList.remove("hidden");
+    document.getElementById("edit-username").focus();
 }
 
 document.getElementById("btn-cancel-edit").addEventListener("click", () => {
@@ -714,23 +1413,42 @@ document.getElementById("btn-cancel-edit").addEventListener("click", () => {
 
 document.getElementById("btn-confirm-edit").addEventListener("click", async () => {
     const btn = document.getElementById("btn-confirm-edit");
-    btn.disabled = true; btn.textContent = "Saving…";
-    const token = localStorage.getItem("veyra_session_token") || "";
     const userId = document.getElementById("edit-user-id").value;
+    const username = document.getElementById("edit-username").value.trim().toLowerCase();
+    const email = document.getElementById("edit-email").value.trim().toLowerCase();
+    const role = document.getElementById("edit-role").value;
+    const status = document.getElementById("edit-status").value;
+    const plan_id = document.getElementById("edit-plan").value;
+    const newPwd = document.getElementById("edit-reset-password").value.trim();
+
+    if (!username) {
+        toast("Username is required", "error");
+        return;
+    }
+    if (newPwd && newPwd.length < 8) {
+        toast("Password must be at least 8 characters", "error");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const token = localStorage.getItem("veyra_session_token") || "";
     const payload = {
         userId,
-        role: document.getElementById("edit-role").value,
-        status: document.getElementById("edit-status").value,
-        plan_id: document.getElementById("edit-plan").value
+        username,
+        email: email || "",
+        role,
+        status,
+        plan_id,
+        app_overrides: {
+            trading_journal: getSelectOverride("edit-journal-access"),
+            lot_size_calculator: getSelectOverride("edit-calculator-access"),
+            wealth_tracker: getSelectOverride("edit-wealth-access"),
+            risk_planner: getSelectOverride("edit-risk-access"),
+            market_radar: getSelectOverride("edit-radar-access")
+        }
     };
-    const newPwd = document.getElementById("edit-reset-password").value.trim();
     if (newPwd) payload.resetPassword = newPwd;
-
-    // App overrides
-    const journalVal = document.getElementById("edit-journal-access").value;
-    payload.app_overrides = {
-        trading_journal: journalVal === "grant" ? true : journalVal === "revoke" ? false : null
-    };
 
     const res = await fetch("/api/admin/users", {
         method: "PATCH",
@@ -741,10 +1459,15 @@ document.getElementById("btn-confirm-edit").addEventListener("click", async () =
         },
         body: JSON.stringify(payload)
     });
-    btn.disabled = false; btn.textContent = "Save Changes";
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
     if (res.ok) {
         toast("User updated successfully", "success");
         document.getElementById("modal-edit").classList.add("hidden");
+        if (currentAdminUser && (userId === currentAdminUser.id || (currentAdminUser.username || "").toLowerCase() === username)) {
+            currentAdminUser.username = username;
+            currentAdminUser.email = email;
+        }
         await loadUsers();
     } else {
         const d = await res.json();
@@ -766,6 +1489,25 @@ document.addEventListener("keydown", (e) => {
         document.getElementById("modal-edit").classList.add("hidden");
     }
 });
+
+// ── Search & Filter Event Listeners ──
+document.getElementById("user-search-input")?.addEventListener("input", applyFilterAndSearch);
+document.getElementById("filter-role")?.addEventListener("change", applyFilterAndSearch);
+document.getElementById("filter-status")?.addEventListener("change", applyFilterAndSearch);
+document.getElementById("filter-plan")?.addEventListener("change", applyFilterAndSearch);
+document.getElementById("filter-app")?.addEventListener("change", applyFilterAndSearch);
+document.getElementById("filter-sort")?.addEventListener("change", applyFilterAndSearch);
+
+document.getElementById("btn-clear-search")?.addEventListener("click", () => {
+    const searchInput = document.getElementById("user-search-input");
+    if (searchInput) {
+        searchInput.value = "";
+        searchInput.focus();
+    }
+    applyFilterAndSearch();
+});
+
+document.getElementById("btn-reset-filters")?.addEventListener("click", resetFilters);
 </script>
 </body>
 </html>

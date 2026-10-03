@@ -1,0 +1,706 @@
+/* ==========================================================================
+   wealth/css/charts.css - Native Financial SVG Charts & Visualizations
+   Pure SVG, Zero Runtime Dependencies, Responsive, Dark/Light Calibrated
+   ========================================================================== */
+
+.charts-section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.charts-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.chart-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 1. Primary Analysis Metric Switcher */
+.chart-metric-segmented {
+  display: flex;
+  align-items: center;
+  background: var(--fill-subtle);
+  border-radius: var(--radius-control);
+  padding: 3px;
+  gap: 2px;
+}
+
+.chart-metric-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 140ms ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chart-metric-btn:hover {
+  color: var(--text-primary);
+}
+
+.chart-metric-btn.active {
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* 2. Grouping Dimension Filter */
+.chart-dim-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-dim-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
+.chart-dim-select {
+  font-family: var(--font-stack);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  background: var(--fill-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+.chart-dim-select:focus {
+  border-color: var(--color-brand);
+}
+
+/* 3. View Format Switcher (Donut vs Bar) */
+.chart-format-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--fill-subtle);
+  border-radius: var(--radius-control);
+  padding: 2px;
+  gap: 2px;
+}
+
+.format-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 140ms ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.format-btn:hover {
+  color: var(--text-primary);
+}
+
+.format-btn.active {
+  background: var(--bg-panel);
+  color: var(--color-brand);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* Chart Canvas Area */
+.chart-body-container {
+  padding: 24px;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.chart-canvas-enter {
+  animation: chartCanvasEnter 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes chartCanvasEnter {
+  0% {
+    opacity: 0.3;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-svg-root {
+  width: 100%;
+  height: 320px;
+  overflow: visible;
+}
+
+/* Donut / Pie Chart Layout with Expanding Animation */
+.pie-chart-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.pie-chart-svg {
+  width: 260px;
+  height: 260px;
+  flex-shrink: 0;
+  animation: pieDonutScale 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-origin: 130px 130px;
+}
+
+@keyframes pieDonutScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) rotate(-20deg);
+  }
+  75% {
+    transform: scale(1.02) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.pie-slice {
+  cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease, filter 160ms ease;
+  transform-origin: 130px 130px;
+  animation: sliceExpand 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pie-slice:hover,
+.pie-slice.is-active {
+  opacity: 1 !important;
+  transform: scale(1.05) !important;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.22));
+}
+
+.pie-slice.is-dimmed {
+  opacity: 0.28 !important;
+}
+
+/* Donut Center Dynamic Readout */
+.donut-center-title {
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-anchor: middle;
+  user-select: none;
+  transition: fill 140ms ease, font-size 140ms ease;
+}
+
+.donut-center-title.is-active {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+.donut-center-val {
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  user-select: none;
+}
+
+.donut-center-sub {
+  font-size: 9px;
+  font-weight: 600;
+  fill: var(--color-brand);
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  user-select: none;
+}
+
+.pie-legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.pie-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 140ms ease, opacity 140ms ease, transform 140ms ease, border-color 140ms ease;
+  animation: legendItemSlide 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  border: 1px solid transparent;
+}
+
+@keyframes legendItemSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.pie-legend-item:hover,
+.pie-legend-item.is-active {
+  background: var(--fill-subtle);
+  border-color: var(--border-default);
+  transform: translateX(3px);
+}
+
+.pie-legend-item.is-dimmed {
+  opacity: 0.32;
+}
+
+.pie-legend-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.legend-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.pie-legend-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pie-legend-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pie-legend-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.pie-legend-percent {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  width: 44px;
+  text-align: right;
+}
+
+/* Vertical Bar Chart Layout with Stretching Animation */
+.bar-chart-container {
+  width: 100%;
+  height: 300px;
+}
+
+.chart-grid-line {
+  stroke: var(--border-default);
+  stroke-dasharray: 3 3;
+}
+
+.chart-axis-text {
+  font-size: 10px;
+  fill: var(--text-secondary);
+  font-family: var(--font-stack);
+  user-select: none;
+}
+
+.bar-axis-label {
+  animation: axisLabelFade 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes axisLabelFade {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bar-rect {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: barStretchUp 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  cursor: pointer;
+  transition: opacity 140ms ease, filter 140ms ease;
+}
+
+@keyframes barStretchUp {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.bar-rect:hover,
+.bar-rect.is-active {
+  opacity: 1 !important;
+  filter: brightness(1.22);
+}
+
+.bar-rect.is-dimmed {
+  opacity: 0.25 !important;
+}
+
+/* 4. Horizontal Ranked Bar Chart with Expanding Track Animation */
+.ranked-bars-wrapper {
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ranked-bar-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 140px;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background-color 100ms ease;
+  animation: rankedRowFadeIn 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rankedRowFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ranked-bar-row:hover {
+  background: var(--fill-subtle);
+}
+
+.ranked-bar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ranked-bar-rank {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  font-variant-numeric: tabular-nums;
+  width: 14px;
+}
+
+.ranked-bar-track {
+  height: 12px;
+  background: var(--fill-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ranked-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transform-origin: left center;
+  animation: horizontalBarGrow 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes horizontalBarGrow {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.ranked-bar-values {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ranked-bar-rate {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ranked-bar-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Line Chart Layout with Drawing Trajectory Animation */
+.line-chart-path {
+  fill: none;
+  stroke: var(--color-brand);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  animation: linePathDraw 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes linePathDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.line-chart-area {
+  fill: url(#lineGradient);
+  opacity: 0;
+  animation: lineAreaFade 600ms cubic-bezier(0.22, 1, 0.36, 1) 300ms forwards;
+}
+
+@keyframes lineAreaFade {
+  to {
+    opacity: 0.15;
+  }
+}
+
+.line-chart-point {
+  fill: var(--bg-panel);
+  stroke: var(--color-brand);
+  stroke-width: 2.5;
+  cursor: pointer;
+  transition: r 140ms ease;
+  animation: pointPopIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes pointPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.line-chart-point:hover,
+.line-chart-point.is-active {
+  r: 7;
+  stroke: var(--bg-panel);
+  stroke-width: 2px;
+}
+
+/* Floating High-Contrast Micro-Tooltip */
+.chart-floating-tooltip {
+  position: fixed;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  font-size: 11px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease;
+  z-index: 99999;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.4;
+}
+
+.chart-floating-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.chart-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+
+.chart-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.chart-tooltip-title {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.chart-tooltip-body {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.chart-tooltip-amount {
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.chart-tooltip-pct {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand);
+}
+
+.chart-tooltip-sub {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-default);
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-tooltip-apr-tag {
+  font-weight: 600;
+  color: var(--color-profit);
+}
+
+.chart-tooltip-sub-text {
+  color: var(--text-placeholder);
+}
+
+/* Fallback Container Tooltip */
+.chart-tooltip {
+  position: absolute;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -100%) translateY(-8px);
+  transition: opacity 120ms ease;
+  z-index: 100;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.chart-tooltip.visible {
+  opacity: 1;
+}
+
+/* Empty Chart State */
+.chart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: var(--text-placeholder);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .pie-chart-wrapper {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .charts-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .chart-controls-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .chart-metric-segmented {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .ranked-bar-row {
+    grid-template-columns: 140px 1fr 100px;
+  }
+}

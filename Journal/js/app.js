@@ -1,22 +1,20 @@
-/**
- * app.js
- * 主应用程序调度中心（全量集成 VEYRA 架构）：
- * 包含 Live Dashboard, Trades, Daily Journal, Strategies, Backtests, Live vs Backtest, Analytics, Settings.
- */
-
 import { openDatabase } from './db/database.js';
 import { Sidebar } from './components/sidebar.js';
 import { requirePageAuth } from '../../js/auth/authGuard.js';
 import { LiveDashboardView } from './views/liveDashboardView.js';
 import { LiveJournalView } from './views/liveJournalView.js';
 import { DailyJournalView } from './views/dailyJournalView.js';
-import { StrategiesView } from './views/strategiesView.js';
+import { PlaybookView } from './views/playbookView.js';
+import { ReportsView } from './views/reportsView.js';
+import { NotebookView } from './views/notebookView.js';
+import { ProgressTrackerView } from './views/progressTrackerView.js';
+import { MentorModeView } from './views/mentorModeView.js';
 import { BacktestBooksView } from './views/backtestBooksView.js';
 import { BacktestDetailView } from './views/backtestDetailView.js';
 import { BacktestOverviewView } from './views/backtestOverviewView.js';
 import { LiveVsBacktestView } from './views/liveVsBacktestView.js';
-import { AnalyticsView } from './views/analyticsView.js';
 import { SettingsView } from './views/settingsView.js';
+import { AddTradeModal } from './components/addTradeModal.js';
 
 class TradingJournalApp {
   constructor() {
@@ -65,8 +63,16 @@ class TradingJournalApp {
         window.location.href = '../main-page/index.html';
       } else if (e.key === '1') {
         window.location.href = '../calculator/index.html';
-      } else if (e.key === 't' || e.key === 'T') {
-        this.toggleTheme();
+      } else if (e.key.toLowerCase() === 'd') {
+        this.navigate('live-dashboard');
+      } else if (e.key.toLowerCase() === 'j') {
+        this.navigate('daily-journal');
+      } else if (e.key.toLowerCase() === 'n') {
+        this.navigate('notebook');
+      } else if (e.key.toLowerCase() === 'b') {
+        this.navigate('playbook');
+      } else if (e.key.toLowerCase() === 'r') {
+        this.navigate('reports');
       }
     });
 
@@ -107,7 +113,14 @@ class TradingJournalApp {
         currentRoute: this.currentRoute,
         currentTheme: this.currentTheme,
         onNavigate: (route) => this.navigate(route),
-        onToggleTheme: () => this.toggleTheme()
+        onToggleTheme: () => this.toggleTheme(),
+        onAddTrade: () => {
+          new AddTradeModal({
+            onTradeAdded: () => {
+              this.renderCurrentView();
+            }
+          });
+        }
       });
 
       this.setupShortcuts();
@@ -159,8 +172,34 @@ class TradingJournalApp {
         }).render();
         break;
 
+      case 'notebook':
+        new NotebookView({
+          container: this.mainContainer
+        }).render();
+        break;
+
+      case 'progress-tracker':
+        new ProgressTrackerView({
+          container: this.mainContainer
+        }).render();
+        break;
+
+      case 'playbook':
       case 'strategies':
-        new StrategiesView({
+        new PlaybookView({
+          container: this.mainContainer
+        }).render();
+        break;
+
+      case 'reports':
+      case 'analytics':
+        new ReportsView({
+          container: this.mainContainer
+        }).render();
+        break;
+
+      case 'mentor-mode':
+        new MentorModeView({
           container: this.mainContainer
         }).render();
         break;
@@ -196,12 +235,6 @@ class TradingJournalApp {
         }).render();
         break;
 
-      case 'analytics':
-        new AnalyticsView({
-          container: this.mainContainer
-        }).render();
-        break;
-
       case 'settings':
         new SettingsView({
           container: this.mainContainer,
@@ -221,3 +254,4 @@ window.addEventListener('DOMContentLoaded', () => {
   const app = new TradingJournalApp();
   app.init();
 });
+

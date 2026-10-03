@@ -146,3 +146,111 @@
   font-size: 10px;
   text-align: right;
 }
+
+/* ==========================================================================
+   DYNAMIC CHART & GAUGE EXPANDING ANIMATIONS
+   ========================================================================== */
+
+/* 1. Circular Donut Gauge Expanding Animation */
+@keyframes gaugeCircleExpand {
+  from {
+    stroke-dashoffset: 280;
+    opacity: 0.2;
+  }
+}
+
+.gauge-circle-anim {
+  animation: gaugeCircleExpand 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: stroke-dashoffset;
+}
+
+/* 2. Semi-Circle Gauge Expanding Animation */
+@keyframes gaugeSemiExpand {
+  from {
+    stroke-dashoffset: 180;
+    opacity: 0.2;
+  }
+}
+
+.gauge-semi-anim {
+  animation: gaugeSemiExpand 650ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: stroke-dashoffset;
+}
+
+/* 3. Bar Charts (Vertical Daily P&L and R-Multiple Histogram Bars) */
+@keyframes pnlBarGrow {
+  from {
+    transform: scaleY(0);
+    opacity: 0.1;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 0.85;
+  }
+}
+
+.pnl-bar, .r-dist-bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: pnlBarGrow 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 4. Horizontal Bars (Reports Day of Week & Symbol Breakdowns) */
+@keyframes horizBarExtend {
+  from {
+    width: 0% !important;
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.horiz-bar-fill {
+  animation: horizBarExtend 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 5. Zella Spider Radar Chart Polygon Blooming */
+@keyframes radarBloom {
+  0% {
+    transform: scale(0.15);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.03);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.radar-polygon {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: radarBloom 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 6. Score Bar Fill Animation */
+@keyframes scoreFillExtend {
+  from {
+    width: 0% !important;
+  }
+}
+
+.score-progress-fill {
+  animation: scoreFillExtend 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 7. Calendar Day Hover Micro-Interactions */
+.calendar-day-cell {
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.calendar-day-cell.has-trades:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 2;
+}
+

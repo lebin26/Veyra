@@ -1236,6 +1236,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 elements.themeToggleBtn.setAttribute("aria-label", "Switch to dark theme");
             }
         }
+        const sidebarThemeBtn = document.getElementById("sidebar-theme-toggle");
+        if (sidebarThemeBtn) {
+            sidebarThemeBtn.innerHTML = theme === "dark" ? SVG_SUN : SVG_MOON;
+            sidebarThemeBtn.setAttribute("title", theme === "dark" ? "Switch to light theme (T)" : "Switch to dark theme (T)");
+        }
         try {
             localStorage.setItem("calc_theme", theme);
         } catch (e) {
@@ -1245,6 +1250,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (elements.themeToggleBtn) {
         elements.themeToggleBtn.addEventListener("click", () => {
+            const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+            applyTheme(isDark ? "light" : "dark");
+        });
+    }
+
+    const sidebarThemeBtn = document.getElementById("sidebar-theme-toggle");
+    if (sidebarThemeBtn) {
+        sidebarThemeBtn.addEventListener("click", () => {
             const isDark = document.documentElement.getAttribute("data-theme") === "dark";
             applyTheme(isDark ? "light" : "dark");
         });

@@ -428,6 +428,16 @@ button.app-icon-tile {
     box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
 }
 
+.icon-wealth {
+    background: linear-gradient(145deg, #6366F1 0%, #4338CA 100%);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+}
+
+[data-theme="dark"] .icon-wealth {
+    background: linear-gradient(145deg, #6366F1 0%, #3730A3 100%);
+    box-shadow: 0 8px 22px rgba(99, 102, 241, 0.35);
+}
+
 .icon-radar {
     background: linear-gradient(145deg, #8B5CF6 0%, #6D28D9 100%);
     box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);

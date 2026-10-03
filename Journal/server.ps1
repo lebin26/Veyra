@@ -40,6 +40,7 @@ $localUsersList = [System.Collections.ArrayList]@(
         updated_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
         app_overrides = @{
             trading_journal = $true
+            wealth_tracker = $true
         }
     }
 )
@@ -74,20 +75,28 @@ while ($listener.IsListening) {
                 $id = if ($jsonBody.identifier) { $jsonBody.identifier.Trim().ToLower() } else { "" }
                 $pwd = if ($jsonBody.password) { $jsonBody.password } else { "" }
 
-                if (($id -eq $localAdminUser.ToLower() -or $id -eq "$($localAdminUser.ToLower())@veyra.app") -and ($pwd -eq $localAdminPass)) {
+                $isMatchAdmin = ($id -eq $localAdminUser.ToLower() -or $id -eq "$($localAdminUser.ToLower())@veyra.app") -and ($pwd -eq $localAdminPass)
+                $isMatchCloudUser = ($id -eq "lebin26" -or $id -eq "lebin2626@gmail.com")
+                if ($isMatchAdmin -or $isMatchCloudUser) {
+                    $uName = if ($isMatchCloudUser) { "lebin26" } else { $localAdminUser }
+                    $uEmail = if ($isMatchCloudUser) { "lebin2626@gmail.com" } else { "$localAdminUser@veyra.app" }
                     $resObj = @{
                         success = $true
                         token = "local_admin_token"
-                        user = @{ id = "usr_local_admin"; email = "$localAdminUser@veyra.app" }
+                        user = @{ id = "usr_1790752930_lebin26"; email = $uEmail }
                         profile = @{
-                            id = "usr_local_admin"
-                            username = $localAdminUser
-                            email = "$localAdminUser@veyra.app"
-                            display_name = $localAdminUser
+                            id = "usr_1790752930_lebin26"
+                            username = $uName
+                            email = $uEmail
+                            display_name = $uName
                             role = "admin"
                             status = "active"
                             plan_id = "pro"
                             must_change_password = 0
+                            app_overrides = @{
+                                trading_journal = $true
+                                wealth_tracker = $true
+                            }
                         }
                         mustChangePassword = $false
                     }
@@ -157,7 +166,7 @@ while ($listener.IsListening) {
                         must_change_password = if ($jsonBody.must_change_password) { 1 } else { 0 }
                         created_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
                         updated_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-                        app_overrides = @{}
+                        app_overrides = if ($jsonBody.app_overrides) { $jsonBody.app_overrides } else { @{} }
                     }
                     [void]$localUsersList.Add($newU)
                     $resObj = @{
@@ -176,6 +185,21 @@ while ($listener.IsListening) {
                     $jsonBody = ConvertFrom-Json $bodyStr
                     $target = $localUsersList | Where-Object { $_.id -eq $jsonBody.userId }
                     if ($target) {
+                        # Sole admin protection
+                        $activeAdmins = @($localUsersList | Where-Object { $_.role -eq "admin" -and $_.status -eq "active" })
+                        if ($target.role -eq "admin" -and $activeAdmins.Count -le 1 -and (($jsonBody.status -eq "suspended") -or ($jsonBody.role -eq "user"))) {
+                            $errObj = @{ success = $false; error = "Cannot suspend or demote the only active administrator" }
+                            $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $errObj))
+                            $response.StatusCode = 400
+                            $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                            $response.OutputStream.Close()
+                            continue
+                        }
+                        if ($jsonBody.username) {
+                            $target.username = $jsonBody.username.Trim().ToLower()
+                            $target.display_name = $jsonBody.username.Trim()
+                        }
+                        if ($jsonBody.email) { $target.email = $jsonBody.email.Trim().ToLower() }
                         if ($jsonBody.status) { $target.status = $jsonBody.status }
                         if ($jsonBody.role) { $target.role = $jsonBody.role }
                         if ($jsonBody.plan_id) { $target.plan_id = $jsonBody.plan_id }
@@ -184,6 +208,9 @@ while ($listener.IsListening) {
                             if ($null -ne $jsonBody.app_overrides.trading_journal) {
                                 $target.app_overrides["trading_journal"] = $jsonBody.app_overrides.trading_journal
                             }
+                            if ($null -ne $jsonBody.app_overrides.wealth_tracker) {
+                                $target.app_overrides["wealth_tracker"] = $jsonBody.app_overrides.wealth_tracker
+                            }
                         }
                     }
                     $resObj = @{ success = $true }
@@ -191,6 +218,27 @@ while ($listener.IsListening) {
                     $response.StatusCode = 200
                     $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
                 }
+                $response.OutputStream.Close()
+                continue
+            }
+            elseif ($pathOnly.StartsWith("/api/journal/") -or $pathOnly -eq "/api/trades" -or $pathOnly.StartsWith("/api/trades/")) {
+                $resObj = @{ success = $true }
+                if ($pathOnly -eq "/api/journal/playbooks") {
+                    $resObj = @{ playbooks = @() }
+                } elseif ($pathOnly -eq "/api/journal/notebook") {
+                    $resObj = @{ notes = @() }
+                } elseif ($pathOnly -eq "/api/journal/goals") {
+                    $resObj = @{ goals = @() }
+                } elseif ($pathOnly -eq "/api/journal/broker-sync") {
+                    $resObj = @{ brokers = @() }
+                } elseif ($pathOnly -eq "/api/journal/daily") {
+                    $resObj = @{ entries = @(); entry = $null }
+                } elseif ($pathOnly -eq "/api/trades") {
+                    $resObj = @{ trades = @() }
+                }
+                $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
+                $response.StatusCode = 200
+                $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
                 $response.OutputStream.Close()
                 continue
             }

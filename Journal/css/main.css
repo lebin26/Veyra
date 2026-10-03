@@ -1,95 +1,175 @@
 /* ==========================================================================
    main.css - Minimal, Flat, Professional Financial Theme
    Strictly Zero Glassmorphism, Zero Heavy Shadows, High Data Density
+   100% Calibrated to Veyra Trading DESIGN_SPEC.md Standard
    ========================================================================== */
 
 :root {
-  --bg-app: #F7F7F5;
-  --surface: #FFFFFF;
-  --surface-alt: #FBFBFA;
-  --surface-hover: #F2F2F0;
-  --surface-active: #EBEBE8;
-  
-  --border-subtle: #E8E8E5;
-  --border-strong: #D6D6D2;
-  
-  --text-main: #111111;
-  --text-secondary: #666666;
-  --text-tertiary: #999999;
-  
-  /* Muted Financial Colors */
-  --profit-color: #15803D;
-  --profit-bg: #F0FDF4;
-  --profit-border: #BBF7D0;
-  
-  --loss-color: #B91C1C;
-  --loss-bg: #FEF2F2;
-  --loss-border: #FECACA;
-  
-  --neutral-color: #525252;
-  --neutral-bg: #F5F5F5;
-  
-  /* Restrained Accent */
-  --accent: #18181B;
+  /* Surface Tokens */
+  --bg-page: #FAFAFA;
+  --bg-panel: #FFFFFF;
+  --fill-subtle: #F4F4F5;
+  --fill-hover: #ECECEE;
+  --fill-slider: #FFFFFF;
+
+  /* Border Tokens */
+  --border-default: #E8E8EA;
+  --border-strong: #D4D4D8;
+
+  /* Typography Tokens */
+  --text-primary: #111113;
+  --text-secondary: #6B6B73;
+  --text-placeholder: #8A8A93;
+  --text-empty: #B4B4BB;
+
+  /* Financial Semantics */
+  --color-brand: #2F5BFF;
+  --color-profit: #1A7F4B;
+  --color-profit-bg: rgba(26, 127, 75, 0.08);
+  --color-loss: #C43D3D;
+  --color-loss-bg: rgba(196, 61, 61, 0.08);
+  --color-warn: #D97706;
+  --color-warn-bg: rgba(217, 119, 6, 0.08);
+
+  /* Geometry */
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-chip: 999px;
+
+  /* Font Stack */
+  --font-stack: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Legacy Mappings to keep existing views compatible */
+  --bg-app: var(--bg-page);
+  --surface: var(--bg-panel);
+  --surface-alt: var(--fill-subtle);
+  --surface-hover: var(--fill-hover);
+  --surface-active: var(--fill-subtle);
+
+  --border-subtle: var(--border-default);
+
+  --text-main: var(--text-primary);
+  --text-tertiary: var(--text-placeholder);
+
+  --profit-color: var(--color-profit);
+  --profit-bg: var(--color-profit-bg);
+  --profit-border: rgba(26, 127, 75, 0.22);
+
+  --loss-color: var(--color-loss);
+  --loss-bg: var(--color-loss-bg);
+  --loss-border: rgba(196, 61, 61, 0.22);
+
+  --neutral-color: var(--text-secondary);
+  --neutral-bg: var(--fill-subtle);
+
+  --accent: var(--color-brand);
   --accent-contrast: #FFFFFF;
-  --accent-subtle: #27272A;
-  
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  
-  --sidebar-width: 210px;
-  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --accent-subtle: rgba(47, 91, 255, 0.12);
+
+  --radius-xs: 4px;
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-panel);
+
+  --sidebar-width: 230px;
+  --font-sans: var(--font-stack);
 }
 
 /* Standalone Dark Theme (Calibrated to Veyra Trading System) */
 [data-theme="dark"] {
-  --bg-app: #0B0B0C;
-  --surface: #141416;
-  --surface-alt: #18181B;
-  --surface-hover: #1E1E22;
-  --surface-active: #28282D;
-  
-  --border-subtle: #26262A;
+  /* Dark Surface Tokens */
+  --bg-page: #0B0B0C;
+  --bg-panel: #141416;
+  --fill-subtle: #1C1C1F;
+  --fill-hover: #26262B;
+  --fill-slider: #2A2A2E;
+
+  /* Dark Border Tokens */
+  --border-default: #26262A;
   --border-strong: #38383E;
-  
-  --text-main: #EDEDEF;
+
+  /* Dark Typography */
+  --text-primary: #EDEDEF;
   --text-secondary: #9A9AA2;
-  --text-tertiary: #6E6E78;
-  
-  /* Brightened Semantics for Dark UI */
-  --profit-color: #22C55E;
-  --profit-bg: rgba(34, 197, 94, 0.12);
+  --text-placeholder: #4E4E58;
+  --text-empty: #52525B;
+
+  /* Dark Semantics */
+  --color-brand: #4F75FF;
+  --color-profit: #22C55E;
+  --color-profit-bg: rgba(34, 197, 94, 0.12);
+  --color-loss: #EF4444;
+  --color-loss-bg: rgba(239, 68, 68, 0.12);
+  --color-warn: #F59E0B;
+  --color-warn-bg: rgba(245, 158, 11, 0.12);
+
+  /* Legacy Mappings for Dark Theme */
+  --bg-app: var(--bg-page);
+  --surface: var(--bg-panel);
+  --surface-alt: var(--fill-subtle);
+  --surface-hover: var(--fill-hover);
+  --surface-active: var(--fill-subtle);
+
+  --border-subtle: var(--border-default);
+
+  --text-main: var(--text-primary);
+  --text-tertiary: var(--text-placeholder);
+
+  --profit-color: var(--color-profit);
+  --profit-bg: var(--color-profit-bg);
   --profit-border: rgba(34, 197, 94, 0.28);
-  
-  --loss-color: #EF4444;
-  --loss-bg: rgba(239, 68, 68, 0.12);
+
+  --loss-color: var(--color-loss);
+  --loss-bg: var(--color-loss-bg);
   --loss-border: rgba(239, 68, 68, 0.28);
-  
-  --neutral-color: #9A9AA2;
-  --neutral-bg: #1C1C1F;
-  
-  --accent: #4F75FF;
+
+  --neutral-color: var(--text-secondary);
+  --neutral-bg: var(--fill-subtle);
+
+  --accent: var(--color-brand);
   --accent-contrast: #FFFFFF;
   --accent-subtle: rgba(79, 117, 255, 0.15);
 }
 
-* {
+/* Reset & Invariants - Prevent all content from being selected */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
-body {
+html, body {
   font-family: var(--font-sans);
   background-color: var(--bg-app);
   color: var(--text-main);
   line-height: 1.45;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   height: 100vh;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Strictly preserve text input inside form fields */
+input, textarea, select {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Layout Frame */
@@ -100,7 +180,7 @@ body {
   overflow: hidden;
 }
 
-/* Sidebar */
+/* ── Unified Veyra Workspace Sidebar ── */
 .app-sidebar {
   width: var(--sidebar-width);
   background: var(--surface);
@@ -108,76 +188,178 @@ body {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 40;
+  height: 100vh;
+  user-select: none;
 }
 
 .sidebar-header {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sidebar-top-bar {
+  padding: 20px 18px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.sidebar-back-btn {
-  display: inline-flex;
+.sidebar-brand {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px 5px 6px;
-  border-radius: 999px;
-  background: var(--surface-active);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
-  font-size: 12px;
-  font-weight: 600;
+  gap: 8px;
   text-decoration: none;
-  cursor: pointer;
-  transition: background-color 140ms ease, border-color 140ms ease, transform 100ms ease;
-  line-height: 1;
 }
 
-.sidebar-back-btn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-strong);
+.sidebar-brand .brand-logo-mark {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background-color: var(--color-brand);
+  display: inline-block;
+  flex-shrink: 0;
 }
 
-.sidebar-back-btn:active {
-  transform: scale(0.96);
+.sidebar-brand-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-main);
 }
 
-.sidebar-back-btn svg {
-  width: 14px;
-  height: 14px;
+.sidebar-app-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-brand);
+  background: rgba(47, 91, 255, 0.08);
+  padding: 2px 7px;
+  border-radius: var(--radius-chip);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.sidebar-theme-btn {
-  width: 28px;
-  height: 28px;
+[data-theme="dark"] .sidebar-app-tag {
+  background: rgba(79, 117, 255, 0.15);
+}
+
+.sidebar-nav {
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-group-label,
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 10px 10px 4px;
+  user-select: none;
+}
+
+.sidebar-nav-item,
+.sidebar-nav-link,
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-control);
   border: none;
   background: transparent;
-  border-radius: 6px;
   color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 140ms ease;
+  text-align: left;
+  user-select: none;
+}
+
+.sidebar-nav-item:hover,
+.sidebar-nav-link:hover,
+.nav-item:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.sidebar-nav-item.active,
+.nav-item.active {
+  background-color: var(--surface-active);
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+.sidebar-nav-item.active svg,
+.nav-item.active svg {
+  stroke: var(--color-brand);
+}
+
+.sidebar-shortcut-tag {
+  margin-left: auto;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-active);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+}
+
+.sidebar-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.sidebar-month-pill,
+.sidebar-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-main);
+}
+
+.sidebar-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-profit);
+}
+
+/* Theme Ghost Button */
+.theme-ghost-btn {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: all 140ms ease;
   outline: none;
 }
 
-.sidebar-theme-btn:hover {
+.theme-ghost-btn:hover {
+  background: var(--surface-hover);
   color: var(--text-main);
-  background-color: var(--surface-hover);
 }
 
-.sidebar-theme-btn svg {
+.theme-ghost-btn svg {
   width: 16px;
   height: 16px;
   stroke: currentColor;
@@ -185,122 +367,6 @@ body {
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
-}
-
-.sidebar-brand-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.brand-logo-mark {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: #2F5BFF;
-  box-shadow: 0 0 8px rgba(47, 91, 255, 0.35);
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-[data-theme="dark"] .brand-logo-mark {
-  background: #4F75FF;
-  box-shadow: 0 0 8px rgba(79, 117, 255, 0.45);
-}
-
-.brand-title {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.2px;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.brand-badge {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: var(--surface-active);
-  color: var(--text-secondary);
-  padding: 1px 5px;
-  border-radius: var(--radius-xs);
-}
-
-.sidebar-nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.nav-section-title {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-tertiary);
-  padding: 0 8px 4px 8px;
-}
-
-.nav-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: background-color 0.1s ease, color 0.1s ease;
-}
-
-.nav-item:hover {
-  background-color: var(--surface-hover);
-  color: var(--text-main);
-}
-
-.nav-item.active {
-  background-color: var(--surface-active);
-  color: var(--text-main);
-  font-weight: 600;
-  border-color: var(--border-subtle);
-}
-
-.nav-item svg {
-  width: 15px;
-  height: 15px;
-  stroke-width: 1.8;
-  opacity: 0.8;
-}
-
-.nav-item.active svg {
-  opacity: 1;
-}
-
-/* Sidebar Footer */
-.sidebar-footer {
-  padding: 12px 14px;
-  border-top: 1px solid var(--border-subtle);
-  font-size: 11px;
-  color: var(--text-tertiary);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 /* Main Area */
@@ -315,9 +381,9 @@ body {
 
 /* Top Mode / Notification Banner */
 .backtest-mode-banner {
-  background-color: #FEF3C7;
-  color: #92400E;
-  border-bottom: 1px solid #FDE68A;
+  background-color: var(--fill-subtle);
+  color: var(--color-warn);
+  border-bottom: 1px solid var(--border-subtle);
   padding: 6px 20px;
   font-size: 11.5px;
   font-weight: 600;
@@ -328,7 +394,7 @@ body {
 }
 
 .backtest-mode-tag {
-  background: #F59E0B;
+  background: var(--color-warn);
   color: #FFFFFF;
   padding: 1px 6px;
   border-radius: var(--radius-xs);
@@ -338,7 +404,7 @@ body {
 
 /* Header & Toolbar */
 .view-header {
-  padding: 14px 24px;
+  padding: 16px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
@@ -354,10 +420,10 @@ body {
 }
 
 .view-title {
-  font-size: 16px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--text-main);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.02em;
 }
 
 .header-right {
@@ -397,6 +463,17 @@ body {
 }
 
 /* Content Area */
+@keyframes viewFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .view-content {
   flex: 1;
   overflow-y: auto;
@@ -404,6 +481,16 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  animation: viewFadeSlideIn 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.kpi-card, .chart-card {
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms ease, border-color 140ms ease;
+}
+
+.kpi-card:hover, .chart-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 /* Utility Buttons */

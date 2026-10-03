@@ -146,8 +146,17 @@ export async function onRequestPost(context) {
             status: user.status,
             plan_id: user.plan_id,
             plan_expires_at: user.plan_expires_at,
-            must_change_password: user.must_change_password
+            must_change_password: user.must_change_password,
+            app_overrides: {}
         };
+
+        // Attach user app overrides
+        try {
+            const overrides = await db.prepare("SELECT app_key, is_enabled FROM user_app_overrides WHERE user_id = ?").bind(user.id).all();
+            for (const row of (overrides.results || [])) {
+                safeProfile.app_overrides[row.app_key] = row.is_enabled;
+            }
+        } catch (_) {}
 
         const maxAge = sessionDays * 24 * 60 * 60;
         const cookieStr = `veyra_session=${token}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Strict; Secure`;
@@ -162,7 +171,7 @@ export async function onRequestPost(context) {
             'Set-Cookie': cookieStr
         });
     } catch (err) {
-        // Never expose internal error messages
+        console.error('[Veyra Auth Error]', err);
         return error("Authentication failed", 500);
     }
 }

@@ -8,9 +8,69 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <main class="app-shell" id="app-shell" role="main">
-        <!-- 1. Header & Instrument Switcher -->
-        <header class="app-header">
+    <div class="calculator-app-layout">
+        <!-- Unified Veyra Workspace Sidebar -->
+        <aside class="calculator-sidebar" id="calculator-sidebar">
+            <div class="sidebar-header">
+                <a href="../main-page/index.html" class="sidebar-brand" title="Veyra Applications Portal">
+                    <span class="brand-logo-mark"></span>
+                    <span class="sidebar-brand-name">Veyra</span>
+                </a>
+                <span class="sidebar-app-tag">Calculator</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-group-label">WORKSPACE</div>
+                <button type="button" class="sidebar-nav-item active" id="calc-nav-item" title="Position Size Calculator">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+                        <line x1="8" y1="6" x2="16" y2="6"></line>
+                        <line x1="16" y1="14" x2="16" y2="18"></line>
+                        <path d="M16 10h.01"></path>
+                        <path d="M12 10h.01"></path>
+                        <path d="M8 10h.01"></path>
+                        <path d="M12 14h.01"></path>
+                        <path d="M8 14h.01"></path>
+                        <path d="M12 18h.01"></path>
+                        <path d="M8 18h.01"></path>
+                    </svg>
+                    <span>Calculator</span>
+                </button>
+
+                <div class="sidebar-group-label" style="margin-top:14px;">APPLICATIONS</div>
+                <a href="../Journal/index.html" class="sidebar-nav-link" title="Quantitative Trading Journal (2)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span>Journal</span>
+                    <kbd class="sidebar-shortcut-tag">2</kbd>
+                </a>
+                <a href="../wealth/index.html" class="sidebar-nav-link" title="Wealth Portfolio Tracker (3)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    <span>Wealth</span>
+                    <kbd class="sidebar-shortcut-tag">3</kbd>
+                </a>
+                <a href="../main-page/index.html" class="sidebar-nav-link" title="Back to Applications Portal">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>Portal</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-status-pill" title="Quantitative Engine v2.0 Safe">
+                    <span class="sidebar-status-dot"></span>
+                    <span style="font-size:11px; font-weight:600;">Engine v2.0</span>
+                </div>
+                <button type="button" id="sidebar-theme-toggle" class="theme-ghost-btn" aria-label="Toggle theme" title="Toggle theme (T)">
+                    <svg id="sidebar-theme-icon-svg" class="theme-icon-svg" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <div class="calculator-content-area">
+            <main class="app-shell" id="app-shell" role="main">
+                <!-- 1. Header & Instrument Switcher -->
+                <header class="app-header">
             <div class="header-top-row">
                 <div class="header-left-nav">
                     <a href="../main-page/index.html" id="btn-back-to-launcher" class="header-launcher-btn" aria-label="Back to Apps" title="Back to Apps (Esc)">
@@ -696,6 +756,8 @@
             <div class="disclaimer-text">Estimates only. Not financial advice.</div>
         </footer>
     </main>
+    </div> <!-- /.calculator-content-area -->
+    </div> <!-- /.calculator-app-layout -->
 
     <script src="script.js"></script>
 </body>

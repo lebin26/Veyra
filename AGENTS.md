@@ -23,31 +23,34 @@
 
 ---
 
-## 2. Supreme Visual & UX Contract (Calculator UI Standard)
+## 2. Supreme Visual & UX Contract (DESIGN_SPEC.md Standard)
 
-All existing and future pages, modules, dialogs, and components **MUST strictly inherit the design language established in `calculator/`**.
+All existing and future pages, modules, dialogs, and components **MUST strictly comply with [DESIGN_SPEC.md](DESIGN_SPEC.md)**.
 
 1. **Design Tokens**:
-   - Must utilize CSS custom properties defined in `calculator/style.css`:
-     - Backgrounds: `--bg-page`, `--bg-panel`, `--bg-card`
-     - Borders: `--border-default`, `--border-focus`
-     - Typography: `--text-primary`, `--text-secondary`, `--text-muted`
-     - Accents: `--color-brand` (`#f59e0b`), `--color-long` (`#10b981`), `--color-short` (`#ef4444`)
-     - Geometry: `--radius-panel: 12px`, `--radius-card: 8px`
+   - Must strictly utilize CSS custom properties defined in `calculator/style.css` and `DESIGN_SPEC.md`:
+     - Backgrounds: `--bg-page` (`#FAFAFA` / `#0B0B0C`), `--bg-panel` (`#FFFFFF` / `#141416`), `--fill-subtle` (`#F4F4F5` / `#1C1C1F`), `--fill-slider` (`#FFFFFF` / `#2A2A2E`)
+     - Borders: `--border-default` (`#E8E8EA` / `#26262A`)
+     - Typography: `--text-primary` (`#111113` / `#EDEDEF`), `--text-secondary` (`#6B6B73` / `#9A9AA2`), `--text-placeholder` (`#8A8A93` / `#4E4E58`), `--text-empty` (`#B4B4BB` / `#52525B`)
+     - Single Brand Accent: `--color-brand` (`#2F5BFF` / `#4F75FF`) reserved exclusively for focus rings, active chips/toggles, and links.
+     - Semantic Colors: Profit/Long `--color-profit` (`#1A7F4B` / `#22C55E`), Loss/Short `--color-loss` (`#C43D3D` / `#EF4444`), Warning `--color-warn` (`#D97706` / `#F59E0B`).
+     - Geometry: Base 4px grid. Controls `--radius-control: 8px`, Panels `--radius-panel: 12px`, Chips `--radius-chip: 999px`.
 2. **Standard Header Hierarchy**:
-   - Header container: `.app-header` inside `.app-shell` (max-width 1040px).
-   - Top row: `.brand-eyebrow` (8px amber brand square + 13px bold uppercase tracking brand name) + `.theme-ghost-btn` (36px rounded toggle with SVG sun/moon).
-   - Title: `.function-title` (21px bold -0.02em letter spacing).
-3. **Application Shell & Containerization**:
-   - Clean, border-delimited cards (`1px solid var(--border-default)`).
-   - Minimalist, distraction-free layouts without fake device frames, heavy skeuomorphism, or conflicting styles.
+   - Header container: `.app-header` inside `.app-shell` (1040px max for tools; full-width fluid `padding: 24px clamp(16px, 2.5vw, 40px)` for data tables/dashboards).
+   - Top row: `.brand-eyebrow` (8px brand square + 13px bold uppercase tracking brand name) + `.theme-ghost-btn` (36px borderless ghost toggle with SVG sun/moon glyph and `aria-label`).
+   - Title: Sentence case, static, 21px bold -0.02em letter spacing.
+3. **Core Principles & Prohibitions**:
+   - **One Focal Hero**: Key quantitative outcome (Lot Size) is the 28px/600 hero.
+   - **Hierarchy via Typography & Space**: An element uses *either* a subtle border *or* a subtle fill, never both stacked.
+   - **Strictly Prohibited**: Gradients, glassmorphism, colorful badges, emoji icons, and heavy drop shadows.
+   - **Restricted Shadows**: Only 2 functional places: Segmented slider thumb (`0 1px 2px rgba(0,0,0,0.06)`) and Popover/Modal (`0 8px 24px rgba(0,0,0,0.06)`).
 4. **Theme Synchronization**:
-   - Dark and light modes must remain 100% color-calibrated and synchronized across all applications via `localStorage.getItem("calc_theme")`.
-5. **Typography & Interaction**:
+   - Dark and light modes must remain 100% color-calibrated and synchronized across all applications via `localStorage.getItem("calc_theme")` and `prefers-color-scheme`.
+5. **Typography & Tabular Numerics**:
    - System/Inter font stack (`Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`).
-   - Static labels and display typography must enforce `user-select: none`.
-   - Input fields and editable textareas must explicitly preserve `user-select: text !important`.
-   - Micro-interactions: 140ms hover transitions, 0.96 active scale feedback.
+   - All numbers, readouts, steppers, tables, and inputs enforce `font-variant-numeric: tabular-nums` to eliminate jitter.
+   - Static labels enforce `user-select: none`. Editable fields preserve `user-select: text !important`.
+   - Motion: 140ms hover transitions, 220ms tab/slider transitions (`cubic-bezier(0.22, 1, 0.36, 1)`).
 
 ---
 

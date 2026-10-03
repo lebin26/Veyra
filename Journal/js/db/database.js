@@ -5,7 +5,7 @@
  */
 
 const DB_NAME = 'PrivateTradingJournalDB';
-const DB_VERSION = 2; // 升级版本支持 strategies 和 daily_journals
+const DB_VERSION = 3; // 升级版本支持 playbooks, notebook, goals, broker_connections
 
 let dbInstance = null;
 
@@ -70,14 +70,43 @@ export function openDatabase() {
         stratStore.createIndex('created_at', 'created_at', { unique: false });
       }
 
-      // 4. DAILY JOURNALS 存储域 (按日复盘，Pre-market / Post-market / 评分)
+      if (!db.objectStoreNames.contains('playbooks')) {
+        const pbStore = db.createObjectStore('playbooks', { keyPath: 'id' });
+        pbStore.createIndex('name', 'name', { unique: false });
+        pbStore.createIndex('market', 'market', { unique: false });
+        pbStore.createIndex('status', 'status', { unique: false });
+        pbStore.createIndex('created_at', 'created_at', { unique: false });
+      }
+
+      // 4. DAILY JOURNALS 存储域 (按日复盘，Pre-market / Post-market / 评分 / 心情 / 市场条件)
       if (!db.objectStoreNames.contains('daily_journals')) {
         const dailyStore = db.createObjectStore('daily_journals', { keyPath: 'date' });
         dailyStore.createIndex('date', 'date', { unique: true });
         dailyStore.createIndex('created_at', 'created_at', { unique: false });
       }
 
-      // 5. SETTINGS
+      // 5. NOTEBOOK 存储域
+      if (!db.objectStoreNames.contains('notebook_entries')) {
+        const nbStore = db.createObjectStore('notebook_entries', { keyPath: 'id' });
+        nbStore.createIndex('category', 'category', { unique: false });
+        nbStore.createIndex('created_at', 'created_at', { unique: false });
+      }
+
+      // 6. PROGRESS GOALS 存储域
+      if (!db.objectStoreNames.contains('progress_goals')) {
+        const goalStore = db.createObjectStore('progress_goals', { keyPath: 'id' });
+        goalStore.createIndex('status', 'status', { unique: false });
+        goalStore.createIndex('created_at', 'created_at', { unique: false });
+      }
+
+      // 7. BROKER CONNECTIONS 存储域
+      if (!db.objectStoreNames.contains('broker_connections')) {
+        const brokerStore = db.createObjectStore('broker_connections', { keyPath: 'id' });
+        brokerStore.createIndex('broker', 'broker', { unique: false });
+        brokerStore.createIndex('status', 'status', { unique: false });
+      }
+
+      // 8. SETTINGS
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'key' });
       }

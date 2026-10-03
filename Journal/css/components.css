@@ -6,68 +6,92 @@
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .kpi-card {
   background: var(--surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
+  border-radius: var(--radius-panel);
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  transition: border-color 140ms ease;
+}
+
+.kpi-card:hover {
+  border-color: var(--border-strong);
 }
 
 .kpi-label {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.05em;
+  user-select: none;
 }
 
 .kpi-value {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-main);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .kpi-subtext {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-tertiary);
 }
 
 /* Modal Overlay & Container */
-.modal-overlay {
+@keyframes modalBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalCardExpand {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-overlay, .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(1px);
+  animation: modalBackdropFade 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.modal-content {
+.modal-content, .modal-card {
   background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
   width: 640px;
   max-width: 94vw;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  animation: modalCardExpand 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .modal-header {
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -75,9 +99,10 @@
 }
 
 .modal-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-main);
+  letter-spacing: -0.01em;
 }
 
 .modal-close-btn {
@@ -193,10 +218,11 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.35);
   z-index: 900;
   display: flex;
   justify-content: flex-end;
+  animation: modalBackdropFade 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .drawer-container {
@@ -207,12 +233,39 @@
   border-left: 1px solid var(--border-strong);
   display: flex;
   flex-direction: column;
-  animation: slideLeft 0.15s ease-out;
+  animation: slideLeft 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideLeft {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+
+/* Skeleton Loading Shimmer & Spinner */
+@keyframes shimmerSweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--fill-subtle) 25%, var(--fill-hover) 50%, var(--fill-subtle) 75%);
+  background-size: 200% 100%;
+  animation: shimmerSweep 1.5s ease-in-out infinite;
+  border-radius: var(--radius-control);
+}
+
+@keyframes veyraSpinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--color-brand);
+  border-radius: 50%;
+  animation: veyraSpinnerRotate 0.75s linear infinite;
 }
 
 .drawer-header {
@@ -403,3 +456,174 @@
   background: none;
   border: none;
 }
+
+/* Add Trade Sidebar Button */
+.btn-sidebar-add-trade {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-brand);
+  color: #FFFFFF !important;
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  user-select: none;
+}
+
+.btn-sidebar-add-trade:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-sidebar-add-trade:active {
+  transform: translateY(0);
+}
+
+/* Modal Segmented Tabs */
+.modal-segmented-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--fill-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  padding: 2px;
+  gap: 2px;
+}
+
+.modal-segmented-tabs .tab-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.modal-segmented-tabs .tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-segmented-tabs .tab-btn.active {
+  background: var(--bg-panel);
+  color: var(--color-brand);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.instruction-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.nav-badge-new {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: var(--color-brand);
+  color: #FFFFFF !important;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+/* Report Navigation Items */
+.report-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-control);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 120ms ease;
+  user-select: none;
+}
+
+.report-nav-item:hover {
+  background: var(--fill-subtle);
+  color: var(--text-primary);
+}
+
+.report-nav-item.active {
+  background: var(--fill-subtle);
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+/* Report Metrics 2-Column Table */
+.report-metrics-subtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.report-metrics-subtable tr {
+  border-bottom: 1px solid var(--border-default);
+}
+
+.report-metrics-subtable td {
+  padding: 7px 0;
+  color: var(--text-secondary);
+}
+
+.report-metrics-subtable td:last-child {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Notebook Chip Filter */
+.chip-filter {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-chip);
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+}
+
+.chip-filter:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.chip-filter.active {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #FFFFFF;
+}
+
+/* Global Selection Contract */
+body, .app-shell, .sidebar, .kpi-card, .chart-card, .data-table th, .calendar-card {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input, textarea, select {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+

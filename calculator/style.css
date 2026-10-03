@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    DESIGN TOKENS & VARIABLES
    Trading Lot & Leverage Calculator - Minimalist Flat Visual System
    ========================================================================== */
@@ -1641,4 +1641,206 @@ button, input, select, textarea, .lot-preset-btn, .risk-preset-btn, .stepper-btn
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+
+/* ==========================================================================
+   UNIFIED VEYRA WORKSPACE SIDEBAR FOR CALCULATOR
+   ========================================================================== */
+
+.calculator-app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+}
+
+.calculator-sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  background-color: var(--bg-panel);
+  border-right: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 40;
+  user-select: none;
+}
+
+.calculator-content-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-page);
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 20px 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.sidebar-brand .brand-logo-mark {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background-color: var(--color-brand);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.sidebar-app-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-brand);
+  background: rgba(47, 91, 255, 0.08);
+  padding: 2px 7px;
+  border-radius: var(--radius-chip);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+[data-theme="dark"] .sidebar-app-tag {
+  background: rgba(79, 117, 255, 0.15);
+}
+
+.sidebar-nav {
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 10px 10px 4px;
+  user-select: none;
+}
+
+.sidebar-nav-item,
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-control);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 140ms ease;
+  text-align: left;
+  user-select: none;
+}
+
+.sidebar-nav-item:hover,
+.sidebar-nav-link:hover {
+  background-color: var(--fill-subtle);
+  color: var(--text-primary);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--fill-subtle);
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+.sidebar-nav-item.active svg {
+  stroke: var(--color-brand);
+}
+
+.sidebar-shortcut-tag {
+  margin-left: auto;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--fill-subtle);
+  border: 1px solid var(--border-default);
+  color: var(--text-placeholder);
+}
+
+.sidebar-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.sidebar-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.sidebar-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-profit);
+}
+
+@media (max-width: 900px) {
+  .calculator-app-layout {
+    flex-direction: column;
+  }
+  .calculator-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px 12px;
+  }
+  .sidebar-group-label,
+  .sidebar-footer,
+  .sidebar-shortcut-tag {
+    display: none;
+  }
+  .sidebar-nav-item,
+  .sidebar-nav-link {
+    width: auto;
+    white-space: nowrap;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
 }

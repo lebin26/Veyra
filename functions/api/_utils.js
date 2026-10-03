@@ -24,7 +24,7 @@ export function error(message, status = 400) {
 }
 
 /**
- * Hash password with PBKDF2 HMAC-SHA256 (310,000 iterations — OWASP 2023 recommendation)
+ * Hash password with PBKDF2 HMAC-SHA256 (100,000 iterations — Cloudflare Workers Web Crypto standard)
  */
 export async function hashPassword(password, saltHex = null) {
     const enc = new TextEncoder();
@@ -47,7 +47,7 @@ export async function hashPassword(password, saltHex = null) {
         {
             name: "PBKDF2",
             salt: saltBytes,
-            iterations: 310000,
+            iterations: 100000,
             hash: "SHA-256"
         },
         keyMaterial,

@@ -81,55 +81,21 @@ export async function checkAppEntitlement(userId, planId, appKey, role) {
     // Admins always have full access
     if (role === 'admin') return true;
 
-    // Try D1 API first
+    // Check cached or fetched profile app_overrides directly
     try {
-        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('veyra_session_token') : null;
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        const res = await fetch(`/api/apps/${appKey}/access`, { headers });
-        if (res.ok && res.status !== 404) {
-            const data = await res.json();
-            return Boolean(data.hasAccess);
+        const { profile } = await getCurrentUserAndProfile();
+        if (profile && profile.app_overrides && profile.app_overrides[appKey] !== undefined) {
+            return Boolean(profile.app_overrides[appKey]);
         }
-    } catch (e) {}
+    } catch (_) {}
 
-    // Supabase fallback
-    const supabase = await getSupabase();
-    if (!supabase) return true; // permissive in unconfigured state
+    // Public apps like calculator default to accessible unless explicitly revoked
+    if (appKey === 'lot_size_calculator') return true;
 
-    try {
-        const { data: appData } = await supabase
-            .from('apps')
-            .select('access_level, is_active')
-            .eq('key', appKey)
-            .single();
+    // Pro plan defaults to full access
+    if (planId === 'pro') return true;
 
-        if (appData && !appData.is_active) return false;
-        if (appData && appData.access_level === 'public') return true;
-
-        const { data: override } = await supabase
-            .from('user_app_overrides')
-            .select('is_enabled')
-            .eq('user_id', userId)
-            .eq('app_key', appKey)
-            .single();
-
-        if (override && override.is_enabled !== null) return Boolean(override.is_enabled);
-
-        const { data: planEntitlement } = await supabase
-            .from('plan_app_entitlements')
-            .select('is_enabled')
-            .eq('plan_id', planId)
-            .eq('app_key', appKey)
-            .single();
-
-        if (planEntitlement) return Boolean(planEntitlement.is_enabled);
-
-        return false;
-    } catch (e) {
-        console.error('[Veyra Guard] Error checking entitlement:', e);
-        return false;
-    }
+    return false;
 }
 
 // ──────────────────────────────────────────

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Veyra Trading · Wealth Tracker</title>
+    <meta name="description" content="Multi-platform asset management, net worth tracking, and portfolio allocation analytics.">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/portfolio.css">
+    <link rel="stylesheet" href="css/charts.css">
+    <link rel="stylesheet" href="css/calendar.css">
+    <script src="../config.js"></script>
+    <script>
+        // Synchronous theme restoration before paint
+        try {
+            const saved = localStorage.getItem("calc_theme");
+            if (saved === "dark" || (!saved && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+                document.documentElement.setAttribute("data-theme", "dark");
+            }
+        } catch (_) {}
+    </script>
+</head>
+<body>
+    <div class="wealth-app-layout">
+        <!-- ── Left Side Navigation Bar ── -->
+        <aside class="wealth-sidebar" id="wealth-sidebar">
+            <div class="sidebar-header">
+                <a href="../main-page/index.html" class="sidebar-brand" title="Veyra Applications Portal">
+                    <span class="brand-logo-mark"></span>
+                    <span class="sidebar-brand-name">Veyra</span>
+                </a>
+                <span class="sidebar-app-tag">Wealth</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-group-label">WORKSPACE</div>
+
+                <button type="button" class="sidebar-nav-item active" data-view="dashboard" id="nav-item-dashboard" title="High-level metrics, yield diagnostics & visual charts (D)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>Dashboard (总览)</span>
+                    <kbd class="sidebar-shortcut-tag">D</kbd>
+                </button>
+
+                <button type="button" class="sidebar-nav-item" data-view="portfolio" id="nav-item-portfolio" title="Detailed asset portfolio table, filters, sorting & CRUD (H)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <line x1="10" y1="10" x2="10" y2="20"></line>
+                    </svg>
+                    <span>Holdings (明细)</span>
+                    <kbd class="sidebar-shortcut-tag">H</kbd>
+                </button>
+
+                <button type="button" class="sidebar-nav-item" data-view="calendar" id="nav-item-calendar" title="12-Month visual archive grid & monthly balance history (C)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Calendar (月历)</span>
+                    <kbd class="sidebar-shortcut-tag">C</kbd>
+                </button>
+
+                <div class="sidebar-group-label" style="margin-top:16px;">APPLICATIONS</div>
+
+                <a href="../calculator/index.html" class="sidebar-nav-link" title="Position Size Calculator (1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>
+                    <span>Calculator</span>
+                    <kbd class="sidebar-shortcut-tag">1</kbd>
+                </a>
+
+                <a href="../Journal/index.html" class="sidebar-nav-link" title="Quantitative Trade Journal (2)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span>Journal</span>
+                    <kbd class="sidebar-shortcut-tag">2</kbd>
+                </a>
+
+                <a href="../main-page/index.html" class="sidebar-nav-link" title="Back to Applications Portal">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>Portal</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-month-pill" title="Reporting month active">
+                    <span class="sidebar-status-dot"></span>
+                    <span id="sidebar-current-month">2026-10</span>
+                </div>
+                <span style="font-size:10px; color:var(--text-placeholder); font-family:var(--font-mono);">v2.4</span>
+            </div>
+        </aside>
+
+        <!-- ── Main Workspace Area ── -->
+        <main class="wealth-content-area" role="main">
+            <!-- 1. Header Row -->
+            <header class="app-header">
+                <div class="header-top-row">
+                    <div class="header-brand-group">
+                        <div class="brand-eyebrow">
+                            <span class="brand-logo-mark"></span>
+                            <span class="brand-title">Veyra Trading</span>
+                        </div>
+                        <h1 class="function-title" id="page-current-title">Wealth Dashboard</h1>
+                    </div>
+
+                    <div class="header-right-actions">
+                        <!-- USD/MYR Quick Pill -->
+                        <div id="header-rate-pill" class="rate-pill" title="Click to adjust benchmark USD/MYR rate">
+                            <span>USD/MYR</span>
+                            <span id="header-rate-val" class="rate-val tabular-nums">4.08</span>
+                            <span class="rate-edit-icon">✎</span>
+                        </div>
+
+                        <!-- User Status -->
+                        <div id="auth-status-container" class="auth-status-wrap">
+                            <a href="../auth/login.html" class="btn-header-signin">Sign In</a>
+                        </div>
+
+                        <!-- Dark/Light Theme Toggle -->
+                        <button type="button" id="theme-toggle-btn" class="theme-ghost-btn" aria-label="Toggle theme" title="Toggle theme (T)">
+                            <svg class="theme-icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 2. Global Month Status & Quick Actions Bar -->
+            <section class="top-action-bar">
+                <div class="month-indicator-group">
+                    <span class="month-indicator-label">Reporting Month:</span>
+
+                    <!-- Interactive Month Navigator & Picker -->
+                    <div class="month-selector-group">
+                        <button type="button" id="btn-prev-month" class="btn-month-step" title="Previous Month (快捷切换上个月)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <input type="month" id="header-month-picker" class="header-month-input tabular-nums" value="2026-10" title="Click to choose any month">
+                        <button type="button" id="btn-next-month" class="btn-month-step" title="Next Month (快捷切换下个月)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+
+                    <!-- Quick Dropdown with historical recorded months -->
+                    <select id="month-dropdown-select" class="month-dropdown-select" title="Jump to recorded month">
+                        <!-- Populated dynamically -->
+                    </select>
+
+                    <span id="header-viewing-month" style="display:none;">2026-10</span>
+                    <span id="month-status-badge" class="section-count-tag">Active Month</span>
+
+                    <button type="button" id="btn-jump-current-month" class="btn btn-secondary btn-jump-current" title="Jump directly to real-world current month">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                        Current Month (当前月)
+                    </button>
+                </div>
+
+                <div class="toolbar-buttons">
+                    <button type="button" id="btn-new-month" class="btn btn-secondary" title="Start a new month entry">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"></path></svg>
+                        + New Month
+                    </button>
+                    <button type="button" id="btn-take-snapshot" class="btn btn-primary" title="Archive this month and lock snapshot (S)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        Archive Month (S)
+                    </button>
+                </div>
+            </section>
+
+            <!-- ── VIEW 1: Dashboard (Focus on High-Level Statistics & Charts) ── -->
+            <div id="view-dashboard" class="page-view-panel">
+                <!-- Uninitialized Month Banner Container -->
+                <section id="month-init-banner" style="display:none;"></section>
+
+                <!-- KPI Cards Grid (8 Core Quantitative Metrics) -->
+                <section id="kpi-container" class="kpi-container"></section>
+
+                <!-- Health & Yield Diagnostics Banner -->
+                <section id="diagnostic-container"></section>
+
+                <!-- Visual Analytics Engine (Donut, Bar, Ranked APR, Trend) -->
+                <section id="charts-container"></section>
+
+                <!-- Quick Jump Strip to Holdings Table -->
+                <div class="dashboard-jump-strip">
+                    <div class="jump-strip-text">
+                        <span class="jump-strip-title">Asset Holdings & Position Records</span>
+                        <span class="jump-strip-sub">Search across bank accounts, crypto holdings, and e-wallets, sort columns by yield, or add holdings in the dedicated Holdings view.</span>
+                    </div>
+                    <button type="button" id="btn-jump-to-portfolio" class="btn btn-secondary">
+                        View Holdings Table →
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── VIEW 2: Holdings (Detailed Asset Portfolio Table & CRUD) ── -->
+            <div id="view-portfolio" class="page-view-panel" style="display:none;">
+                <section id="portfolio-container"></section>
+            </div>
+
+            <!-- ── VIEW 3: Calendar (12-Month Grid Archive & Management) ── -->
+            <div id="view-calendar" class="page-view-panel" style="display:none;">
+                <section id="calendar-container"></section>
+            </div>
+
+            <!-- Footer & Shortcuts Reference -->
+            <footer class="page-trust-footer" style="margin-top:20px; padding:16px 0; border-top:1px solid var(--border-default); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:11px; color:var(--text-secondary);">
+                <div class="desktop-shortcuts-hint" style="display:flex; gap:10px; align-items:center;">
+                    <span style="font-weight:600;">Shortcuts:</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">D</kbd> Dashboard</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">H</kbd> Holdings</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">C</kbd> Calendar</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">A</kbd> Add Asset</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">S</kbd> Snapshot</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">1</kbd> Calculator</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">2</kbd> Journal</span>
+                    <span><kbd style="padding:1px 5px; border-radius:3px; background:var(--fill-subtle); border:1px solid var(--border-default); font-family:var(--font-mono);">T</kbd> Theme</span>
+                </div>
+                <div>
+                    <span>Veyra Trading · Wealth Tracker</span>
+                </div>
+            </footer>
+
+            <!-- Toast Notifications Host -->
+            <div id="wealth-toast" class="wealth-toast" role="status" aria-live="polite"></div>
+
+            <!-- Soft Lock Host -->
+            <div id="soft-lock-host"></div>
+        </main>
+    </div>
+
+    <!-- App Module Entry Point -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

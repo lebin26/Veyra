@@ -75,6 +75,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         if (e.key === "1") window.location.href = "../calculator/index.html";
+        else if (e.key === "2") window.location.href = "../Journal/index.html";
+        else if (e.key === "3") window.location.href = "../wealth/index.html";
         else if (e.key === "t" || e.key === "T") toggleTheme();
     });
 
@@ -157,27 +159,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // ── App Tile Lock: Trade Journal requires login ──
-        const journalTile = document.getElementById("app-link-journal");
-        if (journalTile) {
-            const squircle = journalTile.querySelector(".app-icon-squircle");
-            if (isLoggedIn) {
-                // Remove lock overlay if any, make it a real link
-                journalTile.classList.remove("app-tile-locked");
-                journalTile.removeAttribute("data-locked");
-                journalTile.querySelectorAll(".tile-lock-overlay").forEach(el => el.remove());
-                journalTile.onclick = () => {
-                    window.location.href = "../Journal/index.html";
-                };
-            } else {
-                // Apply lock: prevent navigation, show overlay covering logo only
-                journalTile.classList.add("app-tile-locked");
-                journalTile.setAttribute("data-locked", "true");
-                
-                // Clear any legacy root overlay if present
-                const rootOverlay = journalTile.querySelector(":scope > .tile-lock-overlay");
-                if (rootOverlay) rootOverlay.remove();
+        // ── Helper: Configure App Tile Lock State ──
+        function configureTile(tile, isLocked, lockLabel, lockToastMsg, targetUrl) {
+            if (!tile) return;
+            const squircle = tile.querySelector(".app-icon-squircle");
+            const legacyRoot = tile.querySelector(":scope > .tile-lock-overlay");
+            if (legacyRoot) legacyRoot.remove();
 
+            if (isLocked) {
+                tile.classList.add("app-tile-locked");
+                tile.setAttribute("data-locked", "true");
+                tile.removeAttribute("href");
                 if (squircle && !squircle.querySelector(".tile-lock-overlay")) {
                     squircle.insertAdjacentHTML("beforeend", `
                         <div class="tile-lock-overlay" aria-hidden="true">
@@ -187,16 +179,109 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                 </svg>
                             </div>
-                            <span class="tile-lock-label">Sign in<br>required</span>
+                            <span class="tile-lock-label">${lockLabel}</span>
                         </div>
                     `);
                 }
-                journalTile.onclick = (e) => {
+                tile.onclick = (e) => {
                     e.preventDefault();
-                    showToast("Sign in to access Trade Journal", true);
+                    showToast(lockToastMsg, true);
+                };
+            } else {
+                tile.classList.remove("app-tile-locked");
+                tile.removeAttribute("data-locked");
+                tile.querySelectorAll(".tile-lock-overlay").forEach(el => el.remove());
+                tile.onclick = () => {
+                    window.location.href = targetUrl;
                 };
             }
         }
+
+        // ── 1. Position Size Calculator Entitlement ──
+        const calcTile = document.getElementById("app-link-calculator");
+        const calcOverride = profile?.app_overrides?.lot_size_calculator;
+        const isCalcLocked = (isLoggedIn && calcOverride === false);
+        configureTile(
+            calcTile,
+            isCalcLocked,
+            "Access<br>Revoked",
+            "Access to Position Size Calculator has been restricted by administrator",
+            "../calculator/index.html"
+        );
+
+        // ── 2. Trade Journal Entitlement ──
+        const journalTile = document.getElementById("app-link-journal");
+        let isJournalLocked = false;
+        let journalLabel = "Sign in<br>required";
+        let journalToast = "Sign in to access Trade Journal";
+
+        if (!isLoggedIn) {
+            isJournalLocked = true;
+            journalLabel = "Sign in<br>required";
+            journalToast = "Sign in to access Trade Journal";
+        } else if (isAdmin) {
+            isJournalLocked = false;
+        } else {
+            const jOverride = profile?.app_overrides?.trading_journal;
+            if (jOverride === false) {
+                isJournalLocked = true;
+                journalLabel = "Access<br>Revoked";
+                journalToast = "Access to Trade Journal has been restricted by administrator";
+            } else if (jOverride === true) {
+                isJournalLocked = false;
+            } else if (profile?.plan_id === "free") {
+                isJournalLocked = true;
+                journalLabel = "Pro plan<br>required";
+                journalToast = "Pro plan required for Trade Journal";
+            } else {
+                isJournalLocked = false;
+            }
+        }
+
+        configureTile(
+            journalTile,
+            isJournalLocked,
+            journalLabel,
+            journalToast,
+            "../Journal/index.html"
+        );
+
+        // ── 3. Wealth Tracker Entitlement ──
+        const wealthTile = document.getElementById("app-link-wealth");
+        let isWealthLocked = false;
+        let wealthLabel = "Sign in<br>required";
+        let wealthToast = "Sign in to access Wealth Tracker";
+
+        if (!isLoggedIn) {
+            isWealthLocked = true;
+            wealthLabel = "Sign in<br>required";
+            wealthToast = "Sign in to access Wealth Tracker";
+        } else if (isAdmin) {
+            isWealthLocked = false;
+        } else {
+            const wOverride = profile?.app_overrides?.wealth_tracker;
+            if (wOverride === false) {
+                isWealthLocked = true;
+                wealthLabel = "Access<br>Revoked";
+                wealthToast = "Access to Wealth Tracker has been restricted by administrator";
+            } else if (wOverride === true) {
+                isWealthLocked = false;
+            } else if (profile?.plan_id === "free") {
+                isWealthLocked = true;
+                wealthLabel = "Pro plan<br>required";
+                wealthToast = "Pro plan required for Wealth Tracker";
+            } else {
+                isWealthLocked = false;
+            }
+        }
+
+        configureTile(
+            wealthTile,
+            isWealthLocked,
+            wealthLabel,
+            wealthToast,
+            "../wealth/index.html"
+        );
     }
 
     syncAll();

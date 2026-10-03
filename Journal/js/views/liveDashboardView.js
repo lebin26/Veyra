@@ -1,25 +1,20 @@
-/**
- * liveDashboardView.js
- * LIVE TRADING 主仪表盘（纯净 P&L & R 计算，完整 Time Interval Filter）：
- * 彻底不依赖 account balance，移除任何 balance 概念。
- * 顶部配备强大完整的时间区间过滤器 (Today, Yesterday, This Week, Last Week, This Month, Custom Interval)
- */
-
 import { LiveRepo } from '../db/liveRepo.js';
 import { aggregateMetrics } from '../core/calculations.js';
-import { MetricCards } from '../components/metricCards.js';
-import { EquityCurveChart, DailyPnlChart, RDistributionChart } from '../components/charts.js';
+import { DashboardKpiCards } from '../components/metricCards.js';
+import { CumulativeAreaChart, DailyPnlChart, ZellaRadarChart } from '../components/charts.js';
 import { TradingCalendar } from '../components/calendar.js';
-import { formatCurrency, getMetricColorClass } from '../core/formatters.js';
+import { DailyDetailModal } from '../components/dailyDetailModal.js';
+import { formatCurrency, formatPercent, getMetricColorClass } from '../core/formatters.js';
 
 export class LiveDashboardView {
   constructor(options = {}) {
     this.container = options.container;
     this.trades = [];
     this.unit = '$'; // '$' | 'R'
-    this.timePreset = 'ALL'; // 'ALL', 'TODAY', 'YESTERDAY', 'THIS_WEEK', 'LAST_WEEK', 'THIS_MONTH', 'LAST_MONTH', 'THIS_YEAR', 'CUSTOM'
+    this.timePreset = 'ALL';
     this.startDate = '';
     this.endDate = '';
+    this.accountFilter = 'ALL';
     this.symbolFilter = 'ALL';
     this.setupFilter = 'ALL';
   }
@@ -28,63 +23,100 @@ export class LiveDashboardView {
     this.trades = await LiveRepo.getAllTrades();
 
     this.container.innerHTML = `
-      <div class="view-header">
-        <div class="header-left">
-          <div class="view-title">Dashboard</div>
+      <div class="view-header" style="padding: 16px 24px; border-bottom: 1px solid var(--border-default); background: var(--bg-panel); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div class="header-left" style="display: flex; align-items: center; gap: 12px;">
+          <h1 class="view-title" style="font-size: 20px; font-weight: 700; margin: 0; color: var(--text-primary); letter-spacing: -0.02em;">Dashboard</h1>
+          <span style="font-size: 11.5px; color: var(--text-secondary); background: var(--fill-subtle); padding: 3px 8px; border-radius: var(--radius-chip);" id="dash-trade-count-badge">
+            ${this.trades.length} Trades
+          </span>
         </div>
-        <div class="header-right">
-          <!-- Metric Unit Toggle: Pure $ and R -->
-          <div class="unit-toggle-group">
-            <button class="unit-btn ${this.unit === '$' ? 'active' : ''}" data-unit="$">$ (Cash)</button>
-            <button class="unit-btn ${this.unit === 'R' ? 'active' : ''}" data-unit="R">R (Risk Multiple)</button>
+        
+        <!-- Top Toolbar Right Controls -->
+        <div class="header-right" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <!-- Metric Unit Toggle -->
+          <div class="segmented-control" style="display: flex; background: var(--fill-subtle); padding: 2px; border-radius: var(--radius-control); border: 1px solid var(--border-default);">
+            <button type="button" class="unit-btn ${this.unit === '$' ? 'active' : ''}" data-unit="$" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border: none; border-radius: 6px; background: ${this.unit === '$' ? 'var(--bg-panel)' : 'transparent'}; color: var(--text-primary); cursor: pointer; box-shadow: ${this.unit === '$' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none'};">$ Cash</button>
+            <button type="button" class="unit-btn ${this.unit === 'R' ? 'active' : ''}" data-unit="R" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border: none; border-radius: 6px; background: ${this.unit === 'R' ? 'var(--bg-panel)' : 'transparent'}; color: var(--text-primary); cursor: pointer; box-shadow: ${this.unit === 'R' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none'};">R Multiplier</button>
           </div>
+
+          <!-- Account Selector -->
+          <select class="table-select" id="dash-account-filter" style="padding: 5px 10px; font-size: 11.5px; font-weight: 600; background: var(--bg-panel); border: 1px solid var(--border-default); border-radius: var(--radius-control); color: var(--text-primary);">
+            <option value="ALL">All Accounts</option>
+          </select>
+
+          <!-- Date Range Selector -->
+          <select class="table-select" id="dash-time-preset" style="padding: 5px 10px; font-size: 11.5px; font-weight: 600; background: var(--bg-panel); border: 1px solid var(--border-default); border-radius: var(--radius-control); color: var(--text-primary);">
+            <option value="ALL" ${this.timePreset === 'ALL' ? 'selected' : ''}>All Dates</option>
+            <option value="TODAY" ${this.timePreset === 'TODAY' ? 'selected' : ''}>Today</option>
+            <option value="YESTERDAY" ${this.timePreset === 'YESTERDAY' ? 'selected' : ''}>Yesterday</option>
+            <option value="THIS_WEEK" ${this.timePreset === 'THIS_WEEK' ? 'selected' : ''}>This Week</option>
+            <option value="LAST_WEEK" ${this.timePreset === 'LAST_WEEK' ? 'selected' : ''}>Last Week</option>
+            <option value="THIS_MONTH" ${this.timePreset === 'THIS_MONTH' ? 'selected' : ''}>This Month</option>
+            <option value="LAST_MONTH" ${this.timePreset === 'LAST_MONTH' ? 'selected' : ''}>Last Month</option>
+            <option value="THIS_YEAR" ${this.timePreset === 'THIS_YEAR' ? 'selected' : ''}>This Year</option>
+            <option value="CUSTOM" ${this.timePreset === 'CUSTOM' ? 'selected' : ''}>Custom Range</option>
+          </select>
+
+          <!-- Symbol Filter -->
+          <select class="table-select" id="dash-symbol-filter" style="padding: 5px 10px; font-size: 11.5px; background: var(--bg-panel); border: 1px solid var(--border-default); border-radius: var(--radius-control); color: var(--text-primary);">
+            <option value="ALL">All Symbols</option>
+          </select>
+
+          <!-- Setup Filter -->
+          <select class="table-select" id="dash-setup-filter" style="padding: 5px 10px; font-size: 11.5px; background: var(--bg-panel); border: 1px solid var(--border-default); border-radius: var(--radius-control); color: var(--text-primary);">
+            <option value="ALL">All Playbooks</option>
+          </select>
         </div>
       </div>
 
-      <div class="view-content" id="dashboard-content">
-        <!-- Time Interval & Dimensional Filters Toolbar -->
-        <div class="table-toolbar" style="background: var(--surface); padding: 10px 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); gap: 10px;">
-          <!-- Time Interval Section -->
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Interval:</span>
-            <select class="table-select" id="dash-time-preset" style="font-weight: 600;">
-              <option value="ALL" ${this.timePreset === 'ALL' ? 'selected' : ''}>All Time</option>
-              <option value="TODAY" ${this.timePreset === 'TODAY' ? 'selected' : ''}>Today</option>
-              <option value="YESTERDAY" ${this.timePreset === 'YESTERDAY' ? 'selected' : ''}>Yesterday</option>
-              <option value="THIS_WEEK" ${this.timePreset === 'THIS_WEEK' ? 'selected' : ''}>This Week</option>
-              <option value="LAST_WEEK" ${this.timePreset === 'LAST_WEEK' ? 'selected' : ''}>Last Week</option>
-              <option value="THIS_MONTH" ${this.timePreset === 'THIS_MONTH' ? 'selected' : ''}>This Month</option>
-              <option value="LAST_MONTH" ${this.timePreset === 'LAST_MONTH' ? 'selected' : ''}>Last Month</option>
-              <option value="THIS_YEAR" ${this.timePreset === 'THIS_YEAR' ? 'selected' : ''}>This Year</option>
-              <option value="CUSTOM" ${this.timePreset === 'CUSTOM' ? 'selected' : ''}>Custom Range →</option>
-            </select>
+      <div class="view-content" id="dashboard-content" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; max-width: 1400px; margin: 0 auto; width: 100%;">
+        <!-- Row 1: 5 KPI Cards -->
+        <div id="dash-kpi-container"></div>
 
-            <!-- Custom Date Inputs -->
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <input type="date" class="table-select" id="dash-start-date" value="${this.startDate}" title="Start Date">
-              <span style="color: var(--text-tertiary); font-size: 11px;">to</span>
-              <input type="date" class="table-select" id="dash-end-date" value="${this.endDate}" title="End Date">
+        <!-- Row 2: 3 Analytics Charts (Zella Score Radar | Cumulative P&L Area | Daily P&L Bars) -->
+        <div style="display: grid; grid-template-columns: 320px 1.4fr 1.2fr; gap: 14px; align-items: stretch;" id="dash-charts-row">
+          <!-- Card 1: Zella Score Radar Chart -->
+          <div class="chart-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Zella Score</div>
+              <div style="font-size: 10.5px; color: var(--text-tertiary);">Quantitative Index</div>
             </div>
-
-            <div style="width: 1px; height: 18px; background: var(--border-subtle); margin: 0 4px;"></div>
-
-            <!-- Dimensions -->
-            <select class="table-select" id="dash-symbol-filter">
-              <option value="ALL">All Symbols</option>
-            </select>
-
-            <select class="table-select" id="dash-setup-filter">
-              <option value="ALL">All Strategies</option>
-            </select>
+            <div id="dash-zella-radar-container" style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 220px;"></div>
           </div>
 
-          <div style="font-size: 11.5px; color: var(--text-tertiary);" id="dash-filtered-count">
-            Filtered Trades: 0
+          <!-- Card 2: Cumulative Area Chart -->
+          <div class="chart-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Daily Net Cumulative P&L [${this.unit}]</div>
+              <div style="font-size: 10.5px; color: var(--text-tertiary);">Historical Equity Curve</div>
+            </div>
+            <div class="chart-svg-container" id="dash-cumulative-chart" style="flex: 1; min-height: 220px;"></div>
+          </div>
+
+          <!-- Card 3: Daily P&L Bars -->
+          <div class="chart-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Net Daily P&L [${this.unit}]</div>
+              <div style="font-size: 10.5px; color: var(--text-tertiary);">Day Win/Loss Distribution</div>
+            </div>
+            <div class="chart-svg-container" id="dash-daily-chart" style="flex: 1; min-height: 220px;"></div>
           </div>
         </div>
 
-        <!-- Dashboard Body -->
-        <div id="dash-body"></div>
+        <!-- Row 3: Open Positions + Trading Calendar -->
+        <div style="display: grid; grid-template-columns: 380px 1fr; gap: 14px; align-items: start;" id="dash-bottom-row">
+          <!-- Open Positions Table Card -->
+          <div class="chart-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 100%;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-default); display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-primary);">Open Positions</span>
+              <span style="font-size: 10.5px; color: var(--text-secondary);" id="open-positions-count">0 Active</span>
+            </div>
+            <div id="dash-open-positions-body" style="flex: 1; overflow-x: auto; max-height: 380px;"></div>
+          </div>
+
+          <!-- Trading Calendar Heatmap & Weekly Stats -->
+          <div id="dash-calendar-container"></div>
+        </div>
       </div>
     `;
 
@@ -96,53 +128,48 @@ export class LiveDashboardView {
   bindEvents() {
     this.container.querySelectorAll('.unit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        this.container.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+        this.container.querySelectorAll('.unit-btn').forEach(b => {
+          b.classList.remove('active');
+          b.style.background = 'transparent';
+          b.style.boxShadow = 'none';
+        });
         btn.classList.add('active');
+        btn.style.background = 'var(--bg-panel)';
+        btn.style.boxShadow = '0 1px 2px rgba(0,0,0,0.06)';
         this.unit = btn.dataset.unit;
         this.updateDashboard();
       });
     });
 
     const presetSelect = this.container.querySelector('#dash-time-preset');
-    const startInput = this.container.querySelector('#dash-start-date');
-    const endInput = this.container.querySelector('#dash-end-date');
-
     presetSelect.addEventListener('change', (e) => {
       this.timePreset = e.target.value;
-      this.applyPresetToInputs();
+      this.applyPresetDates();
       this.updateDashboard();
     });
 
-    startInput.addEventListener('change', (e) => {
-      this.startDate = e.target.value;
-      this.timePreset = 'CUSTOM';
-      presetSelect.value = 'CUSTOM';
-      this.updateDashboard();
-    });
-
-    endInput.addEventListener('change', (e) => {
-      this.endDate = e.target.value;
-      this.timePreset = 'CUSTOM';
-      presetSelect.value = 'CUSTOM';
-      this.updateDashboard();
-    });
-
-    this.container.querySelector('#dash-symbol-filter').addEventListener('change', (e) => {
+    const symSelect = this.container.querySelector('#dash-symbol-filter');
+    symSelect.addEventListener('change', (e) => {
       this.symbolFilter = e.target.value;
       this.updateDashboard();
     });
 
-    this.container.querySelector('#dash-setup-filter').addEventListener('change', (e) => {
+    const setupSelect = this.container.querySelector('#dash-setup-filter');
+    setupSelect.addEventListener('change', (e) => {
       this.setupFilter = e.target.value;
+      this.updateDashboard();
+    });
+
+    const accSelect = this.container.querySelector('#dash-account-filter');
+    accSelect.addEventListener('change', (e) => {
+      this.accountFilter = e.target.value;
       this.updateDashboard();
     });
   }
 
-  applyPresetToInputs() {
+  applyPresetDates() {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    const startInput = this.container.querySelector('#dash-start-date');
-    const endInput = this.container.querySelector('#dash-end-date');
 
     if (this.timePreset === 'ALL') {
       this.startDate = '';
@@ -153,9 +180,8 @@ export class LiveDashboardView {
     } else if (this.timePreset === 'YESTERDAY') {
       const y = new Date(now);
       y.setDate(now.getDate() - 1);
-      const yStr = y.toISOString().split('T')[0];
-      this.startDate = yStr;
-      this.endDate = yStr;
+      this.startDate = y.toISOString().split('T')[0];
+      this.endDate = this.startDate;
     } else if (this.timePreset === 'THIS_WEEK') {
       const day = now.getDay() || 7;
       const monday = new Date(now);
@@ -182,14 +208,12 @@ export class LiveDashboardView {
       this.startDate = `${now.getFullYear()}-01-01`;
       this.endDate = todayStr;
     }
-
-    startInput.value = this.startDate;
-    endInput.value = this.endDate;
   }
 
   populateFilterOptions() {
     const symbols = [...new Set(this.trades.map(t => t.symbol).filter(Boolean))].sort();
     const setups = [...new Set(this.trades.map(t => t.setup).filter(Boolean))].sort();
+    const accounts = [...new Set(this.trades.map(t => t.account || t.broker).filter(Boolean))].sort();
 
     const symSelect = this.container.querySelector('#dash-symbol-filter');
     symbols.forEach(s => {
@@ -206,176 +230,143 @@ export class LiveDashboardView {
       opt.textContent = st;
       setupSelect.appendChild(opt);
     });
+
+    const accSelect = this.container.querySelector('#dash-account-filter');
+    accounts.forEach(acc => {
+      const opt = document.createElement('option');
+      opt.value = acc;
+      opt.textContent = acc;
+      accSelect.appendChild(opt);
+    });
   }
 
   getFilteredTrades() {
     return this.trades.filter(t => {
-      // 1. Time Interval Filter
       if (this.startDate && t.date < this.startDate) return false;
       if (this.endDate && t.date > this.endDate) return false;
-
-      // 2. Symbol Filter
-      if (this.symbolFilter !== 'ALL' && t.symbol !== this.symbolFilter) {
-        return false;
-      }
-
-      // 3. Setup Filter
-      if (this.setupFilter !== 'ALL' && t.setup !== this.setupFilter) {
-        return false;
-      }
-
+      if (this.symbolFilter !== 'ALL' && t.symbol !== this.symbolFilter) return false;
+      if (this.setupFilter !== 'ALL' && t.setup !== this.setupFilter) return false;
+      if (this.accountFilter !== 'ALL' && (t.account !== this.accountFilter && t.broker !== this.accountFilter)) return false;
       return true;
     });
   }
 
   updateDashboard() {
     const filtered = this.getFilteredTrades();
-    const countEl = this.container.querySelector('#dash-filtered-count');
-    if (countEl) countEl.textContent = `Showing ${filtered.length} of ${this.trades.length} trades`;
-
-    const dashBody = this.container.querySelector('#dash-body');
-
-    if (this.trades.length === 0) {
-      dashBody.innerHTML = `
-        <div class="empty-state">
-          <div style="font-size: 28px; opacity: 0.6;">📊</div>
-          <div class="empty-state-title">No live trading data yet</div>
-          <div class="empty-state-desc">Start adding executions in the Live Journal to track R, Profit Factor, Mistakes, and Equity curves.</div>
-        </div>
-      `;
-      return;
-    }
-
     const metrics = aggregateMetrics(filtered);
 
-    dashBody.innerHTML = `
-      ${metrics.openTradesCount > 0 ? `
-        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-weight: 700; color: #1D4ED8; font-size: 13px;">⚡ ${metrics.openTradesCount} Active Position${metrics.openTradesCount > 1 ? 's' : ''} Running (持仓中)</span>
-            <span style="font-size: 11.5px; color: #3B82F6;">Total Open Risk: -$${metrics.openRiskTotal.toFixed(2)}</span>
-          </div>
-          <button class="btn btn-sm btn-primary" id="btn-dash-view-open" style="padding: 4px 10px; font-size: 11px; font-weight: 700;">
-            View & Close Open Trades →
-          </button>
-        </div>
-      ` : ''}
-
-      <!-- VEYRA Execution & Discipline Bar -->
-      <div style="background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px;">
-        <div>
-          <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; font-weight: 600;">Plan Adherence</div>
-          <div style="font-size: 16px; font-weight: 700; color: ${metrics.planAdherenceRate >= 80 ? 'var(--profit-color)' : 'var(--loss-color)'}; font-family: var(--font-mono);">
-            ${metrics.planAdherenceRate.toFixed(1)}%
-          </div>
-          <div style="font-size: 10.5px; color: var(--text-secondary);">${metrics.followedPlanCount} Followed / ${metrics.brokePlanCount} Broken</div>
-        </div>
-
-        <div>
-          <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; font-weight: 600;">Cost of Mistakes</div>
-          <div style="font-size: 16px; font-weight: 700; color: var(--loss-color); font-family: var(--font-mono);">
-            -${formatCurrency(metrics.costOfMistakes, false)}
-          </div>
-          <div style="font-size: 10.5px; color: var(--text-secondary);">${metrics.mistakeTradesCount} Trades with mistakes</div>
-        </div>
-
-        <div>
-          <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; font-weight: 600;">P&L Without Mistakes</div>
-          <div style="font-size: 16px; font-weight: 700; color: ${getMetricColorClass(metrics.pnlWithoutMistakes)}; font-family: var(--font-mono);">
-            ${formatCurrency(metrics.pnlWithoutMistakes)}
-          </div>
-          <div style="font-size: 10.5px; color: var(--text-secondary);">Potential disciplined edge</div>
-        </div>
-
-        <div>
-          <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; font-weight: 600;">Payoff Ratio (Win/Loss)</div>
-          <div style="font-size: 16px; font-weight: 700; color: var(--text-main); font-family: var(--font-mono);">
-            ${metrics.payoffRatio !== null ? metrics.payoffRatio.toFixed(2) : 'N/A'}
-          </div>
-          <div style="font-size: 10.5px; color: var(--text-secondary);">Avg Win / Avg Loss size</div>
-        </div>
-      </div>
-
-      <!-- 1. KPI Cards Row (Pure $ and R) -->
-      <div id="dash-kpi-container" style="margin-bottom: 16px;"></div>
-
-      <!-- 2. Charts Row: Equity Curve + Daily P&L -->
-      <div class="charts-row" style="margin-bottom: 16px;">
-        <div class="chart-card">
-          <div class="chart-card-header">
-            <div class="chart-card-title">Equity Curve [${this.unit}]</div>
-            <div style="font-size: 11px; color: var(--text-tertiary);">Cumulative Performance</div>
-          </div>
-          <div class="chart-svg-container" id="dash-equity-chart"></div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-card-header">
-            <div class="chart-card-title">Daily P&L [${this.unit}]</div>
-            <div style="font-size: 11px; color: var(--text-tertiary);">Day by Day Distribution</div>
-          </div>
-          <div class="chart-svg-container" id="dash-daily-chart"></div>
-        </div>
-      </div>
-
-      <!-- 3. VEYRA R-Multiple Distribution Chart -->
-      <div class="chart-card" style="margin-bottom: 16px;">
-        <div class="chart-card-header">
-          <div class="chart-card-title">R-Multiple Distribution (Outcome Skew)</div>
-          <div style="font-size: 11px; color: var(--text-tertiary);">Risk-normalized outcome frequency</div>
-        </div>
-        <div class="chart-svg-container" id="dash-rdist-chart"></div>
-      </div>
-
-      <!-- 4. Calendar View -->
-      <div id="dash-calendar-container"></div>
-    `;
-
-    // 渲染 KPI Cards
-    const kpiHost = dashBody.querySelector('#dash-kpi-container');
-    new MetricCards({
+    // 1. Render 5 KPI Cards
+    const kpiHost = this.container.querySelector('#dash-kpi-container');
+    new DashboardKpiCards({
       container: kpiHost,
       metrics,
       unit: this.unit
     });
 
-    // 渲染 Equity Curve
-    const equityHost = dashBody.querySelector('#dash-equity-chart');
-    new EquityCurveChart({
-      container: equityHost,
+    // 2. Render Zella Radar Chart
+    const zellaHost = this.container.querySelector('#dash-zella-radar-container');
+    new ZellaRadarChart({
+      container: zellaHost,
+      metrics
+    });
+
+    // 3. Render Cumulative Area Chart
+    const cumHost = this.container.querySelector('#dash-cumulative-chart');
+    new CumulativeAreaChart({
+      container: cumHost,
       curveData: metrics.cumulativeCurve,
       unit: this.unit
     });
 
-    // 渲染 Daily P&L
-    const dailyHost = dashBody.querySelector('#dash-daily-chart');
+    // 4. Render Net Daily P&L Chart
+    const dailyHost = this.container.querySelector('#dash-daily-chart');
     new DailyPnlChart({
       container: dailyHost,
       dailyDistribution: metrics.dailyDistribution,
       unit: this.unit
     });
 
-    // 渲染 R Distribution
-    const rDistHost = dashBody.querySelector('#dash-rdist-chart');
-    new RDistributionChart({
-      container: rDistHost,
-      rDistribution: metrics.rDistribution
-    });
+    // 5. Render Open Positions Table
+    this.renderOpenPositions(this.trades.filter(t => t.status === 'OPEN' || !t.closePrice));
 
-    // 渲染 Calendar
-    const calHost = dashBody.querySelector('#dash-calendar-container');
+    // 6. Render Monthly Heatmap Calendar with Weekly Summary & Day Click Modal
+    const calHost = this.container.querySelector('#dash-calendar-container');
     new TradingCalendar({
       container: calHost,
       dailyDistribution: metrics.dailyDistribution,
-      unit: this.unit
+      allTrades: filtered,
+      unit: this.unit,
+      onSelectDate: (dateKey) => {
+        const dayTrades = filtered.filter(t => (t.date === dateKey || (t.openTime && t.openTime.startsWith(dateKey))));
+        const dayData = metrics.dailyDistribution[dateKey] || { pnl: 0, r: 0, trades: dayTrades.length };
+        new DailyDetailModal({
+          date: dateKey,
+          trades: dayTrades,
+          dailyData: dayData,
+          onNoteSave: () => {}
+        });
+      }
     });
+  }
 
-    const btnViewOpen = dashBody.querySelector('#btn-dash-view-open');
-    if (btnViewOpen) {
-      btnViewOpen.addEventListener('click', () => {
-        const tradesNav = document.querySelector('[data-route="live-journal"]');
-        if (tradesNav) tradesNav.click();
-      });
+  renderOpenPositions(openTrades = []) {
+    const container = this.container.querySelector('#dash-open-positions-body');
+    const countBadge = this.container.querySelector('#open-positions-count');
+    if (!container) return;
+
+    if (countBadge) countBadge.textContent = `${openTrades.length} Active`;
+
+    if (openTrades.length === 0) {
+      container.innerHTML = `
+        <div style="padding: 32px 16px; text-align: center; color: var(--text-tertiary); font-size: 11.5px;">
+          No open positions currently running
+        </div>
+      `;
+      return;
     }
+
+    const rowsHtml = openTrades.map(t => {
+      const isLong = (t.direction || t.side || '').toUpperCase() === 'LONG';
+      const sideColor = isLong ? 'var(--color-profit)' : 'var(--color-loss)';
+      const pnl = t.unrealizedPnl !== undefined ? t.unrealizedPnl : (t.pnl || 0);
+      const pnlColorClass = getMetricColorClass(pnl);
+      const roi = t.roi !== undefined ? t.roi : (t.returnPercent || 0);
+
+      return `
+        <tr style="border-bottom: 1px solid var(--border-default); font-size: 11px;">
+          <td style="padding: 8px 12px; color: var(--text-secondary);">${t.date || '—'}</td>
+          <td style="padding: 8px 12px; font-weight: 700; color: var(--text-primary);">${t.symbol || '—'}</td>
+          <td style="padding: 8px 12px;">
+            <span style="font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: ${isLong ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${sideColor};">
+              ${isLong ? 'LONG' : 'SHORT'}
+            </span>
+          </td>
+          <td style="padding: 8px 12px; text-align: right; font-family: var(--font-mono);">${t.size || t.quantity || 1}</td>
+          <td style="padding: 8px 12px; text-align: right; font-family: var(--font-mono);">${t.entryPrice ? Number(t.entryPrice).toFixed(2) : '—'}</td>
+          <td style="padding: 8px 12px; text-align: right; font-family: var(--font-mono);" class="${pnlColorClass}">${formatCurrency(pnl)}</td>
+          <td style="padding: 8px 12px; text-align: right; font-family: var(--font-mono);">${formatPercent(roi)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    container.innerHTML = `
+      <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border-default); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); background: var(--fill-subtle);">
+            <th style="padding: 8px 12px;">Date</th>
+            <th style="padding: 8px 12px;">Symbol</th>
+            <th style="padding: 8px 12px;">Side</th>
+            <th style="padding: 8px 12px; text-align: right;">Qty</th>
+            <th style="padding: 8px 12px; text-align: right;">Entry</th>
+            <th style="padding: 8px 12px; text-align: right;">Unrealized</th>
+            <th style="padding: 8px 12px; text-align: right;">ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    `;
   }
 }
+

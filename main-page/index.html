@@ -66,16 +66,18 @@
                     <span class="app-icon-name">Trade Journal</span>
                 </div>
 
-                <!-- App 3: Risk Planner (Coming Soon) -->
-                <button type="button" class="app-icon-tile app-coming-soon" role="listitem" data-app-name="Risk Planner" aria-label="Risk Planner">
-                    <div class="app-icon-squircle icon-risk">
+                <!-- App 3: Wealth Tracker (members only — lock applied by JS if not logged in) -->
+                <div id="app-link-wealth" class="app-icon-tile active-app" role="listitem" aria-label="Wealth Tracker" tabindex="0">
+                    <div class="app-icon-squircle icon-wealth">
                         <svg class="app-svg-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M24 6l15 6v13c0 9.5-6.5 17-15 19-8.5-2-15-9.5-15-19V12l15-6z" />
-                            <path d="M18 24l4 4 8-8" />
+                            <rect x="8" y="12" width="32" height="24" rx="4" />
+                            <path d="M8 20h32" />
+                            <circle cx="24" cy="27" r="3" />
+                            <path d="M16 8h16" />
                         </svg>
                     </div>
-                    <span class="app-icon-name">Risk Planner</span>
-                </button>
+                    <span class="app-icon-name">Wealth Tracker</span>
+                </div>
 
                 <!-- App 4: Market Radar (Coming Soon) -->
                 <button type="button" class="app-icon-tile app-coming-soon" role="listitem" data-app-name="Market Radar" aria-label="Market Radar">
@@ -97,6 +99,8 @@
             <div class="desktop-shortcuts-hint" aria-label="Keyboard Shortcuts">
                 <span class="shortcuts-title">Shortcuts:</span>
                 <span class="shortcut-tag"><kbd>1</kbd> Calculator</span>
+                <span class="shortcut-tag"><kbd>2</kbd> Journal</span>
+                <span class="shortcut-tag"><kbd>3</kbd> Wealth</span>
                 <span class="shortcut-tag"><kbd>T</kbd> Theme</span>
             </div>
             <div class="footer-brand">Veyra Trading</div>

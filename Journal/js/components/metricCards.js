@@ -113,3 +113,138 @@ export class MetricCards {
     this.container.appendChild(grid);
   }
 }
+
+/**
+ * PDF-Standard Dashboard 5 KPI Cards (with Circular gauges, Semi-circle gauge, Win/Loss bar)
+ */
+import { renderCircularGauge, renderSemiGauge, renderWinLossBar } from './charts.js';
+
+export class DashboardKpiCards {
+  constructor(options = {}) {
+    this.container = options.container;
+    this.metrics = options.metrics || {};
+    this.unit = options.unit || '$';
+    this.init();
+  }
+
+  update(metrics, unit = this.unit) {
+    this.metrics = metrics;
+    this.unit = unit;
+    this.render();
+  }
+
+  init() {
+    this.render();
+  }
+
+  render() {
+    if (!this.container) return;
+    this.container.innerHTML = '';
+
+    const m = this.metrics;
+    const unit = this.unit;
+
+    // 1. Net P&L
+    const netVal = m.netPnl !== undefined ? m.netPnl : 0;
+    const netValStr = unit === 'R' ? formatR(m.totalR) : formatCurrency(netVal);
+    const netColorClass = getMetricColorClass(netVal);
+    const isNetPositive = netVal >= 0;
+
+    // 2. Trade Win %
+    const winRate = m.winRate !== undefined ? Number(m.winRate) : 0;
+    const winRateStr = `${winRate.toFixed(2)}%`;
+    const winGaugeSvg = renderCircularGauge(winRate, '#5B55D9', 52);
+
+    // 3. Profit Factor
+    const pf = m.profitFactor !== null && m.profitFactor !== undefined ? Number(m.profitFactor) : 0;
+    const pfStr = pf > 0 ? pf.toFixed(2) : '0.00';
+    const pfGaugePct = Math.min(100, (pf / 3.0) * 100);
+    const pfGaugeSvg = renderCircularGauge(pfGaugePct, '#4FC3A1', 52);
+
+    // 4. Day Win %
+    const dayWinRate = m.dayWinRate !== undefined ? Number(m.dayWinRate) : (m.dailyDistribution ? 
+      (() => {
+        const days = Object.values(m.dailyDistribution);
+        if (days.length === 0) return 0;
+        const winDays = days.filter(d => (unit === 'R' ? d.r : d.pnl) > 0).length;
+        return (winDays / days.length) * 100;
+      })() : 0);
+    const dayWinRateStr = `${dayWinRate.toFixed(2)}%`;
+    const daySemiGaugeSvg = renderSemiGauge(dayWinRate, '#4FC3A1', 60, 32);
+
+    // 5. Avg win / loss trade
+    const avgWin = m.averageWin || 0;
+    const avgLoss = Math.abs(m.averageLoss || 0);
+    const ratio = avgLoss > 0 ? (avgWin / avgLoss) : (avgWin > 0 ? avgWin : 0);
+    const ratioStr = ratio > 0 ? ratio.toFixed(2) : '0.00';
+    const winLossBarHtml = renderWinLossBar(avgWin, avgLoss, ratio);
+
+    const html = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%;">
+        <!-- Card 1: Net P&L -->
+        <div class="kpi-card" style="padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between; min-height: 96px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;">Net P&L [${unit}]</span>
+            <span style="font-size: 12px; color: ${isNetPositive ? 'var(--profit-color)' : 'var(--loss-color)'};">
+              ${isNetPositive ? '▲' : '▼'}
+            </span>
+          </div>
+          <div style="font-size: 22px; font-weight: 700; font-family: var(--font-mono); margin: 4px 0;" class="${netColorClass}">
+            ${netValStr}
+          </div>
+          <div style="font-size: 10.5px; color: var(--text-tertiary);">
+            ${m.totalTrades || 0} Total Trades (${m.winningTrades || 0}W / ${m.losingTrades || 0}L)
+          </div>
+        </div>
+
+        <!-- Card 2: Trade Win % -->
+        <div class="kpi-card" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; min-height: 96px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;">Trade Win %</div>
+            <div style="font-size: 22px; font-weight: 700; font-family: var(--font-mono); color: var(--text-main);">${winRateStr}</div>
+            <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;">Win / Closed trades</div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center;">
+            ${winGaugeSvg}
+          </div>
+        </div>
+
+        <!-- Card 3: Profit Factor -->
+        <div class="kpi-card" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; min-height: 96px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;">Profit Factor</div>
+            <div style="font-size: 22px; font-weight: 700; font-family: var(--font-mono); color: var(--text-main);">${pfStr}</div>
+            <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;">Gross Win / Gross Loss</div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center;">
+            ${pfGaugeSvg}
+          </div>
+        </div>
+
+        <!-- Card 4: Day Win % -->
+        <div class="kpi-card" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; min-height: 96px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;">Day Win %</div>
+            <div style="font-size: 22px; font-weight: 700; font-family: var(--font-mono); color: var(--text-main);">${dayWinRateStr}</div>
+            <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;">Profitable calendar days</div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center; padding-top: 4px;">
+            ${daySemiGaugeSvg}
+          </div>
+        </div>
+
+        <!-- Card 5: Avg win/loss trade -->
+        <div class="kpi-card" style="padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between; min-height: 96px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px;">Avg win/loss trade</div>
+            <div style="font-size: 22px; font-weight: 700; font-family: var(--font-mono); color: var(--text-main);">${ratioStr}</div>
+          </div>
+          ${winLossBarHtml}
+        </div>
+      </div>
+    `;
+
+    this.container.innerHTML = html;
+  }
+}
+
