@@ -851,6 +851,15 @@ input, textarea {
   color: var(--text-placeholder);
 }
 
+.shortcut-kbd {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--fill-subtle);
+  border: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
 .sidebar-footer {
   padding: 14px 18px;
   border-top: 1px solid var(--border-default);
@@ -965,6 +974,14 @@ input, textarea {
   .sidebar-footer,
   .sidebar-nav-link {
     display: none;
+  }
+  /* Hide keyboard shortcut tags on mobile — touch devices have no keyboard */
+  .sidebar-shortcut-tag {
+    display: none;
+  }
+  /* Hide footer keyboard shortcuts on mobile */
+  .desktop-shortcuts-hint {
+    display: none !important;
   }
   .sidebar-nav-item {
     padding: 7px 12px;
