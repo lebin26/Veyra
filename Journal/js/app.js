@@ -1,4 +1,4 @@
-import { openDatabase } from './db/database.js';
+import { openDatabase, setActiveUser } from './db/database.js';
 import { Sidebar } from './components/sidebar.js';
 import { requirePageAuth } from '../../js/auth/authGuard.js';
 import { LiveDashboardView } from './views/liveDashboardView.js';
@@ -105,7 +105,10 @@ class TradingJournalApp {
       const authContext = await requirePageAuth({ appKey: 'trading_journal' });
       if (!authContext) return;
 
-      await openDatabase();
+      const currentUid = authContext.user?.id || 'guest';
+      try { localStorage.setItem('veyra_active_user_id', currentUid); } catch (_) {}
+      setActiveUser(currentUid);
+      await openDatabase(currentUid);
 
       const sidebarContainer = document.getElementById('app-sidebar-host');
       this.sidebar = new Sidebar({

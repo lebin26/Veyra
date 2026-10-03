@@ -128,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             currentUserProfile = profile;
 
             if (user && profile && profile.status === "active") {
+                try { localStorage.setItem("veyra_active_user_id", user.id); } catch (_) {}
                 const isRevoked = profile.app_overrides?.wealth_tracker === false;
                 if (isRevoked) {
                     showSoftLock("Access Restricted", "Access to Wealth Tracker has been restricted for your account by an administrator.");

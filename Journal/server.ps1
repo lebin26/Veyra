@@ -35,6 +35,24 @@ $localUsersList = [System.Collections.ArrayList]@(
         role = "admin"
         status = "active"
         plan_id = "pro"
+        password = $localAdminPass
+        must_change_password = 0
+        created_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        updated_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        app_overrides = @{
+            trading_journal = $true
+            wealth_tracker = $true
+        }
+    },
+    @{
+        id = "usr_lebin26"
+        username = "lebin26"
+        email = "lebin2626@gmail.com"
+        display_name = "Lebin"
+        role = "admin"
+        status = "active"
+        plan_id = "pro"
+        password = $localAdminPass
         must_change_password = 0
         created_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
         updated_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
@@ -44,6 +62,29 @@ $localUsersList = [System.Collections.ArrayList]@(
         }
     }
 )
+
+# User-isolated in-memory storage for zero-bleed local development
+$localWealthStores = @{}  # userId -> @{ month -> [ArrayList]@() }
+
+function Get-UserFromAuthHeader($req, $users) {
+    $authH = $req.Headers["Authorization"]
+    if (-not $authH) { return $null }
+    if ($authH -match "local_token_([a-zA-Z0-9_\-]+)") {
+        $tid = $matches[1]
+        return ($users | Where-Object { $_.id -eq $tid } | Select-Object -First 1)
+    }
+    if ($authH -like "*local_admin_token*") {
+        return ($users | Where-Object { $_.id -eq "usr_local_admin" } | Select-Object -First 1)
+    }
+    return $null
+}
+
+function Send-JsonResponse($res, $code, $obj) {
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $obj -Depth 10))
+    $res.StatusCode = $code
+    $res.OutputStream.Write($bytes, 0, $bytes.Length)
+    $res.OutputStream.Close()
+}
 
 while ($listener.IsListening) {
     try {
@@ -61,6 +102,7 @@ while ($listener.IsListening) {
             $response.ContentType = "application/json; charset=utf-8"
             $response.AddHeader("Access-Control-Allow-Origin", "*")
             $response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            $response.AddHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
             
             if ($request.HttpMethod -eq "OPTIONS") {
                 $response.StatusCode = 204
@@ -75,94 +117,90 @@ while ($listener.IsListening) {
                 $id = if ($jsonBody.identifier) { $jsonBody.identifier.Trim().ToLower() } else { "" }
                 $pwd = if ($jsonBody.password) { $jsonBody.password } else { "" }
 
-                $isMatchAdmin = ($id -eq $localAdminUser.ToLower() -or $id -eq "$($localAdminUser.ToLower())@veyra.app") -and ($pwd -eq $localAdminPass)
-                $isMatchCloudUser = ($id -eq "lebin26" -or $id -eq "lebin2626@gmail.com")
-                if ($isMatchAdmin -or $isMatchCloudUser) {
-                    $uName = if ($isMatchCloudUser) { "lebin26" } else { $localAdminUser }
-                    $uEmail = if ($isMatchCloudUser) { "lebin2626@gmail.com" } else { "$localAdminUser@veyra.app" }
+                $matchedUser = $null
+                foreach ($u in $localUsersList) {
+                    $uNameLower = if ($u.username) { $u.username.ToLower() } else { "" }
+                    $uEmailLower = if ($u.email) { $u.email.ToLower() } else { "" }
+                    if ($uNameLower -eq $id -or $uEmailLower -eq $id) {
+                        # Match password or allow local test pass
+                        if ($pwd -eq $localAdminPass -or ($u.password -and $pwd -eq $u.password) -or $pwd -eq "VeyraTemp123!") {
+                            $matchedUser = $u
+                            break
+                        }
+                    }
+                }
+
+                if ($matchedUser) {
+                    $token = "local_token_" + $matchedUser.id
                     $resObj = @{
                         success = $true
-                        token = "local_admin_token"
-                        user = @{ id = "usr_1790752930_lebin26"; email = $uEmail }
+                        token = $token
+                        user = @{ id = $matchedUser.id; email = $matchedUser.email; username = $matchedUser.username }
                         profile = @{
-                            id = "usr_1790752930_lebin26"
-                            username = $uName
-                            email = $uEmail
-                            display_name = $uName
-                            role = "admin"
-                            status = "active"
-                            plan_id = "pro"
-                            must_change_password = 0
-                            app_overrides = @{
-                                trading_journal = $true
-                                wealth_tracker = $true
-                            }
+                            id = $matchedUser.id
+                            username = $matchedUser.username
+                            email = $matchedUser.email
+                            display_name = $matchedUser.display_name
+                            role = $matchedUser.role
+                            status = $matchedUser.status
+                            plan_id = $matchedUser.plan_id
+                            must_change_password = $matchedUser.must_change_password
+                            app_overrides = $matchedUser.app_overrides
                         }
-                        mustChangePassword = $false
+                        mustChangePassword = ($matchedUser.must_change_password -eq 1)
                     }
-                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
-                    $response.StatusCode = 200
-                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                    Send-JsonResponse $response 200 $resObj
                 } else {
                     $errObj = @{ success = $false; error = "Invalid email or password" }
-                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $errObj))
-                    $response.StatusCode = 401
-                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                    Send-JsonResponse $response 401 $errObj
                 }
-                $response.OutputStream.Close()
                 continue
             }
             elseif ($pathOnly -eq "/api/auth/me" -and $request.HttpMethod -eq "GET") {
-                $authH = $request.Headers["Authorization"]
-                if ($authH -like "*local_admin_token*") {
+                $targetU = Get-UserFromAuthHeader $request $localUsersList
+                if ($targetU) {
                     $resObj = @{
-                        user = @{ id = "usr_local_admin"; email = "$localAdminUser@veyra.app" }
+                        user = @{ id = $targetU.id; email = $targetU.email; username = $targetU.username }
                         profile = @{
-                            id = "usr_local_admin"
-                            username = $localAdminUser
-                            email = "$localAdminUser@veyra.app"
-                            display_name = $localAdminUser
-                            role = "admin"
-                            status = "active"
-                            plan_id = "pro"
-                            must_change_password = 0
+                            id = $targetU.id
+                            username = $targetU.username
+                            email = $targetU.email
+                            display_name = $targetU.display_name
+                            role = $targetU.role
+                            status = $targetU.status
+                            plan_id = $targetU.plan_id
+                            must_change_password = $targetU.must_change_password
+                            app_overrides = $targetU.app_overrides
                         }
                     }
                 } else {
                     $resObj = @{ user = $null; profile = $null }
                 }
-                $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
-                $response.StatusCode = 200
-                $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
-                $response.OutputStream.Close()
+                Send-JsonResponse $response 200 $resObj
                 continue
             }
             elseif ($pathOnly -eq "/api/auth/logout") {
                 $resObj = @{ success = $true }
-                $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
-                $response.StatusCode = 200
-                $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
-                $response.OutputStream.Close()
+                Send-JsonResponse $response 200 $resObj
                 continue
             }
             elseif ($pathOnly -eq "/api/admin/users") {
                 if ($request.HttpMethod -eq "GET") {
                     $resObj = @{ users = $localUsersList }
-                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj -Depth 5))
-                    $response.StatusCode = 200
-                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                    Send-JsonResponse $response 200 $resObj
                 }
                 elseif ($request.HttpMethod -eq "POST") {
                     $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
                     $bodyStr = $reader.ReadToEnd()
                     $jsonBody = ConvertFrom-Json $bodyStr
                     $newU = @{
-                        id = "usr_" + [System.Guid]::NewGuid().ToString()
+                        id = "usr_" + [System.Guid]::NewGuid().ToString().Replace("-","").Substring(0, 16)
                         username = if ($jsonBody.username) { $jsonBody.username } else { "user_" + (Get-Random) }
                         email = if ($jsonBody.email) { $jsonBody.email } else { $jsonBody.username + "@veyra.app" }
                         role = if ($jsonBody.role) { $jsonBody.role } else { "user" }
                         status = "active"
                         plan_id = if ($jsonBody.plan_id) { $jsonBody.plan_id } else { "pro" }
+                        password = if ($jsonBody.password) { $jsonBody.password } else { "VeyraTemp123!" }
                         must_change_password = if ($jsonBody.must_change_password) { 1 } else { 0 }
                         created_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
                         updated_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
@@ -173,11 +211,9 @@ while ($listener.IsListening) {
                         success = $true
                         userId = $newU.id
                         username = $newU.username
-                        initialPassword = if ($jsonBody.password) { $jsonBody.password } else { "VeyraTemp123!" }
+                        initialPassword = $newU.password
                     }
-                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
-                    $response.StatusCode = 200
-                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                    Send-JsonResponse $response 200 $resObj
                 }
                 elseif ($request.HttpMethod -eq "PATCH") {
                     $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
@@ -189,10 +225,7 @@ while ($listener.IsListening) {
                         $activeAdmins = @($localUsersList | Where-Object { $_.role -eq "admin" -and $_.status -eq "active" })
                         if ($target.role -eq "admin" -and $activeAdmins.Count -le 1 -and (($jsonBody.status -eq "suspended") -or ($jsonBody.role -eq "user"))) {
                             $errObj = @{ success = $false; error = "Cannot suspend or demote the only active administrator" }
-                            $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $errObj))
-                            $response.StatusCode = 400
-                            $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
-                            $response.OutputStream.Close()
+                            Send-JsonResponse $response 400 $errObj
                             continue
                         }
                         if ($jsonBody.username) {
@@ -214,12 +247,147 @@ while ($listener.IsListening) {
                         }
                     }
                     $resObj = @{ success = $true }
-                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
-                    $response.StatusCode = 200
-                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                    Send-JsonResponse $response 200 $resObj
                 }
-                $response.OutputStream.Close()
                 continue
+            }
+            # ---------------------------------------------------------
+            # Wealth Endpoints (Per-User Partitioned)
+            # ---------------------------------------------------------
+            elseif ($pathOnly.StartsWith("/api/wealth/")) {
+                $targetU = Get-UserFromAuthHeader $request $localUsersList
+                if (-not $targetU) {
+                    Send-JsonResponse $response 401 @{ unauthorized = $true; error = "Unauthorized" }
+                    continue
+                }
+
+                $uid = $targetU.id
+                if (-not $localWealthStores.ContainsKey($uid)) {
+                    $localWealthStores[$uid] = @{}
+                }
+                $userStore = $localWealthStores[$uid]
+
+                # Parse month query param
+                $m = "2026-10"
+                if ($rawUrl -match "month=([^&]+)") {
+                    $m = [System.Uri]::UnescapeDataString($matches[1])
+                }
+
+                if (-not $userStore.ContainsKey($m)) {
+                    $userStore[$m] = [System.Collections.ArrayList]@()
+                }
+                $accountsList = $userStore[$m]
+
+                if ($pathOnly -eq "/api/wealth/summary") {
+                    $usdRate = 4.08
+                    $totalNetWorthMyr = 0.0
+                    $totalAprMyr = 0.0
+                    $computed = @()
+                    foreach ($a in $accountsList) {
+                        $amt = [double]$a.amount
+                        $apr = [double]$a.apr
+                        $r = if ($a.currency -eq "USD") { $usdRate } else { 1.0 }
+                        $myr = [Math]::Round(($amt * $r), 2)
+                        $aprAmt = [Math]::Round((($myr * $apr) / 100.0), 2)
+                        $totalNetWorthMyr += $myr
+                        $totalAprMyr += $aprAmt
+                        $computed += @{
+                            id = $a.id
+                            name = $a.name
+                            category = $a.category
+                            platform = $a.platform
+                            currency = $a.currency
+                            amount = $amt
+                            apr = $apr
+                            amount_myr = $myr
+                            apr_amount_myr = $aprAmt
+                        }
+                    }
+                    $weightedRoi = if ($totalNetWorthMyr -gt 0) { [Math]::Round((($totalAprMyr / $totalNetWorthMyr) * 100.0), 2) } else { 0.0 }
+                    $allMonths = @($userStore.Keys | Sort-Object)
+
+                    $resObj = @{
+                        month = $m
+                        is_archived = $false
+                        needs_init = ($accountsList.Count -eq 0)
+                        usd_rate = $usdRate
+                        available_months = $allMonths
+                        last_recorded_month = $null
+                        portfolio = @{
+                            total_net_worth_myr = $totalNetWorthMyr
+                            estimated_apr_myr = $totalAprMyr
+                            weighted_roi = $weightedRoi
+                            accounts_count = $accountsList.Count
+                            accounts = $computed
+                        }
+                        growth = @{
+                            delta_rm = 0.0
+                            growth_rate = 0.0
+                            previous_month = $null
+                            previous_net_worth = 0.0
+                        }
+                        analytics = @{
+                            category_breakdown = @()
+                            platform_breakdown = @()
+                            history_snapshots = @()
+                        }
+                        insights = @{
+                            top_apr_contributors = @()
+                        }
+                    }
+                    Send-JsonResponse $response 200 $resObj
+                    continue
+                }
+                elseif ($pathOnly -eq "/api/wealth/portfolio") {
+                    if ($request.HttpMethod -eq "GET") {
+                        Send-JsonResponse $response 200 @{ month = $m; accounts = $accountsList; usd_rate = 4.08 }
+                    }
+                    elseif ($request.HttpMethod -eq "POST") {
+                        $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                        $bodyStr = $reader.ReadToEnd()
+                        $b = ConvertFrom-Json $bodyStr
+                        $newAcc = @{
+                            id = "acc_" + [System.Guid]::NewGuid().ToString().Replace("-","").Substring(0, 10)
+                            name = if ($b.name) { $b.name } else { "Account" }
+                            category = if ($b.category) { $b.category } else { "bank" }
+                            platform = if ($b.platform) { $b.platform } else { "Other" }
+                            currency = if ($b.currency) { $b.currency } else { "MYR" }
+                            amount = [double]$b.amount
+                            apr = [double]$b.apr
+                        }
+                        [void]$accountsList.Add($newAcc)
+                        Send-JsonResponse $response 201 @{ success = $true; account = $newAcc }
+                    }
+                    continue
+                }
+                elseif ($pathOnly.StartsWith("/api/wealth/portfolio/")) {
+                    $accId = $pathOnly.Substring("/api/wealth/portfolio/".Length)
+                    if ($request.HttpMethod -eq "DELETE") {
+                        $toRemove = $accountsList | Where-Object { $_.id -eq $accId }
+                        if ($toRemove) { [void]$accountsList.Remove($toRemove) }
+                        Send-JsonResponse $response 200 @{ success = $true; deleted = $true }
+                    }
+                    elseif ($request.HttpMethod -eq "PUT") {
+                        $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                        $bodyStr = $reader.ReadToEnd()
+                        $b = ConvertFrom-Json $bodyStr
+                        $item = $accountsList | Where-Object { $_.id -eq $accId }
+                        if ($item) {
+                            if ($b.name) { $item.name = $b.name }
+                            if ($b.category) { $item.category = $b.category }
+                            if ($b.platform) { $item.platform = $b.platform }
+                            if ($b.currency) { $item.currency = $b.currency }
+                            if ($null -ne $b.amount) { $item.amount = [double]$b.amount }
+                            if ($null -ne $b.apr) { $item.apr = [double]$b.apr }
+                        }
+                        Send-JsonResponse $response 200 @{ success = $true; id = $accId }
+                    }
+                    continue
+                }
+                elseif ($pathOnly -eq "/api/wealth/settings") {
+                    Send-JsonResponse $response 200 @{ success = $true }
+                    continue
+                }
             }
             elseif ($pathOnly.StartsWith("/api/journal/") -or $pathOnly -eq "/api/trades" -or $pathOnly.StartsWith("/api/trades/")) {
                 $resObj = @{ success = $true }
@@ -236,10 +404,7 @@ while ($listener.IsListening) {
                 } elseif ($pathOnly -eq "/api/trades") {
                     $resObj = @{ trades = @() }
                 }
-                $responseBytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $resObj))
-                $response.StatusCode = 200
-                $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
-                $response.OutputStream.Close()
+                Send-JsonResponse $response 200 $resObj
                 continue
             }
         }

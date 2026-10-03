@@ -1,40 +1,21 @@
 /**
  * wealth/js/core/api.js
  * Month-Centric High-Availability API & Offline Store
- * Designed for monthly entries with automatic historical archiving.
+ * Strictly partitioned by user ID to guarantee zero multi-tenant data bleed.
  */
 
-const SEED_OCT_2026 = [
-    { id: "acc_1", platform: "Touch 'n Go", product: "GO+", category: "cash", currency: "MYR", amount: 405.37, apr: 3.11, notes: "Daily cash yield" },
-    { id: "acc_2", platform: "Hong Leong Bank", product: "Saving", category: "bank", currency: "MYR", amount: 3284.19, apr: 1.50, notes: "Emergency fund" },
-    { id: "acc_3", platform: "Hong Leong Bank", product: "e-FD", category: "bank", currency: "MYR", amount: 3000.00, apr: 3.60, notes: "Fixed Deposit" },
-    { id: "acc_4", platform: "Public Bank", product: "Saving", category: "bank", currency: "MYR", amount: 0.00, apr: 0.00, notes: "" },
-    { id: "acc_5", platform: "myASNB", product: "ASM1", category: "investment", currency: "MYR", amount: 65.93, apr: 5.00, notes: "Government unit trust" },
-    { id: "acc_6", platform: "myASNB", product: "ASM2", category: "investment", currency: "MYR", amount: 0.00, apr: 5.00, notes: "" },
-    { id: "acc_7", platform: "myASNB", product: "ASM3", category: "investment", currency: "MYR", amount: 105.50, apr: 5.00, notes: "" },
-    { id: "acc_8", platform: "Rize", product: "Saving", category: "bank", currency: "MYR", amount: 491.47, apr: 0.00, notes: "Digital bank" },
-    { id: "acc_9", platform: "Versa", product: "Cash", category: "cash", currency: "MYR", amount: 4026.59, apr: 3.48, notes: "MMF Liquid Cash" },
-    { id: "acc_10", platform: "Aeon Wallet", product: "Saving", category: "cash", currency: "MYR", amount: 15.00, apr: 0.00, notes: "" },
-    { id: "acc_11", platform: "Shopee Pay", product: "Money+", category: "cash", currency: "MYR", amount: 1029.02, apr: 5.61, notes: "High APR Wallet" },
-    { id: "acc_12", platform: "Ryt Bank", product: "Saving", category: "bank", currency: "MYR", amount: 295.54, apr: 2.05, notes: "" },
-    { id: "acc_13", platform: "Seter", product: "Saving", category: "bank", currency: "MYR", amount: 9.62, apr: 0.00, notes: "" },
-    { id: "acc_14", platform: "Bybit", product: "Mantle Vault", category: "crypto", currency: "USD", amount: 400.00, apr: 6.75, notes: "On-chain Staking" },
-    { id: "acc_15", platform: "Bybit", product: "Flexible", category: "crypto", currency: "USD", amount: 200.00, apr: 7.18, notes: "USDT Flexible Earn" },
-    { id: "acc_16", platform: "Bybit", product: "BYUSDT", category: "crypto", currency: "USD", amount: 421.36, apr: 3.18, notes: "Trading Collateral" },
-    { id: "acc_17", platform: "VT Markets", product: "Trading Account", category: "trading", currency: "USD", amount: 61.42, apr: 0.00, notes: "Forex Broker" },
-    { id: "acc_18", platform: "Vantage", product: "Trading Account", category: "trading", currency: "USD", amount: 0.34, apr: 0.00, notes: "CFD Account" }
-];
+function getActiveUserId() {
+    try {
+        return localStorage.getItem("veyra_active_user_id") || "guest";
+    } catch (_) {
+        return "guest";
+    }
+}
 
-const SEED_SEP_2026 = [
-    { id: "acc_s1", platform: "Touch 'n Go", product: "GO+", category: "cash", currency: "MYR", amount: 350.00, apr: 3.11, notes: "" },
-    { id: "acc_s2", platform: "Hong Leong Bank", product: "Saving", category: "bank", currency: "MYR", amount: 2800.00, apr: 1.50, notes: "" },
-    { id: "acc_s3", platform: "Hong Leong Bank", product: "e-FD", category: "bank", currency: "MYR", amount: 3000.00, apr: 3.60, notes: "" },
-    { id: "acc_s9", platform: "Versa", product: "Cash", category: "cash", currency: "MYR", amount: 3800.00, apr: 3.48, notes: "" },
-    { id: "acc_s11", platform: "Shopee Pay", product: "Money+", category: "cash", currency: "MYR", amount: 950.00, apr: 5.61, notes: "" },
-    { id: "acc_s14", platform: "Bybit", product: "Mantle Vault", category: "crypto", currency: "USD", amount: 400.00, apr: 6.75, notes: "" },
-    { id: "acc_s15", platform: "Bybit", product: "Flexible", category: "crypto", currency: "USD", amount: 150.00, apr: 7.18, notes: "" },
-    { id: "acc_s16", platform: "Bybit", product: "BYUSDT", category: "crypto", currency: "USD", amount: 410.00, apr: 3.18, notes: "" }
-];
+function getScopedKey(baseKey) {
+    const uid = getActiveUserId().replace(/[^a-zA-Z0-9_-]/g, '_');
+    return `${baseKey}_${uid}`;
+}
 
 function getAuthHeader() {
     let token = null;
@@ -44,25 +25,36 @@ function getAuthHeader() {
     return headers;
 }
 
-// Local monthly storage helpers
-function getMonthlyStore() {
+function getScopedUsdRate() {
     try {
-        const val = localStorage.getItem("veyra_wealth_monthly_store");
+        const rate = localStorage.getItem(getScopedKey("veyra_wealth_usd_rate"));
+        return rate ? Number(rate) : 4.08;
+    } catch (_) {
+        return 4.08;
+    }
+}
+
+function setScopedUsdRate(rate) {
+    try {
+        localStorage.setItem(getScopedKey("veyra_wealth_usd_rate"), String(rate));
+    } catch (_) {}
+}
+
+// Local monthly storage helpers (isolated per authenticated user)
+function getMonthlyStore() {
+    const key = getScopedKey("veyra_wealth_monthly_store");
+    try {
+        const val = localStorage.getItem(key);
         if (val) return JSON.parse(val);
     } catch (_) {}
 
-    // Initialize with Sep 2026 (Archived) and Oct 2026 (Active)
+    const now = new Date();
+    const curMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const initial = {
-        "2026-09": {
-            month: "2026-09",
-            usd_rate: 4.08,
-            items: SEED_SEP_2026,
-            is_archived: true
-        },
-        "2026-10": {
-            month: "2026-10",
-            usd_rate: 4.08,
-            items: SEED_OCT_2026,
+        [curMonth]: {
+            month: curMonth,
+            usd_rate: getScopedUsdRate(),
+            items: [],
             is_archived: false
         }
     };
@@ -71,17 +63,18 @@ function getMonthlyStore() {
 }
 
 function saveMonthlyStore(store) {
+    const key = getScopedKey("veyra_wealth_monthly_store");
     try {
-        localStorage.setItem("veyra_wealth_monthly_store", JSON.stringify(store));
+        localStorage.setItem(key, JSON.stringify(store));
     } catch (_) {}
 }
 
 function computeLocalMonthlySummary(month) {
     const store = getMonthlyStore();
-    const usdRate = Number(localStorage.getItem("veyra_wealth_usd_rate") || 4.08);
+    const usdRate = getScopedUsdRate();
 
     const monthData = store[month] || null;
-    const accountsRaw = monthData ? monthData.items : [];
+    const accountsRaw = monthData ? (monthData.items || []) : [];
 
     let totalNetWorthMyr = 0;
     let totalEstimatedAprMyr = 0;
@@ -128,7 +121,7 @@ function computeLocalMonthlySummary(month) {
 
     if (prevMonthKey && store[prevMonthKey]) {
         const prevSummary = computeLocalMonthlySummary(prevMonthKey);
-        prevNetWorth = prevSummary.portfolio.total_net_worth_myr;
+        prevNetWorth = prevSummary.portfolio?.total_net_worth_myr || 0;
         if (prevNetWorth > 0 && totalNetWorthMyr > 0) {
             deltaRm = Math.round((totalNetWorthMyr - prevNetWorth) * 100) / 100;
             growthRate = Math.round(((deltaRm / prevNetWorth) * 100) * 100) / 100;
@@ -147,7 +140,7 @@ function computeLocalMonthlySummary(month) {
         }
         const s = store[m];
         let nW = 0; let aprSum = 0;
-        (s.items || []).forEach(it => {
+        (s?.items || []).forEach(it => {
             const r = it.currency === 'USD' ? (s.usd_rate || usdRate) : 1.0;
             const mVal = (it.amount || 0) * r;
             nW += mVal;
@@ -230,24 +223,47 @@ export const WealthApi = {
     async getSummary(month) {
         const m = month || "2026-10";
         const remote = await request(`/api/wealth/summary?month=${encodeURIComponent(m)}`);
-        if (remote && !remote.unauthorized && remote.portfolio?.accounts?.length) {
+        
+        // If remote responded successfully, it reflects this user's cloud state (even if 0 accounts)
+        if (remote && !remote.unauthorized && remote.portfolio) {
+            const store = getMonthlyStore();
+            store[m] = {
+                month: m,
+                usd_rate: remote.usd_rate || getScopedUsdRate(),
+                items: remote.portfolio.accounts || [],
+                is_archived: !!remote.is_archived
+            };
+            saveMonthlyStore(store);
+            if (remote.usd_rate) setScopedUsdRate(remote.usd_rate);
             return remote;
         }
         if (remote?.unauthorized) return { unauthorized: true };
 
+        // Fallback to user's isolated local store if offline
         return computeLocalMonthlySummary(m);
     },
 
     async getPortfolio(month) {
         const m = month || "2026-10";
         const remote = await request(`/api/wealth/portfolio?month=${encodeURIComponent(m)}`);
-        if (remote && remote.accounts) return remote;
+        if (remote && remote.accounts) {
+            const store = getMonthlyStore();
+            store[m] = {
+                month: m,
+                usd_rate: remote.usd_rate || getScopedUsdRate(),
+                items: remote.accounts,
+                is_archived: false
+            };
+            saveMonthlyStore(store);
+            if (remote.usd_rate) setScopedUsdRate(remote.usd_rate);
+            return remote;
+        }
 
         const store = getMonthlyStore();
         return {
             month: m,
             accounts: store[m]?.items || [],
-            usd_rate: Number(localStorage.getItem("veyra_wealth_usd_rate") || 4.08)
+            usd_rate: getScopedUsdRate()
         };
     },
 
@@ -257,13 +273,12 @@ export const WealthApi = {
             method: "POST",
             body: JSON.stringify({ ...payload, month: m })
         });
-        if (remote && remote.success) return remote;
-
+        
         const store = getMonthlyStore();
         if (!store[m]) {
-            store[m] = { month: m, usd_rate: 4.08, items: [], is_archived: false };
+            store[m] = { month: m, usd_rate: getScopedUsdRate(), items: [], is_archived: false };
         }
-        const newAcc = {
+        const newAcc = (remote && remote.account) ? remote.account : {
             id: 'acc_' + Date.now().toString(36),
             ...payload,
             amount: Number(payload.amount) || 0,
@@ -271,7 +286,8 @@ export const WealthApi = {
         };
         store[m].items.push(newAcc);
         saveMonthlyStore(store);
-        return { success: true, account: newAcc };
+
+        return remote || { success: true, account: newAcc };
     },
 
     async updateAccount(id, payload, month) {
@@ -280,7 +296,6 @@ export const WealthApi = {
             method: "PUT",
             body: JSON.stringify(payload)
         });
-        if (remote && remote.success) return remote;
 
         const store = getMonthlyStore();
         if (store[m]) {
@@ -290,7 +305,7 @@ export const WealthApi = {
                 saveMonthlyStore(store);
             }
         }
-        return { success: true, id };
+        return remote || { success: true, id };
     },
 
     async deleteAccount(id, month) {
@@ -298,14 +313,13 @@ export const WealthApi = {
         const remote = await request(`/api/wealth/portfolio/${encodeURIComponent(id)}?month=${encodeURIComponent(m)}`, {
             method: "DELETE"
         });
-        if (remote && remote.success) return remote;
 
         const store = getMonthlyStore();
         if (store[m]) {
             store[m].items = store[m].items.filter(a => a.id !== id);
             saveMonthlyStore(store);
         }
-        return { success: true, deleted: true };
+        return remote || { success: true, deleted: true };
     },
 
     // 一键从上月复制数据到新月份并归档旧月
@@ -316,7 +330,7 @@ export const WealthApi = {
                 action: "clone",
                 source_month: sourceMonth,
                 target_month: targetMonth,
-                usd_rate: Number(localStorage.getItem("veyra_wealth_usd_rate") || 4.08)
+                usd_rate: getScopedUsdRate()
             })
         });
         if (remote && remote.success) return remote;
@@ -337,7 +351,7 @@ export const WealthApi = {
 
         store[targetMonth] = {
             month: targetMonth,
-            usd_rate: store[sourceMonth].usd_rate || 4.08,
+            usd_rate: store[sourceMonth].usd_rate || getScopedUsdRate(),
             items: clonedItems,
             is_archived: false
         };
@@ -356,10 +370,9 @@ export const WealthApi = {
         return { success: true };
     },
 
-
     async saveSettings(payload) {
         if (payload.default_usd_rate) {
-            localStorage.setItem("veyra_wealth_usd_rate", payload.default_usd_rate);
+            setScopedUsdRate(payload.default_usd_rate);
         }
         await request("/api/wealth/settings", { method: "PUT", body: JSON.stringify(payload) });
         return { success: true, settings: payload };

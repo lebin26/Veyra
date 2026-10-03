@@ -41,6 +41,12 @@ export async function signIn(identifier, password) {
                 if (data.token && typeof localStorage !== 'undefined') {
                     localStorage.setItem('veyra_session_token', data.token);
                 }
+                if (data.user?.id && typeof localStorage !== 'undefined') {
+                    localStorage.setItem('veyra_active_user_id', data.user.id);
+                    if (data.profile?.username) {
+                        localStorage.setItem('veyra_active_username', data.profile.username);
+                    }
+                }
                 cachedProfile = data.profile;
                 return {
                     success: true,
@@ -146,6 +152,12 @@ export async function signIn(identifier, password) {
             };
         }
 
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('veyra_active_user_id', user.id);
+            if (profile.username) {
+                localStorage.setItem('veyra_active_username', profile.username);
+            }
+        }
         cachedProfile = profile;
 
         return {
@@ -171,6 +183,8 @@ export async function signOut() {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('veyra_session_token') : null;
     if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('veyra_session_token');
+        localStorage.removeItem('veyra_active_user_id');
+        localStorage.removeItem('veyra_active_username');
     }
 
     try {
@@ -207,10 +221,20 @@ export async function getCurrentUserAndProfile() {
             const data = await res.json();
             if (data && data.user && data.profile) {
                 cachedProfile = data.profile;
+                if (typeof localStorage !== 'undefined' && data.user.id) {
+                    localStorage.setItem('veyra_active_user_id', data.user.id);
+                    if (data.profile.username) {
+                        localStorage.setItem('veyra_active_username', data.profile.username);
+                    }
+                }
                 return { user: data.user, profile: data.profile };
             }
             if (res.status === 200 && data.user === null) {
                 cachedProfile = null;
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.removeItem('veyra_active_user_id');
+                    localStorage.removeItem('veyra_active_username');
+                }
                 return { user: null, profile: null };
             }
         }
@@ -228,12 +252,19 @@ export async function getCurrentUserAndProfile() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || !session.user) {
             cachedProfile = null;
+            if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem('veyra_active_user_id');
+                localStorage.removeItem('veyra_active_username');
+            }
             return { user: null, profile: null };
         }
 
         const user = session.user;
 
         if (cachedProfile && cachedProfile.id === user.id) {
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('veyra_active_user_id', user.id);
+            }
             return { user, profile: cachedProfile };
         }
 
@@ -248,10 +279,38 @@ export async function getCurrentUserAndProfile() {
         }
 
         cachedProfile = profile;
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('veyra_active_user_id', user.id);
+            if (profile.username) {
+                localStorage.setItem('veyra_active_username', profile.username);
+            }
+        }
         return { user, profile };
     } catch (err) {
         console.error('[Veyra Auth] Error getting current user:', err);
         return { user: null, profile: null };
+    }
+}
+
+/**
+ * Get active user ID synchronously from localStorage if available
+ */
+export function getActiveUserId() {
+    try {
+        return (typeof localStorage !== 'undefined') ? (localStorage.getItem('veyra_active_user_id') || null) : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+/**
+ * Get active username synchronously from localStorage if available
+ */
+export function getActiveUsername() {
+    try {
+        return (typeof localStorage !== 'undefined') ? (localStorage.getItem('veyra_active_username') || null) : null;
+    } catch (_) {
+        return null;
     }
 }
 

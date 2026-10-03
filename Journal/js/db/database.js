@@ -1,21 +1,66 @@
 /**
  * database.js
  * 工业级 IndexedDB 本地数据库：
+ * 物理隔离不同用户账户 (Multi-Tenant Local Partitioning)，
  * 物理隔离 Live 与 Backtest，并支持 Strategies (Playbooks) 与 Daily Journals 架构。
  */
 
-const DB_NAME = 'PrivateTradingJournalDB';
-const DB_VERSION = 3; // 升级版本支持 playbooks, notebook, goals, broker_connections
+const DB_VERSION = 3;
 
+let activeUserId = null;
 let dbInstance = null;
 
-export function openDatabase() {
+export function setActiveUser(userId) {
+  const cleanId = userId ? String(userId).trim() : null;
+  if (activeUserId !== cleanId) {
+    if (dbInstance) {
+      try { dbInstance.close(); } catch (_) {}
+      dbInstance = null;
+    }
+    activeUserId = cleanId;
+  }
+}
+
+export function getActiveUserId() {
+  if (activeUserId) return activeUserId;
+  try {
+    return localStorage.getItem('veyra_active_user_id') || 'guest';
+  } catch (_) {
+    return 'guest';
+  }
+}
+
+export function getDatabaseName(userId) {
+  const uid = userId || getActiveUserId();
+  const safeUid = (uid || 'guest').replace(/[^a-zA-Z0-9_-]/g, '_');
+  return `VeyraJournalDB_${safeUid}`;
+}
+
+export function closeDatabase() {
   if (dbInstance) {
+    try { dbInstance.close(); } catch (_) {}
+    dbInstance = null;
+  }
+}
+
+export function openDatabase(specifiedUserId) {
+  if (specifiedUserId) {
+    setActiveUser(specifiedUserId);
+  }
+
+  const currentDbName = getDatabaseName();
+
+  if (dbInstance && dbInstance.name === currentDbName) {
     return Promise.resolve(dbInstance);
   }
 
+  if (dbInstance) {
+    try { dbInstance.close(); } catch (_) {}
+    dbInstance = null;
+  }
+
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(currentDbName, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
