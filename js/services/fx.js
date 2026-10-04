@@ -219,6 +219,7 @@ export async function initializeFX() {
         window.VEYRA_FX = {
             USDMYR: null,
             date: null,
+            fetchedAt: null,
             isFallback: false,
             status: "loading" // "loading" | "ready" | "unavailable"
         };
@@ -229,6 +230,7 @@ export async function initializeFX() {
     if (cached) {
         window.VEYRA_FX.USDMYR = cached.rate;
         window.VEYRA_FX.date = cached.date;
+        window.VEYRA_FX.fetchedAt = cached.fetchedAt || null;
         window.VEYRA_FX.isFallback = Boolean(cached.isFallback);
         window.VEYRA_FX.status = "ready";
     }
@@ -240,6 +242,7 @@ export async function initializeFX() {
         window.VEYRA_FX = {
             USDMYR: fx.rate,
             date: fx.date,
+            fetchedAt: fx.fetchedAt || Date.now(),
             isFallback: Boolean(fx.isFallback),
             status: "ready"
         };

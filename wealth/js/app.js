@@ -27,8 +27,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const elements = {
         themeToggleBtn: document.getElementById("theme-toggle-btn"),
         authStatusContainer: document.getElementById("auth-status-container"),
-        headerRatePill: document.getElementById("header-rate-pill"),
-        headerRateVal: document.getElementById("header-rate-val"),
         headerViewingMonth: document.getElementById("header-viewing-month"),
         headerMonthPicker: document.getElementById("header-month-picker"),
         monthDropdownSelect: document.getElementById("month-dropdown-select"),
@@ -205,9 +203,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 currentData.usd_rate = window.VEYRA_FX.USDMYR;
             }
 
-            // Sync Header USD/MYR rate from unified FX service / snapshot benchmark
-            updateHeaderRatePill();
-
             // Sync Viewing Month text, picker input, dropdown, sidebar month pill, and status badge
             if (elements.headerViewingMonth) {
                 elements.headerViewingMonth.textContent = currentMonth;
@@ -309,6 +304,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // 1. Render KPI Cards (Automated FX benchmark, manual editing disallowed)
             renderKPICards(elements.kpiContainer, data);
+
+            // Bind click-to-refresh on Dashboard USD/MYR rate card
+            const rateCard = elements.kpiContainer?.querySelector("#kpi-card-rate");
+            if (rateCard) {
+                rateCard.style.cursor = "pointer";
+                rateCard.addEventListener("click", async () => {
+                    showToast("Refreshing USD/MYR rate from Frankfurter...");
+                    try {
+                        await getUSDMYRRate({ forceRefresh: true });
+                        await initializeFX();
+                        await loadData();
+                        const rate = window.VEYRA_FX?.USDMYR;
+                        showToast(`USD/MYR 汇率已更新: ${formatFXRate(rate)}`);
+                    } catch (_) {
+                        showToast("使用本地缓存汇率");
+                    }
+                });
+            }
 
             // 2. Render Health Diagnostic Banner
             renderHealthDiagnostic(elements.diagnosticContainer, data);
@@ -542,52 +555,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 currentMonth = chosen;
                 switchViewMode("portfolio");
                 loadData();
-            }
-        });
-    }
-
-    function updateHeaderRatePill() {
-        if (!elements.headerRateVal) return;
-        const fx = window.VEYRA_FX;
-        const isArchived = Boolean(currentData && currentData.is_archived);
-        const activeRate = isArchived
-            ? (currentData.usd_rate || fx?.USDMYR)
-            : (fx?.USDMYR || currentData?.usd_rate);
-
-        if (!fx || fx.status === 'loading') {
-            elements.headerRateVal.textContent = "Loading...";
-            if (elements.headerRatePill) {
-                elements.headerRatePill.title = "USD/MYR — Loading latest rate from Frankfurter...";
-            }
-        } else if (typeof activeRate === 'number' && activeRate > 0) {
-            const formatted = formatFXRate(activeRate);
-            elements.headerRateVal.textContent = formatted;
-            const subtitle = isArchived
-                ? `1 USD = ${formatted} MYR\nArchived Snapshot Rate (${currentData.month})\nSource: Wealth Archive`
-                : `1 USD = ${formatted} MYR\nRate date: ${fx.date || '—'}${fx.isFallback ? ' · Cached fallback' : ''}\nSource: Frankfurter`;
-            if (elements.headerRatePill) {
-                elements.headerRatePill.title = subtitle;
-            }
-        } else {
-            elements.headerRateVal.textContent = "Unavailable";
-            if (elements.headerRatePill) {
-                elements.headerRatePill.title = "USD/MYR exchange rate currently unavailable";
-            }
-        }
-    }
-
-    if (elements.headerRatePill) {
-        elements.headerRatePill.addEventListener("click", async () => {
-            showToast("Refreshing USD/MYR rate from Frankfurter...");
-            try {
-                await getUSDMYRRate({ forceRefresh: true });
-                await initializeFX();
-                updateHeaderRatePill();
-                await loadData();
-                const rate = window.VEYRA_FX?.USDMYR;
-                showToast(`USD/MYR refreshed: ${formatFXRate(rate)} (${window.VEYRA_FX?.date || ''})`);
-            } catch (err) {
-                showToast("Failed to refresh live rate. Using cached rate.");
             }
         });
     }

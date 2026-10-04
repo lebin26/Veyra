@@ -19,9 +19,23 @@ export function renderKPICards(container, data, onEditRate) {
     const formattedRate = (effectiveRate !== null && Number.isFinite(effectiveRate) && effectiveRate > 0)
         ? effectiveRate.toFixed(4)
         : "—";
-    const rateSubtext = formattedRate !== "—"
-        ? `1 USD = ${formattedRate} MYR${isFallback ? ' · Cached' : ''}`
-        : "Rate currently unavailable";
+    // Format last updated description
+    let lastUpdatedText = "—";
+    if (isArchived) {
+        lastUpdatedText = `最后更新: ${data.month || '归档锁定'}`;
+    } else if (fxState.fetchedAt) {
+        const d = new Date(fxState.fetchedAt);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        lastUpdatedText = `最后更新: ${y}-${m}-${day} ${hh}:${mm}`;
+    } else if (fxState.date) {
+        lastUpdatedText = `最后更新: ${fxState.date}`;
+    } else {
+        lastUpdatedText = "最后更新: 实时";
+    }
 
     const {
         portfolio = {},
@@ -84,13 +98,13 @@ export function renderKPICards(container, data, onEditRate) {
             </div>
 
             <!-- 4. Active USD/MYR Rate -->
-            <div class="kpi-card" id="kpi-card-rate" title="USD/MYR FX Benchmark · Frankfurter">
+            <div class="kpi-card" id="kpi-card-rate" title="USD/MYR 汇率基准 · Frankfurter (点击刷新)">
                 <div class="kpi-label-group">
-                    <span>USD / MYR FX Rate</span>
-                    <span style="font-size: 10px; color: var(--text-secondary);">${rateDate ? `Date: ${rateDate}` : 'Frankfurter'}</span>
+                    <span>USD / MYR</span>
+                    <span style="font-size: 10px; color: var(--text-secondary);">${rateDate ? `基准日: ${rateDate}` : 'Frankfurter'}</span>
                 </div>
                 <div class="kpi-val-regular tabular-nums">${formattedRate}</div>
-                <div class="kpi-subtext">${rateSubtext}</div>
+                <div class="kpi-subtext">${lastUpdatedText}</div>
             </div>
         </div>
 
