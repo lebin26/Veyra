@@ -77,8 +77,8 @@ export async function onRequest(context) {
                 apr: Number(r.apr) || 0,
                 apr_amount_myr: Number(r.apr_amount_myr) || 0
             }));
-        } else {
-            // Check if there are live accounts to seed this month
+        } else if (month === defaultMonth) {
+            // Only seed from legacy wealth_accounts if viewing the default/current month
             const liveRes = await db.prepare(`
                 SELECT id, platform, product, category, currency, amount, apr, notes
                 FROM wealth_accounts
@@ -87,16 +87,29 @@ export async function onRequest(context) {
             `).bind(currentUser.id).all();
 
             if (liveRes.results && liveRes.results.length > 0) {
-                accounts = liveRes.results.map(r => {
+                // Automatically persist as snapshot for defaultMonth so that future edits and month isolation are clean
+                const snapId = 'snp_' + crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+                await db.prepare(`
+                    INSERT INTO wealth_snapshots (id, user_id, month, usd_rate, total_net_worth_myr, estimated_apr_myr, weighted_roi, created_at)
+                    VALUES (?, ?, ?, ?, 0, 0, 0, datetime('now'))
+                `).bind(snapId, currentUser.id, defaultMonth, usdRate).run();
+
+                for (const r of liveRes.results) {
                     const amt = Number(r.amount) || 0;
                     const apr = Number(r.apr) || 0;
                     const rate = r.currency === 'USD' ? usdRate : 1.0;
                     const myr = Math.round(amt * rate * 100) / 100;
                     const aprAmt = Math.round(((myr * apr) / 100) * 100) / 100;
+                    const itemId = 'sni_' + crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+                    await db.prepare(`
+                        INSERT INTO wealth_snapshot_items (id, snapshot_id, platform, product, category, currency, amount, amount_myr, apr, apr_amount_myr)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `).bind(itemId, snapId, r.platform, r.product, r.category, r.currency, amt, myr, apr, aprAmt).run();
+
                     totalNetWorthMyr += myr;
                     totalEstimatedAprMyr += aprAmt;
-                    return {
-                        id: r.id,
+                    accounts.push({
+                        id: itemId,
                         platform: r.platform,
                         product: r.product,
                         category: r.category,
@@ -105,11 +118,20 @@ export async function onRequest(context) {
                         amount_myr: myr,
                         apr,
                         apr_amount_myr: aprAmt
-                    };
-                });
+                    });
+                }
                 totalNetWorthMyr = Math.round(totalNetWorthMyr * 100) / 100;
                 totalEstimatedAprMyr = Math.round(totalEstimatedAprMyr * 100) / 100;
                 weightedRoi = totalNetWorthMyr > 0 ? Math.round(((totalEstimatedAprMyr / totalNetWorthMyr) * 100) * 100) / 100 : 0;
+                await db.prepare(`
+                    UPDATE wealth_snapshots
+                    SET total_net_worth_myr = ?, estimated_apr_myr = ?, weighted_roi = ?
+                    WHERE id = ?
+                `).bind(totalNetWorthMyr, totalEstimatedAprMyr, weightedRoi, snapId).run();
+
+                currentSnapshot = { id: snapId, month: defaultMonth, usd_rate: usdRate };
+                allSnapshots.push(currentSnapshot);
+                if (!availableMonths.includes(defaultMonth)) availableMonths.push(defaultMonth);
             }
         }
 

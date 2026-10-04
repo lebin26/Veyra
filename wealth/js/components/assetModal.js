@@ -10,7 +10,12 @@ const PLATFORM_SUGGESTIONS = [
     "Aeon Wallet", "Shopee Pay", "Ryt Bank", "Seter", "VT Markets", "Vantage"
 ];
 
-export function openAssetModal(asset = null, onSaved) {
+export function openAssetModal(asset = null, targetMonth = null, onSaved) {
+    if (typeof targetMonth === 'function') {
+        onSaved = targetMonth;
+        targetMonth = null;
+    }
+
     const existing = document.getElementById("asset-modal");
     if (existing) existing.remove();
 
@@ -22,7 +27,7 @@ export function openAssetModal(asset = null, onSaved) {
     backdrop.innerHTML = `
         <div class="modal-panel" style="max-width: 480px;">
             <div class="modal-header">
-                <span class="modal-title">${isEdit ? 'Edit Asset Holding' : 'Add New Asset Holding'}</span>
+                <span class="modal-title">${isEdit ? 'Edit Asset Holding' : 'Add New Asset Holding'}${targetMonth ? ` · ${escapeHtml(targetMonth)}` : ''}</span>
                 <button type="button" class="modal-close-btn" id="modal-close">✕</button>
             </div>
 
@@ -120,9 +125,9 @@ export function openAssetModal(asset = null, onSaved) {
 
         try {
             if (isEdit) {
-                await WealthApi.updateAccount(asset.id, payload);
+                await WealthApi.updateAccount(asset.id, payload, targetMonth);
             } else {
-                await WealthApi.createAccount(payload);
+                await WealthApi.createAccount(payload, targetMonth);
             }
             closeModal();
             if (typeof onSaved === 'function') onSaved();

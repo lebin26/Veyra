@@ -110,17 +110,7 @@ export function renderPortfolioTable(container, accounts = [], usdRate = null, c
                     <div class="section-title-group">
                         <h2 class="section-title">Asset Portfolio</h2>
                         <span class="section-count-tag tabular-nums">${processed.length} of ${accounts.length} Assets</span>
-                        ${currentMonth ? `
-                            <div class="table-month-control" title="Holdings month">
-                                <button type="button" class="btn-table-month-step" id="tbl-btn-prev-month" title="Previous Month">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                                </button>
-                                <span class="table-month-badge tabular-nums">${currentMonth}</span>
-                                <button type="button" class="btn-table-month-step" id="tbl-btn-next-month" title="Next Month">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                </button>
-                            </div>
-                        ` : ''}
+                        ${currentMonth ? `<span class="section-count-tag tabular-nums" style="font-weight:600; color:var(--text-secondary);" title="Reporting Month">${escapeHtml(currentMonth)}</span>` : ''}
                     </div>
 
                     <div class="section-filters-row">
@@ -357,27 +347,6 @@ export function renderPortfolioTable(container, accounts = [], usdRate = null, c
                 }
             });
         });
-
-        // Holdings table month steppers
-        const prevTblBtn = container.querySelector("#tbl-btn-prev-month");
-        if (prevTblBtn && currentMonth && typeof callbacks.onMonthChange === 'function') {
-            prevTblBtn.addEventListener("click", () => {
-                const [y, m] = currentMonth.split('-').map(Number);
-                const d = new Date(y, m - 2, 1);
-                const prevM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                callbacks.onMonthChange(prevM);
-            });
-        }
-
-        const nextTblBtn = container.querySelector("#tbl-btn-next-month");
-        if (nextTblBtn && currentMonth && typeof callbacks.onMonthChange === 'function') {
-            nextTblBtn.addEventListener("click", () => {
-                const [y, m] = currentMonth.split('-').map(Number);
-                const d = new Date(y, m, 1);
-                const nextM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                callbacks.onMonthChange(nextM);
-            });
-        }
 
         // Template Quick Fill buttons
         const tblQuickBtn = container.querySelector("#btn-tbl-quick-template");

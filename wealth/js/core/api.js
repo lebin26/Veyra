@@ -18,6 +18,7 @@ function getScopedKey(baseKey) {
 }
 
 import { getActiveFXRate, convertUSDToMYR } from '../../../js/services/fx.js';
+import { getCurrentMonthStr } from './math.js';
 
 function getAuthHeader() {
     let token = null;
@@ -222,7 +223,7 @@ async function request(url, options = {}) {
 
 export const WealthApi = {
     async getSummary(month) {
-        const m = month || "2026-10";
+        const m = month || getCurrentMonthStr();
         const activeRate = getActiveRate();
         const rateQuery = activeRate ? `&rate=${encodeURIComponent(activeRate)}` : '';
         const remote = await request(`/api/wealth/summary?month=${encodeURIComponent(m)}${rateQuery}`);
@@ -250,7 +251,7 @@ export const WealthApi = {
     },
 
     async getPortfolio(month) {
-        const m = month || "2026-10";
+        const m = month || getCurrentMonthStr();
         const remote = await request(`/api/wealth/portfolio?month=${encodeURIComponent(m)}`);
         if (remote && remote.accounts) {
             const store = getMonthlyStore();
@@ -273,7 +274,7 @@ export const WealthApi = {
     },
 
     async createAccount(payload, month) {
-        const m = month || "2026-10";
+        const m = month || getCurrentMonthStr();
         const remote = await request(`/api/wealth/portfolio?month=${encodeURIComponent(m)}`, {
             method: "POST",
             body: JSON.stringify({ ...payload, month: m })
@@ -296,7 +297,7 @@ export const WealthApi = {
     },
 
     async updateAccount(id, payload, month) {
-        const m = month || "2026-10";
+        const m = month || getCurrentMonthStr();
         const remote = await request(`/api/wealth/portfolio/${encodeURIComponent(id)}?month=${encodeURIComponent(m)}`, {
             method: "PUT",
             body: JSON.stringify(payload)
@@ -314,7 +315,7 @@ export const WealthApi = {
     },
 
     async deleteAccount(id, month) {
-        const m = month || "2026-10";
+        const m = month || getCurrentMonthStr();
         const remote = await request(`/api/wealth/portfolio/${encodeURIComponent(id)}?month=${encodeURIComponent(m)}`, {
             method: "DELETE"
         });

@@ -343,19 +343,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                         alert(err.message || "Failed to copy template");
                     }
                 },
-                onMonthChange: (m) => {
-                    currentMonth = m;
-                    showToast(`Switched Holdings to ${m}`);
-                    loadData();
-                },
                 onAddAsset: () => {
-                    openAssetModal(null, () => {
+                    openAssetModal(null, currentMonth, () => {
                         showToast("Asset added to " + currentMonth);
                         loadData();
                     });
                 },
                 onEditAsset: (asset) => {
-                    openAssetModal(asset, () => {
+                    openAssetModal(asset, currentMonth, () => {
                         showToast("Asset updated");
                         loadData();
                     });
@@ -483,7 +478,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const blankBtn = elements.monthInitBanner.querySelector("#btn-start-blank");
         if (blankBtn) {
             blankBtn.addEventListener("click", () => {
-                openAssetModal(null, () => loadData());
+                openAssetModal(null, currentMonth, () => loadData());
             });
         }
     }

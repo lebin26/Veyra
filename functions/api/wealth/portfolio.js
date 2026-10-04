@@ -27,18 +27,18 @@ export async function onRequest(context) {
     const month = (rawMonth && /^\d{4}-\d{2}$/.test(rawMonth)) ? rawMonth : defaultMonth;
 
     // Helper: Ensure snapshot exists for month and return snapshot record
-    async function getOrCreateSnapshot(usdRate = 4.08) {
+    async function getOrCreateSnapshot(usdRate = 4.08, targetM = month) {
         let snap = await db.prepare(
             "SELECT id, month, usd_rate FROM wealth_snapshots WHERE user_id = ? AND month = ?"
-        ).bind(currentUser.id, month).first();
+        ).bind(currentUser.id, targetM).first();
 
         if (!snap) {
             const snapId = 'snp_' + crypto.randomUUID().replace(/-/g, '').substring(0, 16);
             await db.prepare(`
                 INSERT INTO wealth_snapshots (id, user_id, month, usd_rate, total_net_worth_myr, estimated_apr_myr, weighted_roi, created_at)
                 VALUES (?, ?, ?, ?, 0, 0, 0, datetime('now'))
-            `).bind(snapId, currentUser.id, month, usdRate).run();
-            snap = { id: snapId, month, usd_rate: usdRate };
+            `).bind(snapId, currentUser.id, targetM, usdRate).run();
+            snap = { id: snapId, month: targetM, usd_rate: usdRate };
         }
         return snap;
     }
@@ -123,7 +123,7 @@ export async function onRequest(context) {
 
             const settings = await db.prepare("SELECT default_usd_rate FROM wealth_settings WHERE user_id = ?").bind(currentUser.id).first();
             const rate = Number(settings?.default_usd_rate) || 4.08;
-            const snap = await getOrCreateSnapshot(rate);
+            const snap = await getOrCreateSnapshot(rate, targetMonth);
 
             const convRate = currency === 'USD' ? snap.usd_rate : 1.0;
             const amountMyr = Math.round(amount * convRate * 100) / 100;
