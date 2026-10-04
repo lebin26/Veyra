@@ -5,7 +5,7 @@
  * Veyra Trading Platform
  */
 import { getCurrentUserAndProfile, signOut } from '../../js/auth/authState.js?v=4';
-import { getCurrentMonthStr } from './core/math.js';
+import { getCurrentMonthStr, escapeHtml } from './core/math.js';
 import { WealthApi } from './core/api.js';
 import { renderKPICards } from './components/kpiCards.js';
 import { renderHealthDiagnostic } from './components/healthDiagnostic.js';
@@ -289,20 +289,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             });
 
-            // Check template availability for this month
-            const templateInfo = await WealthApi.getTemplateForMonth(currentMonth);
-
-            // Check if month needs initialization (empty record)
-            if (data.needs_init) {
-                renderMonthInitBanner(data.last_recorded_month, templateInfo);
-            } else {
-                if (elements.monthInitBanner) {
-                    elements.monthInitBanner.style.display = "none";
-                    elements.monthInitBanner.innerHTML = "";
-                }
-            }
-
-            // 1. Render KPI Cards (Automated FX benchmark, manual editing disallowed)
+            // 1. Immediately Render KPI Cards (Automated FX benchmark, manual editing disallowed)
             renderKPICards(elements.kpiContainer, data);
 
             // Bind click-to-refresh on Dashboard USD/MYR rate card
@@ -323,10 +310,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 });
             }
 
-            // 2. Render Health Diagnostic Banner
+            // 2. Immediately Render Health Diagnostic Banner
             renderHealthDiagnostic(elements.diagnosticContainer, data);
 
-            // 3. Render Visual Charts
+            // 3. Immediately Render Visual Charts
             renderChartEngine(elements.chartsContainer, {
                 ...data.analytics,
                 accounts: data.portfolio?.accounts || [],
@@ -334,13 +321,41 @@ document.addEventListener("DOMContentLoaded", async () => {
                 growth: data.growth
             });
 
+            // Check template availability for this month (using cached summary data for speed)
+            let templateInfo = null;
+            try {
+                templateInfo = await WealthApi.getTemplateForMonth(currentMonth, data);
+            } catch (terr) {
+                console.warn("[Wealth Tracker] Failed to retrieve template info:", terr);
+            }
+
+            // Check if month needs initialization (empty record)
+            if (data.needs_init) {
+                try {
+                    renderMonthInitBanner(data.last_recorded_month, templateInfo);
+                } catch (berr) {
+                    console.error("[Wealth Tracker] Banner render error:", berr);
+                    if (elements.monthInitBanner) {
+                        elements.monthInitBanner.style.display = "none";
+                        elements.monthInitBanner.innerHTML = "";
+                    }
+                }
+            } else {
+                if (elements.monthInitBanner) {
+                    elements.monthInitBanner.style.display = "none";
+                    elements.monthInitBanner.innerHTML = "";
+                }
+            }
+
             // 4. Render Asset Portfolio Table
             const currentUsdRate = data.usd_rate || window.VEYRA_FX?.USDMYR || null;
+            const hasTemplate = Boolean(templateInfo && templateInfo.hasTemplate);
+            const sourceMonth = templateInfo?.sourceMonth || data.last_recorded_month;
             renderPortfolioTable(elements.portfolioContainer, data.portfolio?.accounts || [], currentUsdRate, {
                 currentMonth: currentMonth,
                 isArchived: !!data.is_archived,
-                hasTemplate: templateInfo.hasTemplate,
-                lastRecordedMonth: templateInfo.sourceMonth,
+                hasTemplate: hasTemplate,
+                lastRecordedMonth: sourceMonth,
                 onQuickTemplate: () => {
                     openTemplateModal(currentMonth, templateInfo, () => {
                         showToast(`已成功通过模板录入 ${currentMonth} 资产`);
@@ -349,8 +364,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 },
                 onCopyTemplate: async () => {
                     try {
-                        await WealthApi.inheritFromPreviousMonth(templateInfo.sourceMonth, currentMonth);
-                        showToast(`已复制 ${templateInfo.sourceMonth} 资产到 ${currentMonth}`);
+                        await WealthApi.inheritFromPreviousMonth(sourceMonth, currentMonth);
+                        showToast(`已复制 ${sourceMonth} 资产到 ${currentMonth}`);
                         loadData();
                     } catch (err) {
                         alert(err.message || "Failed to copy template");
@@ -429,13 +444,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ──────────────────────────────────────────
     function renderMonthInitBanner(lastRecordedMonth, templateInfo) {
         if (!elements.monthInitBanner) return;
-        elements.monthInitBanner.style.display = "block";
 
-        const hasTemplate = templateInfo && templateInfo.hasTemplate;
+        const hasTemplate = Boolean(templateInfo && templateInfo.hasTemplate);
         const sourceM = templateInfo?.sourceMonth || lastRecordedMonth;
 
         elements.monthInitBanner.innerHTML = `
-            <div style="background:var(--bg-panel); border:1px solid var(--border-default); border-left:3px solid var(--color-brand); border-radius:var(--radius-panel); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+            <div style="background:var(--bg-panel); border:1px solid var(--border-default); border-left:3px solid var(--color-brand); border-radius:var(--radius-panel); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <strong style="font-size:13.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
                         <span>新月份资产建档 (${escapeHtml(currentMonth)})</span>
@@ -462,6 +476,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
             </div>
         `;
+        elements.monthInitBanner.style.display = "block";
 
         if (hasTemplate) {
             const quickBtn = elements.monthInitBanner.querySelector("#btn-quick-fill-template");
@@ -613,11 +628,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 1. Initialize automated USD/MYR FX Benchmark from Frankfurter API / Local Cache
     await initializeFX();
-    updateHeaderRatePill();
 
     // 2. React to dynamic FX updates
     window.addEventListener("veyra:fx:updated", () => {
-        updateHeaderRatePill();
         if (currentData) {
             loadData();
         }

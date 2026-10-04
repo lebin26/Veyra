@@ -53,3 +53,13 @@ export function getCurrentMonthStr() {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
 }
+
+export function escapeHtml(str) {
+    if (str === undefined || str === null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}

@@ -406,12 +406,12 @@ export const WealthApi = {
     },
 
     // 智能获取可用于快速填写的上月模板
-    async getTemplateForMonth(targetMonth) {
+    async getTemplateForMonth(targetMonth, cachedSummary = null) {
         let sourceMonth = null;
         try {
-            const summary = await this.getSummary(targetMonth);
-            sourceMonth = summary.last_recorded_month;
-            if (!sourceMonth && Array.isArray(summary.available_months)) {
+            const summary = cachedSummary || await this.getSummary(targetMonth);
+            sourceMonth = summary?.last_recorded_month;
+            if (!sourceMonth && Array.isArray(summary?.available_months)) {
                 const prev = summary.available_months.filter(m => m < targetMonth).sort().reverse();
                 sourceMonth = prev[0] || null;
             }
