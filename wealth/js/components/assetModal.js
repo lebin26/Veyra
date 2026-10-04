@@ -3,6 +3,7 @@
  * Modal for creating and editing individual portfolio assets
  */
 import { WealthApi } from '../core/api.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 const PLATFORM_SUGGESTIONS = [
     "Touch 'n Go", "Hong Leong Bank", "Maybank", "CIMB", "Public Bank",
@@ -11,6 +12,7 @@ const PLATFORM_SUGGESTIONS = [
 ];
 
 export function openAssetModal(asset = null, targetMonth = null, onSaved) {
+    const triggerEl = document.activeElement;
     if (typeof targetMonth === 'function') {
         onSaved = targetMonth;
         targetMonth = null;
@@ -23,12 +25,15 @@ export function openAssetModal(asset = null, targetMonth = null, onSaved) {
     const backdrop = document.createElement("div");
     backdrop.id = "asset-modal";
     backdrop.className = "modal-backdrop open";
+    backdrop.setAttribute("role", "dialog");
+    backdrop.setAttribute("aria-modal", "true");
+    backdrop.setAttribute("aria-labelledby", "asset-modal-title");
 
     backdrop.innerHTML = `
         <div class="modal-panel" style="max-width: 480px;">
             <div class="modal-header">
-                <span class="modal-title">${isEdit ? 'Edit Asset Holding' : 'Add New Asset Holding'}${targetMonth ? ` · ${escapeHtml(targetMonth)}` : ''}</span>
-                <button type="button" class="modal-close-btn" id="modal-close">✕</button>
+                <span class="modal-title" id="asset-modal-title">${isEdit ? 'Edit Asset Holding' : 'Add New Asset Holding'}${targetMonth ? ` · ${escapeHtml(targetMonth)}` : ''}</span>
+                <button type="button" class="modal-close-btn" id="modal-close" aria-label="Close dialog">✕</button>
             </div>
 
             <form id="asset-form">
@@ -100,9 +105,16 @@ export function openAssetModal(asset = null, targetMonth = null, onSaved) {
     const cancelBtn = backdrop.querySelector("#modal-cancel");
     const form = backdrop.querySelector("#asset-form");
 
+    const releaseTrap = trapFocus(backdrop, {
+        returnFocusTo: triggerEl,
+        onEscape: closeModal,
+        initialFocus: "#acc-platform"
+    });
+
     function closeModal() {
+        releaseTrap();
         backdrop.classList.remove("open");
-        setTimeout(() => backdrop.remove(), 200);
+        setTimeout(() => backdrop.remove(), 160);
     }
 
     closeBtn.addEventListener("click", closeModal);

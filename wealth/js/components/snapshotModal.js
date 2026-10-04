@@ -4,20 +4,25 @@
  */
 import { formatMYR, formatPercent } from '../core/math.js';
 import { WealthApi } from '../core/api.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export function openSnapshotModal(month, currentNetWorth, currentUsdRate, onSaved) {
+    const triggerEl = document.activeElement;
     const existing = document.getElementById("snapshot-modal");
     if (existing) existing.remove();
 
     const backdrop = document.createElement("div");
     backdrop.id = "snapshot-modal";
     backdrop.className = "modal-backdrop open";
+    backdrop.setAttribute("role", "dialog");
+    backdrop.setAttribute("aria-modal", "true");
+    backdrop.setAttribute("aria-labelledby", "snapshot-modal-title");
 
     backdrop.innerHTML = `
         <div class="modal-panel" style="max-width: 500px;">
             <div class="modal-header">
-                <span class="modal-title">Monthly Net Worth Snapshot</span>
-                <button type="button" class="modal-close-btn" id="modal-close">✕</button>
+                <span class="modal-title" id="snapshot-modal-title">Monthly Net Worth Snapshot</span>
+                <button type="button" class="modal-close-btn" id="modal-close" aria-label="Close dialog">✕</button>
             </div>
 
             <div class="modal-body">
@@ -93,9 +98,16 @@ export function openSnapshotModal(month, currentNetWorth, currentUsdRate, onSave
     const form = backdrop.querySelector("#snapshot-form");
     const historyList = backdrop.querySelector("#snapshots-history-list");
 
+    const releaseTrap = trapFocus(backdrop, {
+        returnFocusTo: triggerEl,
+        onEscape: closeModal,
+        initialFocus: "#snap-month-input"
+    });
+
     function closeModal() {
+        releaseTrap();
         backdrop.classList.remove("open");
-        setTimeout(() => backdrop.remove(), 200);
+        setTimeout(() => backdrop.remove(), 160);
     }
 
     closeBtn.addEventListener("click", closeModal);

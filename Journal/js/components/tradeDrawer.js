@@ -16,9 +16,11 @@ import { deriveTradeMetrics, autoCalculateTrade } from '../core/calculations.js'
 import { ScreenshotUploader } from './screenshotUploader.js';
 import { LiveRepo } from '../db/liveRepo.js';
 import { BacktestRepo } from '../db/backtestRepo.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export class TradeDrawer {
   constructor(options = {}) {
+    this.opener = options.opener || document.activeElement;
     this.trade = options.trade;
     this.screenshots = options.screenshots || [];
     this.mode = options.mode || 'LIVE';
@@ -55,6 +57,9 @@ export class TradeDrawer {
 
     const overlay = document.createElement('div');
     overlay.className = 'drawer-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', `Trade Review ${raw.symbol}`);
 
     const pnlClass = d.netPnl > 0 ? 'text-profit' : (d.netPnl < 0 ? 'text-loss' : 'text-neutral');
     const badgeSideClass = raw.direction === 'LONG' ? 'badge-long' : 'badge-short';
@@ -455,8 +460,10 @@ export class TradeDrawer {
       });
     });
 
+    let untrap = null;
     const close = () => {
-      document.body.removeChild(overlay);
+      if (untrap) untrap();
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
       this.onClose();
     };
 
@@ -556,6 +563,12 @@ export class TradeDrawer {
         await this.onDelete(raw.id);
         close();
       }
+    });
+
+    untrap = trapFocus(overlay.querySelector('.drawer-container') || overlay, {
+      returnFocusTo: this.opener,
+      onEscape: () => close(),
+      initialFocus: isOpen && overlay.querySelector('#drawer-exit-input') ? overlay.querySelector('#drawer-exit-input') : overlay.querySelector('button, input')
     });
   }
 }

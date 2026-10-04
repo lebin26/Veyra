@@ -6,8 +6,10 @@
  */
 import { formatMYR, formatCurrencyByCode, formatPercent } from '../core/math.js';
 import { WealthApi } from '../core/api.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export function openTemplateModal(targetMonth, templateData, onSaved) {
+    const triggerEl = document.activeElement;
     const existing = document.getElementById("template-modal");
     if (existing) existing.remove();
 
@@ -29,6 +31,9 @@ export function openTemplateModal(targetMonth, templateData, onSaved) {
     const backdrop = document.createElement("div");
     backdrop.id = "template-modal";
     backdrop.className = "modal-backdrop open";
+    backdrop.setAttribute("role", "dialog");
+    backdrop.setAttribute("aria-modal", "true");
+    backdrop.setAttribute("aria-labelledby", "template-modal-title");
 
     function computeTotals() {
         let totalMyr = 0;
@@ -185,7 +190,10 @@ export function openTemplateModal(targetMonth, templateData, onSaved) {
         }
     }
 
+    let releaseTrap = null;
+
     function closeModal() {
+        if (typeof releaseTrap === 'function') releaseTrap();
         backdrop.classList.remove("open");
         setTimeout(() => backdrop.remove(), 160);
     }
@@ -200,14 +208,6 @@ export function openTemplateModal(targetMonth, templateData, onSaved) {
         backdrop.addEventListener("click", (e) => {
             if (e.target === backdrop) closeModal();
         });
-
-        const handleKey = (e) => {
-            if (e.key === "Escape") {
-                closeModal();
-                document.removeEventListener("keydown", handleKey);
-            }
-        };
-        document.addEventListener("keydown", handleKey);
 
         // Keep last month amounts
         const btnKeep = backdrop.querySelector("#btn-keep-last");
@@ -332,6 +332,12 @@ export function openTemplateModal(targetMonth, templateData, onSaved) {
 
     renderContent();
     document.body.appendChild(backdrop);
+
+    releaseTrap = trapFocus(backdrop, {
+        returnFocusTo: triggerEl,
+        onEscape: closeModal,
+        initialFocus: ".template-amount-input"
+    });
 }
 
 function escapeHtml(str) {

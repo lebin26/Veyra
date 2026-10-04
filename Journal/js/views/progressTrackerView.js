@@ -9,6 +9,7 @@
 import { GoalRepo } from '../db/goalRepo.js';
 import { LiveRepo } from '../db/liveRepo.js';
 import { aggregateMetrics } from '../core/calculations.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export class ProgressTrackerView {
   constructor(options = {}) {
@@ -128,14 +129,18 @@ export class ProgressTrackerView {
     });
   }
 
-  openAddGoalModal() {
+  openAddGoalModal(opener = document.activeElement) {
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Set Performance Goal');
+
     modal.innerHTML = `
       <div class="modal-card" style="max-width: 460px; width: 90%;">
         <div class="modal-header">
           <div class="modal-title">Set Performance Goal</div>
-          <button type="button" class="modal-close" id="modal-goal-close">&times;</button>
+          <button type="button" class="modal-close" id="modal-goal-close" aria-label="Close goal modal">&times;</button>
         </div>
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px; padding: 18px 20px;">
           <div>
@@ -177,17 +182,37 @@ export class ProgressTrackerView {
 
     document.body.appendChild(modal);
 
+    let untrap = null;
     const close = () => {
+      if (untrap) untrap();
       if (document.body.contains(modal)) document.body.removeChild(modal);
     };
 
     modal.querySelector('#modal-goal-close').addEventListener('click', close);
     modal.querySelector('#modal-goal-cancel').addEventListener('click', close);
 
+    untrap = trapFocus(modal.querySelector('.modal-card') || modal, {
+      returnFocusTo: opener,
+      onEscape: () => close(),
+      initialFocus: modal.querySelector('#goal-title')
+    });
+
     modal.querySelector('#modal-goal-save').addEventListener('click', async () => {
-      const title = modal.querySelector('#goal-title').value.trim();
-      const target = Number(modal.querySelector('#goal-target').value);
-      if (!title || isNaN(target)) return alert('Goal title and target are required');
+      const titleInput = modal.querySelector('#goal-title');
+      const targetInput = modal.querySelector('#goal-target');
+      const title = titleInput.value.trim();
+      const target = Number(targetInput.value);
+
+      if (!title) {
+        alert('Goal title is required');
+        titleInput.focus();
+        return;
+      }
+      if (isNaN(target)) {
+        alert('Target value is required and must be a number');
+        targetInput.focus();
+        return;
+      }
 
       await GoalRepo.createGoal({
         title,

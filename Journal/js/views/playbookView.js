@@ -9,6 +9,7 @@
 
 import { PlaybookRepo } from '../db/playbookRepo.js';
 import { LiveRepo } from '../db/liveRepo.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export class PlaybookView {
   constructor(options = {}) {
@@ -178,14 +179,18 @@ export class PlaybookView {
     });
   }
 
-  openCreateModal() {
+  openCreateModal(opener = document.activeElement) {
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Create Playbook Strategy');
+
     modal.innerHTML = `
       <div class="modal-card" style="max-width: 520px; width: 92%;">
         <div class="modal-header">
           <div class="modal-title">Create Playbook Strategy</div>
-          <button type="button" class="modal-close" id="modal-pb-close">&times;</button>
+          <button type="button" class="modal-close" id="modal-pb-close" aria-label="Close playbook modal">&times;</button>
         </div>
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px; padding: 18px 20px;">
           <div>
@@ -234,16 +239,29 @@ export class PlaybookView {
 
     document.body.appendChild(modal);
 
+    let untrap = null;
     const close = () => {
+      if (untrap) untrap();
       if (document.body.contains(modal)) document.body.removeChild(modal);
     };
 
     modal.querySelector('#modal-pb-close').addEventListener('click', close);
     modal.querySelector('#modal-pb-cancel').addEventListener('click', close);
 
+    untrap = trapFocus(modal.querySelector('.modal-card') || modal, {
+      returnFocusTo: opener,
+      onEscape: () => close(),
+      initialFocus: modal.querySelector('#pb-name')
+    });
+
     modal.querySelector('#modal-pb-save').addEventListener('click', async () => {
-      const name = modal.querySelector('#pb-name').value.trim();
-      if (!name) return alert('Strategy name is required');
+      const nameInput = modal.querySelector('#pb-name');
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert('Strategy name is required');
+        nameInput.focus();
+        return;
+      }
 
       await PlaybookRepo.createPlaybook({
         name,

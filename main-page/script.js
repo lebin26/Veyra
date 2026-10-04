@@ -195,6 +195,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     window.location.href = targetUrl;
                 };
             }
+
+            tile.onkeydown = (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    tile.click();
+                }
+            };
         }
 
         // ── 1. Position Size Calculator Entitlement ──

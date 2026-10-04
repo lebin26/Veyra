@@ -8,6 +8,7 @@
  */
 
 import { NotebookRepo } from '../db/notebookRepo.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export class NotebookView {
   constructor(options = {}) {
@@ -141,14 +142,18 @@ export class NotebookView {
     });
   }
 
-  openAddNoteModal() {
+  openAddNoteModal(opener = document.activeElement) {
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Add Trading Note');
+
     modal.innerHTML = `
       <div class="modal-card" style="max-width: 480px; width: 90%;">
         <div class="modal-header">
           <div class="modal-title">Add Trading Note</div>
-          <button type="button" class="modal-close" id="modal-note-close">&times;</button>
+          <button type="button" class="modal-close" id="modal-note-close" aria-label="Close note modal">&times;</button>
         </div>
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px; padding: 18px 20px;">
           <div>
@@ -184,17 +189,37 @@ export class NotebookView {
 
     document.body.appendChild(modal);
 
+    let untrap = null;
     const close = () => {
+      if (untrap) untrap();
       if (document.body.contains(modal)) document.body.removeChild(modal);
     };
 
     modal.querySelector('#modal-note-close').addEventListener('click', close);
     modal.querySelector('#modal-note-cancel').addEventListener('click', close);
 
+    untrap = trapFocus(modal.querySelector('.modal-card') || modal, {
+      returnFocusTo: opener,
+      onEscape: () => close(),
+      initialFocus: modal.querySelector('#note-title')
+    });
+
     modal.querySelector('#modal-note-save').addEventListener('click', async () => {
-      const title = modal.querySelector('#note-title').value.trim();
-      const content = modal.querySelector('#note-content').value.trim();
-      if (!title || !content) return alert('Title and content are required');
+      const titleInput = modal.querySelector('#note-title');
+      const contentInput = modal.querySelector('#note-content');
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+
+      if (!title) {
+        alert('Title is required');
+        titleInput.focus();
+        return;
+      }
+      if (!content) {
+        alert('Content is required');
+        contentInput.focus();
+        return;
+      }
 
       await NotebookRepo.createNote({
         title,

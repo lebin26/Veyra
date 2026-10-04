@@ -402,3 +402,38 @@ body {
         padding: 20px 16px;
     }
 }
+
+/* Accessibility: Skip Link & Focus Rings */
+.skip-link {
+    position: absolute;
+    top: -60px;
+    left: 16px;
+    z-index: 10000;
+    padding: 8px 14px;
+    background: var(--color-brand);
+    color: #FFFFFF !important;
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: var(--radius-control);
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+    top: 16px;
+    outline: 2px solid #FFFFFF;
+    outline-offset: 2px;
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-brand) !important;
+    outline-offset: 2px !important;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+    outline: none;
+}

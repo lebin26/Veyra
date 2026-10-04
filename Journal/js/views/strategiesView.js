@@ -11,6 +11,7 @@ import { StrategyRepo } from '../db/strategyRepo.js';
 import { LiveRepo } from '../db/liveRepo.js';
 import { aggregateMetrics } from '../core/calculations.js';
 import { formatCurrency, formatR, getMetricColorClass } from '../core/formatters.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export class StrategiesView {
   constructor(options = {}) {
@@ -154,18 +155,21 @@ export class StrategiesView {
     });
   }
 
-  openStrategyModal(existingStrat = null) {
+  openStrategyModal(existingStrat = null, opener = document.activeElement) {
     const s = existingStrat || {};
     const isEdit = Boolean(existingStrat);
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', isEdit ? 'Edit Strategy Playbook' : 'Add Strategy Playbook');
 
     overlay.innerHTML = `
       <div class="modal-content" style="width: 540px;">
         <div class="modal-header">
           <div class="modal-title">${isEdit ? 'Edit Strategy Playbook' : 'Add Strategy Playbook'}</div>
-          <button class="modal-close-btn">&times;</button>
+          <button class="modal-close-btn" aria-label="Close strategy dialog">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -223,17 +227,30 @@ export class StrategiesView {
 
     document.body.appendChild(overlay);
 
-    const close = () => document.body.removeChild(overlay);
+    let untrap = null;
+    const close = () => {
+      if (untrap) untrap();
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+
     overlay.querySelector('.modal-close-btn').addEventListener('click', close);
     overlay.querySelector('#strat-cancel-btn').addEventListener('click', close);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) close();
     });
 
+    untrap = trapFocus(overlay.querySelector('.modal-content') || overlay, {
+      returnFocusTo: opener,
+      onEscape: () => close(),
+      initialFocus: overlay.querySelector('#strat-name')
+    });
+
     overlay.querySelector('#strat-save-btn').addEventListener('click', async () => {
-      const name = overlay.querySelector('#strat-name').value.trim();
+      const nameInput = overlay.querySelector('#strat-name');
+      const name = nameInput.value.trim();
       if (!name) {
         alert('Strategy name is required.');
+        nameInput.focus();
         return;
       }
 

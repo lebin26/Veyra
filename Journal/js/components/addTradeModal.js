@@ -11,9 +11,11 @@ import { StrategyRepo } from '../db/strategyRepo.js';
 import { PlaybookRepo } from '../db/playbookRepo.js';
 import { autoCalculateTrade } from '../core/calculations.js';
 import { formatCurrency, formatR } from '../core/formatters.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export class AddTradeModal {
   constructor(options = {}) {
+    this.opener = options.opener || document.activeElement;
     this.onTradeAdded = options.onTradeAdded || (() => {});
     this.activeTab = options.defaultTab || 'file-upload'; // 'file-upload' | 'broker-sync' | 'manual'
     this.parsedTrades = [];
@@ -21,6 +23,7 @@ export class AddTradeModal {
     this.playbooks = [];
     this.strategies = [];
     this.modalEl = null;
+    this.untrap = null;
     this.init();
   }
 
@@ -39,6 +42,9 @@ export class AddTradeModal {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'modal-add-trade-system';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Add Trade');
 
     overlay.innerHTML = `
       <div class="modal-content" style="width: 880px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
@@ -53,7 +59,7 @@ export class AddTradeModal {
               <button type="button" class="tab-btn ${this.activeTab === 'manual' ? 'active' : ''}" data-tab="manual">Manual</button>
             </div>
           </div>
-          <button type="button" class="modal-close-btn" id="btn-close-add-trade">&times;</button>
+          <button type="button" class="modal-close-btn" id="btn-close-add-trade" aria-label="Close add trade modal">&times;</button>
         </div>
 
         <!-- Body Area (Tab Content) -->
@@ -67,6 +73,11 @@ export class AddTradeModal {
     this.modalEl = overlay;
     this.bindGlobalEvents();
     this.renderTabContent();
+
+    this.untrap = trapFocus(overlay.querySelector('.modal-content') || overlay, {
+      returnFocusTo: this.opener,
+      onEscape: () => this.close()
+    });
   }
 
   bindGlobalEvents() {
@@ -75,17 +86,35 @@ export class AddTradeModal {
       if (e.target === this.modalEl) this.close();
     });
 
-    this.modalEl.querySelectorAll('.tab-btn').forEach(btn => {
+    const tabBtns = Array.from(this.modalEl.querySelectorAll('.tab-btn'));
+    tabBtns.forEach((btn, idx) => {
       btn.addEventListener('click', () => {
         this.activeTab = btn.dataset.tab;
-        this.modalEl.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        tabBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.renderTabContent();
+      });
+
+      btn.addEventListener('keydown', (e) => {
+        let target = null;
+        if (e.key === 'ArrowRight') {
+          target = tabBtns[(idx + 1) % tabBtns.length];
+        } else if (e.key === 'ArrowLeft') {
+          target = tabBtns[(idx - 1 + tabBtns.length) % tabBtns.length];
+        }
+        if (target) {
+          target.focus();
+          target.click();
+        }
       });
     });
   }
 
   close() {
+    if (this.untrap) {
+      this.untrap();
+      this.untrap = null;
+    }
     if (this.modalEl) {
       this.modalEl.remove();
       this.modalEl = null;

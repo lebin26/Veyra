@@ -10,6 +10,7 @@ import { autoCalculateTrade } from '../core/calculations.js';
 import { ScreenshotUploader } from './screenshotUploader.js';
 import { formatCurrency, formatR, formatRR } from '../core/formatters.js';
 import { StrategyRepo } from '../db/strategyRepo.js';
+import { trapFocus } from '../../../js/utils/focusTrap.js';
 
 export class TradeModal {
   constructor(options = {}) {
@@ -367,11 +368,22 @@ export class TradeModal {
 
     updatePreview();
 
-    const close = () => document.body.removeChild(overlay);
+    const triggerEl = document.activeElement;
+    let releaseTrap = null;
+    const close = () => {
+      if (typeof releaseTrap === 'function') releaseTrap();
+      if (document.body.contains(overlay)) document.body.removeChild(overlay);
+    };
     overlay.querySelector('.modal-close-btn').addEventListener('click', close);
     overlay.querySelector('#modal-cancel-btn').addEventListener('click', close);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) close();
+    });
+
+    releaseTrap = trapFocus(overlay, {
+      returnFocusTo: triggerEl,
+      onEscape: close,
+      initialFocus: '#trade-symbol'
     });
 
     overlay.querySelector('#modal-save-btn').addEventListener('click', async () => {
@@ -429,6 +441,8 @@ export class TradeModal {
           </div>
         `;
         if (warningsBox.scrollIntoView) warningsBox.scrollIntoView();
+        const firstInvalid = overlay.querySelector('#trade-symbol') || warningsBox;
+        if (firstInvalid && typeof firstInvalid.focus === 'function') firstInvalid.focus();
         return;
       }
 

@@ -592,9 +592,42 @@
         }
         .admin-toast.success { border-color: rgba(34,197,94,0.4); color: #16A34A; }
         .admin-toast.error { border-color: rgba(239,68,68,0.4); color: #DC2626; }
+
+        /* Accessibility: Skip Link & Focus Rings */
+        .skip-link {
+            position: absolute;
+            top: -60px;
+            left: 16px;
+            z-index: 10000;
+            padding: 8px 14px;
+            background: var(--color-brand);
+            color: #FFFFFF !important;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: top 0.15s ease;
+        }
+        .skip-link:focus {
+            top: 16px;
+            outline: 2px solid #FFFFFF;
+            outline-offset: 2px;
+        }
+        :focus-visible {
+            outline: 2px solid var(--color-brand) !important;
+            outline-offset: 2px !important;
+        }
+        button:focus:not(:focus-visible),
+        a:focus:not(:focus-visible),
+        input:focus:not(:focus-visible),
+        select:focus:not(:focus-visible) {
+            outline: none;
+        }
     </style>
 </head>
 <body>
+<a href="#admin-main-content" class="skip-link">Skip to main content</a>
 <div class="admin-shell">
     <!-- Header -->
     <header class="admin-header">
@@ -608,7 +641,7 @@
     </header>
 
     <!-- Content -->
-    <main class="admin-content">
+    <main class="admin-content" id="admin-main-content">
         <!-- Stats -->
         <div class="stats-row" id="stats-row">
             <div class="stat-card">
@@ -917,6 +950,7 @@
 
 <script type="module">
 import { getCurrentUserAndProfile } from "../js/auth/authState.js?v=4";
+import { trapFocus } from "../js/utils/focusTrap.js";
 
 let currentAdminUser = null;
 
@@ -1282,7 +1316,7 @@ function renderTable(users) {
             const userId = btn.dataset.id;
             const user = allUsers.find(u => u.id === userId);
             if (action === "edit") {
-                openEditModal(user);
+                openEditModal(user, btn);
             } else if (action === "suspend") {
                 const activeAdmins = allUsers.filter(u => u.role === "admin" && u.status === "active").length;
                 if (user.role === "admin" && activeAdmins <= 1) {
@@ -1314,7 +1348,16 @@ async function quickUpdate(userId, payload, successMsg) {
 }
 
 // ── Create User Modal ──
-document.getElementById("btn-create-user").addEventListener("click", () => {
+let untrapCreate = null;
+const closeCreateModal = () => {
+    if (untrapCreate) {
+        untrapCreate();
+        untrapCreate = null;
+    }
+    document.getElementById("modal-create").classList.add("hidden");
+};
+
+document.getElementById("btn-create-user").addEventListener("click", (e) => {
     document.getElementById("new-username").value = "";
     document.getElementById("new-email").value = "";
     document.getElementById("new-password").value = "";
@@ -1322,17 +1365,22 @@ document.getElementById("btn-create-user").addEventListener("click", () => {
     document.getElementById("new-plan").value = "pro";
     document.getElementById("new-must-change").checked = true;
 
-    ["new-journal-access", "new-calculator-access", "new-risk-access", "new-radar-access"].forEach(id => {
+    ["new-journal-access", "new-calculator-access", "new-wealth-access", "new-risk-access", "new-radar-access"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = "plan";
     });
 
     document.getElementById("modal-create").classList.remove("hidden");
-    document.getElementById("new-username").focus();
+    untrapCreate = trapFocus(document.getElementById("modal-create").querySelector(".modal-card") || document.getElementById("modal-create"), {
+        returnFocusTo: e.currentTarget,
+        onEscape: closeCreateModal,
+        initialFocus: document.getElementById("new-username")
+    });
 });
 
-document.getElementById("btn-cancel-create").addEventListener("click", () => {
-    document.getElementById("modal-create").classList.add("hidden");
+document.getElementById("btn-cancel-create").addEventListener("click", closeCreateModal);
+document.getElementById("modal-create").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-create")) closeCreateModal();
 });
 
 function getSelectOverride(elId) {
@@ -1345,8 +1393,13 @@ function getSelectOverride(elId) {
 
 document.getElementById("btn-confirm-create").addEventListener("click", async () => {
     const btn = document.getElementById("btn-confirm-create");
-    const username = document.getElementById("new-username").value.trim();
-    if (!username) { toast("Username is required", "error"); return; }
+    const usernameInput = document.getElementById("new-username");
+    const username = usernameInput.value.trim();
+    if (!username) {
+        toast("Username is required", "error");
+        usernameInput.focus();
+        return;
+    }
     btn.disabled = true;
     btn.textContent = "Creating…";
     const token = localStorage.getItem("veyra_session_token") || "";
@@ -1379,7 +1432,7 @@ document.getElementById("btn-confirm-create").addEventListener("click", async ()
     const data = await res.json();
     if (res.ok) {
         toast(`User @${data.username} created! Initial password: ${data.initialPassword}`, "success");
-        document.getElementById("modal-create").classList.add("hidden");
+        closeCreateModal();
         await loadUsers();
     } else {
         toast(data.error || "Failed to create user", "error");
@@ -1387,7 +1440,16 @@ document.getElementById("btn-confirm-create").addEventListener("click", async ()
 });
 
 // ── Edit User Modal ──
-function openEditModal(user) {
+let untrapEdit = null;
+const closeEditModal = () => {
+    if (untrapEdit) {
+        untrapEdit();
+        untrapEdit = null;
+    }
+    document.getElementById("modal-edit").classList.add("hidden");
+};
+
+function openEditModal(user, triggerEl = null) {
     document.getElementById("edit-user-id").value = user.id;
     document.getElementById("edit-username").value = user.username || "";
     document.getElementById("edit-email").value = user.email || "";
@@ -1434,29 +1496,38 @@ function openEditModal(user) {
     setOverrideField("edit-radar-access", "market_radar");
 
     document.getElementById("modal-edit").classList.remove("hidden");
-    document.getElementById("edit-username").focus();
+    untrapEdit = trapFocus(document.getElementById("modal-edit").querySelector(".modal-card") || document.getElementById("modal-edit"), {
+        returnFocusTo: triggerEl,
+        onEscape: closeEditModal,
+        initialFocus: document.getElementById("edit-username")
+    });
 }
 
-document.getElementById("btn-cancel-edit").addEventListener("click", () => {
-    document.getElementById("modal-edit").classList.add("hidden");
+document.getElementById("btn-cancel-edit").addEventListener("click", closeEditModal);
+document.getElementById("modal-edit").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-edit")) closeEditModal();
 });
 
 document.getElementById("btn-confirm-edit").addEventListener("click", async () => {
     const btn = document.getElementById("btn-confirm-edit");
     const userId = document.getElementById("edit-user-id").value;
-    const username = document.getElementById("edit-username").value.trim().toLowerCase();
+    const usernameInput = document.getElementById("edit-username");
+    const username = usernameInput.value.trim().toLowerCase();
     const email = document.getElementById("edit-email").value.trim().toLowerCase();
     const role = document.getElementById("edit-role").value;
     const status = document.getElementById("edit-status").value;
     const plan_id = document.getElementById("edit-plan").value;
-    const newPwd = document.getElementById("edit-reset-password").value.trim();
+    const pwdInput = document.getElementById("edit-reset-password");
+    const newPwd = pwdInput.value.trim();
 
     if (!username) {
         toast("Username is required", "error");
+        usernameInput.focus();
         return;
     }
     if (newPwd && newPwd.length < 8) {
         toast("Password must be at least 8 characters", "error");
+        pwdInput.focus();
         return;
     }
 
@@ -1493,7 +1564,7 @@ document.getElementById("btn-confirm-edit").addEventListener("click", async () =
     btn.textContent = "Save Changes";
     if (res.ok) {
         toast("User updated successfully", "success");
-        document.getElementById("modal-edit").classList.add("hidden");
+        closeEditModal();
         if (currentAdminUser && (userId === currentAdminUser.id || (currentAdminUser.username || "").toLowerCase() === username)) {
             currentAdminUser.username = username;
             currentAdminUser.email = email;
@@ -1502,21 +1573,6 @@ document.getElementById("btn-confirm-edit").addEventListener("click", async () =
     } else {
         const d = await res.json();
         toast(d.error || "Update failed", "error");
-    }
-});
-
-// Close modals on backdrop click
-["modal-create", "modal-edit"].forEach(id => {
-    document.getElementById(id).addEventListener("click", (e) => {
-        if (e.target === e.currentTarget) document.getElementById(id).classList.add("hidden");
-    });
-});
-
-// Escape key to close modals
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-        document.getElementById("modal-create").classList.add("hidden");
-        document.getElementById("modal-edit").classList.add("hidden");
     }
 });
 

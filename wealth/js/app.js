@@ -292,11 +292,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             // 1. Immediately Render KPI Cards (Automated FX benchmark, manual editing disallowed)
             renderKPICards(elements.kpiContainer, data);
 
-            // Bind click-to-refresh on Dashboard USD/MYR rate card
+            // Bind click-to-refresh on Dashboard USD/MYR rate card (Fully keyboard accessible)
             const rateCard = elements.kpiContainer?.querySelector("#kpi-card-rate");
             if (rateCard) {
                 rateCard.style.cursor = "pointer";
-                rateCard.addEventListener("click", async () => {
+                rateCard.setAttribute("role", "button");
+                rateCard.setAttribute("tabindex", "0");
+                rateCard.setAttribute("aria-label", "Refresh USD/MYR rate from Frankfurter API");
+                const handleRefreshRate = async () => {
                     showToast("Refreshing USD/MYR rate from Frankfurter...");
                     try {
                         await getUSDMYRRate({ forceRefresh: true });
@@ -306,6 +309,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                         showToast(`USD/MYR 汇率已更新: ${formatFXRate(rate)}`);
                     } catch (_) {
                         showToast("使用本地缓存汇率");
+                    }
+                };
+                rateCard.addEventListener("click", handleRefreshRate);
+                rateCard.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleRefreshRate();
                     }
                 });
             }
@@ -590,6 +600,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 9. Keyboard Shortcuts
     // ──────────────────────────────────────────
     window.addEventListener("keydown", (e) => {
+        // If a modal or dialog is open, do not trigger page-level single-key shortcuts
+        if (document.querySelector(".modal-backdrop.open, .modal-backdrop:not(.hidden)")) {
+            return;
+        }
+
         const tag = document.activeElement ? document.activeElement.tagName.toUpperCase() : "";
         if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) {
             if (e.key === "Escape") document.activeElement.blur();

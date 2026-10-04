@@ -624,18 +624,25 @@ document.addEventListener("DOMContentLoaded", () => {
     // Expandable Leverage Dropdown Menu
     function toggleLeverageMenu() {
         const isOpen = !elements.leverageMenu.classList.contains("hidden");
-        if (isOpen) closeLeverageMenu();
+        if (isOpen) closeLeverageMenu(true);
         else openLeverageMenu();
     }
 
     function openLeverageMenu() {
         elements.leverageMenu.classList.remove("hidden");
         elements.leverageTriggerBtn.setAttribute("aria-expanded", "true");
+        // Focus first or active menu button
+        const activeBtn = elements.leverageMenu.querySelector(".lev-menu-btn.active") || elements.levMenuButtons[0];
+        if (activeBtn) activeBtn.focus();
     }
 
-    function closeLeverageMenu() {
+    function closeLeverageMenu(restoreFocus = false) {
+        if (elements.leverageMenu.classList.contains("hidden")) return;
         elements.leverageMenu.classList.add("hidden");
         elements.leverageTriggerBtn.setAttribute("aria-expanded", "false");
+        if (restoreFocus && elements.leverageTriggerBtn) {
+            elements.leverageTriggerBtn.focus();
+        }
     }
 
     elements.leverageTriggerBtn.addEventListener("click", (e) => {
@@ -643,9 +650,27 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleLeverageMenu();
     });
 
+    elements.leverageTriggerBtn.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+            if (elements.leverageMenu.classList.contains("hidden")) {
+                e.preventDefault();
+                openLeverageMenu();
+            }
+        }
+    });
+
     elements.leverageMenu.addEventListener("click", (e) => e.stopPropagation());
+
+    elements.leverageMenu.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            closeLeverageMenu(true);
+        }
+    });
+
     document.addEventListener("click", () => {
-        if (!elements.leverageMenu.classList.contains("hidden")) closeLeverageMenu();
+        if (!elements.leverageMenu.classList.contains("hidden")) closeLeverageMenu(false);
     });
 
     // Leverage Selection Logic
@@ -1363,6 +1388,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (elements.mobileStickyInfo) {
         elements.mobileStickyInfo.addEventListener("click", scrollToResults);
+        elements.mobileStickyInfo.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                scrollToResults();
+            }
+        });
     }
     if (elements.btnMobileViewResults) {
         elements.btnMobileViewResults.addEventListener("click", scrollToResults);
@@ -1384,6 +1415,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Desktop Keyboard Shortcuts & Input Dismissal
     window.addEventListener("keydown", (e) => {
+        // 1. If leverage menu is open, Escape should close it first
+        if (e.key === "Escape") {
+            if (elements.leverageMenu && !elements.leverageMenu.classList.contains("hidden")) {
+                closeLeverageMenu(true);
+                return;
+            }
+        }
+
         const activeTag = document.activeElement ? document.activeElement.tagName.toUpperCase() : "";
         const isInputActive = activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT";
 
@@ -1395,7 +1434,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (e.key === "Escape") {
-            window.location.href = "../main-page/index.html";
+            // Dismiss focus from current control without navigating away
+            if (document.activeElement && document.activeElement !== document.body) {
+                document.activeElement.blur();
+            }
             return;
         }
 

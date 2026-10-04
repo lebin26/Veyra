@@ -18,6 +18,7 @@
     </script>
 </head>
 <body>
+    <a href="#email" class="skip-link">Skip to login form</a>
     <!-- Top Brand Nav -->
     <header class="auth-top-nav">
         <a href="../main-page/index.html" class="brand-eyebrow" aria-label="Back to Veyra Apps">
@@ -149,6 +150,9 @@
             } catch (e) {}
         })();
 
+        // Focus username on load
+        if (elements.email) elements.email.focus();
+
         // Helper to reset button state
         function resetLoadingState() {
             elements.btnSubmit.disabled = false;
@@ -164,7 +168,14 @@
             const email = elements.email.value.trim();
             const password = elements.password.value;
 
-            if (!email || !password) return;
+            if (!email) {
+                elements.email.focus();
+                return;
+            }
+            if (!password) {
+                elements.password.focus();
+                return;
+            }
 
             elements.btnSubmit.disabled = true;
             elements.btnText.textContent = 'Signing in...';
@@ -177,6 +188,8 @@
                     resetLoadingState();
                     elements.errorText.textContent = result.error || 'Invalid credentials. Please try again.';
                     elements.errorBanner.classList.remove('hidden');
+                    elements.password.focus();
+                    elements.password.select();
                     return;
                 }
 
@@ -196,6 +209,8 @@
                 resetLoadingState();
                 elements.errorText.textContent = (err && err.message) ? err.message : 'Network error. Please try again.';
                 elements.errorBanner.classList.remove('hidden');
+                elements.password.focus();
+                elements.password.select();
             }
         });
     </script>
