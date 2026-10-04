@@ -11,7 +11,7 @@ export function renderHealthDiagnostic(container, data) {
     const totalNetWorth = data.portfolio?.total_net_worth_myr || 0;
     const estimatedApr = data.portfolio?.estimated_apr_myr || 0;
     const weightedRoi = data.portfolio?.weighted_roi || 0;
-    const topContributors = data.insights?.top_apr_contributors || [];
+    const topContributors = (data.insights?.top_apr_contributors || []).slice(0, 3);
     const deltaRm = data.growth?.delta_rm || 0;
     const growthRate = data.growth?.growth_rate || 0;
     const prevMonth = data.growth?.previous_month;

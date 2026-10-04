@@ -167,7 +167,7 @@ function computeLocalMonthlySummary(month) {
         percentage: totalNetWorthMyr > 0 ? Math.round(((val / totalNetWorthMyr) * 100) * 10) / 10 : 0
     })).sort((a,b) => b.amount_myr - a.amount_myr);
 
-    const topApr = [...computedAccounts].filter(a => a.apr > 0 && a.amount_myr > 0).sort((a,b) => b.apr - a.apr).slice(0, 4);
+    const topApr = [...computedAccounts].filter(a => a.apr > 0 && a.amount_myr > 0).sort((a,b) => b.apr - a.apr).slice(0, 3);
 
     return {
         month,

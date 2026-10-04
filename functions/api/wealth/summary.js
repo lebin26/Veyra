@@ -135,7 +135,7 @@ export async function onRequest(context) {
             percentage: totalNetWorthMyr > 0 ? Math.round(((val / totalNetWorthMyr) * 100) * 10) / 10 : 0
         })).sort((a,b) => b.amount_myr - a.amount_myr);
 
-        const topApr = [...accounts].filter(a => a.apr > 0 && a.amount_myr > 0).sort((a,b) => b.apr - a.apr).slice(0, 4);
+        const topApr = [...accounts].filter(a => a.apr > 0 && a.amount_myr > 0).sort((a,b) => b.apr - a.apr).slice(0, 3);
 
         // 5. Growth vs Previous Month
         const previousSnapshot = allSnapshots.filter(s => s.month < month).sort((a,b) => b.month.localeCompare(a.month))[0] || null;
