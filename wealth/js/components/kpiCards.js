@@ -21,6 +21,12 @@ export function renderKPICards(container, data, onEditRate) {
         ? `1 USD = ${formattedRate} MYR${isFallback ? ' · Cached' : ''}`
         : "Rate currently unavailable";
 
+    const {
+        portfolio = {},
+        growth = {},
+        insights = {}
+    } = data || {};
+
     const netWorth = portfolio.total_net_worth_myr || 0;
     const estimatedApr = portfolio.estimated_apr_myr || 0;
     const weightedRoi = portfolio.weighted_roi || 0;

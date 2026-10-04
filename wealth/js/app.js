@@ -317,7 +317,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
 
             // 4. Render Asset Portfolio Table
-            renderPortfolioTable(elements.portfolioContainer, data.portfolio?.accounts || [], usdRate, {
+            const currentUsdRate = data.usd_rate || window.VEYRA_FX?.USDMYR || null;
+            renderPortfolioTable(elements.portfolioContainer, data.portfolio?.accounts || [], currentUsdRate, {
                 currentMonth: currentMonth,
                 isArchived: !!data.is_archived,
                 hasTemplate: templateInfo.hasTemplate,
@@ -644,7 +645,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.addEventListener("veyra:fx:updated", () => {
         updateHeaderRatePill();
         if (currentData) {
-            renderView(activeViewMode);
+            loadData();
         }
     });
 
