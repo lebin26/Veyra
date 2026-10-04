@@ -223,14 +223,20 @@ async function request(url, options = {}) {
 export const WealthApi = {
     async getSummary(month) {
         const m = month || "2026-10";
-        const remote = await request(`/api/wealth/summary?month=${encodeURIComponent(m)}`);
+        const activeRate = getActiveRate();
+        const rateQuery = activeRate ? `&rate=${encodeURIComponent(activeRate)}` : '';
+        const remote = await request(`/api/wealth/summary?month=${encodeURIComponent(m)}${rateQuery}`);
         
         // If remote responded successfully, it reflects this user's cloud state (even if 0 accounts)
         if (remote && !remote.unauthorized && remote.portfolio) {
+            // For active unarchived month, ensure live FX rate is preserved
+            if (!remote.is_archived && activeRate) {
+                remote.usd_rate = activeRate;
+            }
             const store = getMonthlyStore();
             store[m] = {
                 month: m,
-                usd_rate: remote.usd_rate || getActiveRate(),
+                usd_rate: remote.usd_rate || activeRate,
                 items: remote.portfolio.accounts || [],
                 is_archived: !!remote.is_archived
             };

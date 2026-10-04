@@ -29,11 +29,13 @@ export async function onRequest(context) {
         const rawMonth = url.searchParams.get('month');
         const month = (rawMonth && /^\d{4}-\d{2}$/.test(rawMonth)) ? rawMonth : defaultMonth;
 
-        // 1. User Settings
+        // 1. User Settings & Live Query Rate
         const settings = await db.prepare(
             "SELECT default_usd_rate, target_savings_rate FROM wealth_settings WHERE user_id = ?"
         ).bind(currentUser.id).first();
-        const baseUsdRate = Number(settings?.default_usd_rate) || 4.08;
+        const rawRate = Number(url.searchParams.get('rate'));
+        const queryRate = (rawRate && Number.isFinite(rawRate) && rawRate > 0) ? rawRate : null;
+        const baseUsdRate = queryRate || Number(settings?.default_usd_rate) || 4.08;
         const targetSavingsRate = Number(settings?.target_savings_rate) || 40.0;
 
         // 2. Fetch all recorded snapshot months for this user (Archives list)

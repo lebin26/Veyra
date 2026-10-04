@@ -200,6 +200,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             currentData = data;
 
+            // For active/unarchived month, ensure data.usd_rate is synchronized with live FX
+            if (!data.is_archived && window.VEYRA_FX?.USDMYR) {
+                currentData.usd_rate = window.VEYRA_FX.USDMYR;
+            }
+
             // Sync Header USD/MYR rate from unified FX service / snapshot benchmark
             updateHeaderRatePill();
 
@@ -549,17 +554,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     function updateHeaderRatePill() {
         if (!elements.headerRateVal) return;
         const fx = window.VEYRA_FX;
+        const isArchived = Boolean(currentData && currentData.is_archived);
+        const activeRate = isArchived
+            ? (currentData.usd_rate || fx?.USDMYR)
+            : (fx?.USDMYR || currentData?.usd_rate);
+
         if (!fx || fx.status === 'loading') {
             elements.headerRateVal.textContent = "Loading...";
             if (elements.headerRatePill) {
                 elements.headerRatePill.title = "USD/MYR — Loading latest rate from Frankfurter...";
             }
-        } else if (typeof fx.USDMYR === 'number' && fx.USDMYR > 0) {
-            const formatted = formatFXRate(fx.USDMYR);
+        } else if (typeof activeRate === 'number' && activeRate > 0) {
+            const formatted = formatFXRate(activeRate);
             elements.headerRateVal.textContent = formatted;
-            const fallbackText = fx.isFallback ? " · Cached fallback" : "";
+            const subtitle = isArchived
+                ? `1 USD = ${formatted} MYR\nArchived Snapshot Rate (${currentData.month})\nSource: Wealth Archive`
+                : `1 USD = ${formatted} MYR\nRate date: ${fx.date || '—'}${fx.isFallback ? ' · Cached fallback' : ''}\nSource: Frankfurter`;
             if (elements.headerRatePill) {
-                elements.headerRatePill.title = `1 USD = ${formatted} MYR\nRate date: ${fx.date || '—'}${fallbackText}\nSource: Frankfurter`;
+                elements.headerRatePill.title = subtitle;
             }
         } else {
             elements.headerRateVal.textContent = "Unavailable";

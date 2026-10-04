@@ -9,11 +9,13 @@ export function renderKPICards(container, data, onEditRate) {
     if (!container) return;
 
     const fxState = window.VEYRA_FX || {};
-    const effectiveRate = (typeof data.usd_rate === 'number' && data.usd_rate > 0)
+    // For archived past snapshots, respect historical locked rate; for current/active month, always use unified live FX rate
+    const isArchived = Boolean(data && data.is_archived);
+    const effectiveRate = (isArchived && typeof data.usd_rate === 'number' && data.usd_rate > 0)
         ? data.usd_rate
-        : (typeof fxState.USDMYR === 'number' ? fxState.USDMYR : null);
-    const rateDate = fxState.date || null;
-    const isFallback = Boolean(fxState.isFallback);
+        : (typeof fxState.USDMYR === 'number' && fxState.USDMYR > 0 ? fxState.USDMYR : data.usd_rate);
+    const rateDate = isArchived ? (data.month || fxState.date) : (fxState.date || null);
+    const isFallback = !isArchived && Boolean(fxState.isFallback);
     const formattedRate = (effectiveRate !== null && Number.isFinite(effectiveRate) && effectiveRate > 0)
         ? effectiveRate.toFixed(4)
         : "—";
