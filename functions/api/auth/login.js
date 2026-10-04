@@ -54,42 +54,21 @@ export async function onRequestPost(context) {
                 const matchedUsername = adminEnvUsername;
                 const matchedPassword = adminEnvPassword;
                 try {
-                    // Ensure tables exist
-                    await db.prepare(`
-                        CREATE TABLE IF NOT EXISTS users (
-                            id TEXT PRIMARY KEY,
-                            username TEXT UNIQUE NOT NULL,
-                            email TEXT UNIQUE,
-                            password_hash TEXT NOT NULL,
-                            password_salt TEXT NOT NULL,
-                            display_name TEXT,
-                            role TEXT NOT NULL DEFAULT 'user',
-                            status TEXT NOT NULL DEFAULT 'active',
-                            plan_id TEXT NOT NULL DEFAULT 'pro',
-                            plan_expires_at TEXT DEFAULT NULL,
-                            must_change_password INTEGER NOT NULL DEFAULT 0,
-                            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-                        )
-                    `).run();
-
-                    await db.prepare(`
-                        CREATE TABLE IF NOT EXISTS sessions (
-                            id TEXT PRIMARY KEY,
-                            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                            expires_at TEXT NOT NULL,
-                            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-                        )
-                    `).run();
-
+                    // Schema is managed by d1/schema.sql — no runtime CREATE TABLE here
                     const { hash, salt } = await hashPassword(matchedPassword);
                     const adminId = 'usr_admin_' + matchedUsername;
                     await db.prepare(`
-                        INSERT OR REPLACE INTO users (
+                        INSERT INTO users (
                             id, username, email, password_hash, password_salt, display_name, role, status, plan_id, must_change_password, created_at, updated_at
                         ) VALUES (
                             ?, ?, ?, ?, ?, ?, 'admin', 'active', 'pro', 0, datetime('now'), datetime('now')
                         )
+                        ON CONFLICT(username) DO UPDATE SET
+                            password_hash = excluded.password_hash,
+                            password_salt = excluded.password_salt,
+                            role = 'admin',
+                            status = 'active',
+                            updated_at = datetime('now')
                     `).bind(
                         adminId,
                         matchedUsername,

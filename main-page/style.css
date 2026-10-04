@@ -505,6 +505,12 @@ button.app-icon-tile {
     justify-self: start;
 }
 
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+    .desktop-shortcuts-hint {
+        display: none !important;
+    }
+}
+
 .shortcuts-title {
     font-weight: 500;
 }

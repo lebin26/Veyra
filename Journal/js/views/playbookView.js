@@ -161,7 +161,7 @@ export class PlaybookView {
     }).join('');
 
     host.innerHTML = `
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px;">
         ${cardsHtml}
       </div>
     `;

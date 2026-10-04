@@ -3,11 +3,15 @@
  * Clean CSV Exporter for Wealth Tracker
  */
 
-export function exportPortfolioToCSV(accounts, usdRate = 4.08, filename = "wealth_portfolio.csv") {
+export function exportPortfolioToCSV(accounts, usdRate = null, filename = "wealth_portfolio.csv") {
     if (!accounts || !accounts.length) {
         alert("No portfolio data to export");
         return;
     }
+
+    const effectiveUsdRate = (typeof usdRate === 'number' && usdRate > 0)
+        ? usdRate
+        : (window.VEYRA_FX?.USDMYR || 1.0);
 
     const headers = [
         "Platform",
@@ -22,7 +26,7 @@ export function exportPortfolioToCSV(accounts, usdRate = 4.08, filename = "wealt
     ];
 
     const rows = accounts.map(a => {
-        const rate = a.currency === 'USD' ? usdRate : 1.0;
+        const rate = a.currency === 'USD' ? effectiveUsdRate : 1.0;
         const myr = (Number(a.amount) || 0) * rate;
         const aprAmt = (myr * (Number(a.apr) || 0)) / 100;
 

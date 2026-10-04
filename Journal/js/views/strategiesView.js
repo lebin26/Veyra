@@ -42,7 +42,7 @@ export class StrategiesView {
       </div>
 
       <div class="view-content" id="strategies-content">
-        <div id="strategies-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px;"></div>
+        <div id="strategies-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px;"></div>
       </div>
     `;
 

@@ -704,3 +704,23 @@
     grid-template-columns: 140px 1fr 100px;
   }
 }
+
+@media (max-width: 500px) {
+  .ranked-bar-row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 6px 12px;
+  }
+  .ranked-bar-label {
+    grid-column: 1 / 2;
+  }
+  .ranked-bar-values {
+    grid-column: 2 / 3;
+    justify-content: flex-end;
+  }
+  .ranked-bar-track {
+    grid-column: 1 / 3;
+    width: 100%;
+  }
+}
+

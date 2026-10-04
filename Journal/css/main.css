@@ -313,6 +313,12 @@ input, textarea, select {
   color: var(--text-tertiary);
 }
 
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+  .sidebar-shortcut-tag {
+    display: none !important;
+  }
+}
+
 .sidebar-footer {
   padding: 14px 18px;
   border-top: 1px solid var(--border-subtle);

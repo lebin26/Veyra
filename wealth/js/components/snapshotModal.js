@@ -45,8 +45,9 @@ export function openSnapshotModal(month, currentNetWorth, currentUsdRate, onSave
                             <input type="month" id="snap-month-input" class="form-input" value="${month}" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="snap-rate-input">USD/MYR Conversion Rate</label>
-                            <input type="number" id="snap-rate-input" class="form-input tabular-nums" step="0.01" min="0.1" value="${currentUsdRate}" required>
+                            <label class="form-label" for="snap-rate-display">USD/MYR Benchmark</label>
+                            <input type="text" id="snap-rate-display" class="form-input tabular-nums" value="${(typeof currentUsdRate === 'number' && currentUsdRate > 0) ? `1 USD = ${currentUsdRate.toFixed(4)} MYR` : (window.VEYRA_FX?.USDMYR ? `1 USD = ${window.VEYRA_FX.USDMYR.toFixed(4)} MYR` : 'Automated FX rate')}" readonly disabled style="opacity:0.85; cursor:not-allowed; background:var(--fill-subtle);">
+                            <input type="hidden" id="snap-rate-input" value="${(typeof currentUsdRate === 'number' && currentUsdRate > 0) ? currentUsdRate : (window.VEYRA_FX?.USDMYR || '')}">
                         </div>
                     </div>
 

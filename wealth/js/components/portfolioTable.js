@@ -6,7 +6,7 @@
 import { formatMYR, formatCurrencyByCode, formatPercent } from '../core/math.js';
 import { exportPortfolioToCSV } from '../core/export.js';
 
-export function renderPortfolioTable(container, accounts = [], usdRate = 4.08, callbacks = {}) {
+export function renderPortfolioTable(container, accounts = [], usdRate = null, callbacks = {}) {
     if (!container) return;
 
     let activeCategory = "all";
@@ -144,7 +144,12 @@ export function renderPortfolioTable(container, accounts = [], usdRate = 4.08, c
                         </div>
 
                         <!-- Actions -->
-                        <div style="display:flex; gap:6px;">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            ${callbacks.hasTemplate ? `
+                                <button type="button" id="btn-tbl-quick-template" class="btn btn-secondary" style="color:var(--color-brand); font-weight:600;" title="使用 ${escapeHtml(callbacks.lastRecordedMonth || '')} 模板快速填写本月数据">
+                                    ⚡ 快速填写模板
+                                </button>
+                            ` : ''}
                             <button type="button" id="btn-export-csv" class="btn btn-secondary" title="Export portfolio to CSV">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -180,10 +185,43 @@ export function renderPortfolioTable(container, accounts = [], usdRate = 4.08, c
                             </tr>
                         </thead>
                         <tbody>
-                            ${processed.length === 0 ? `
+                            ${accounts.length === 0 ? `
+                                <tr>
+                                    <td colspan="8" class="table-empty-row" style="padding: 44px 20px;">
+                                        <div style="max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                                            <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--fill-subtle); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--color-brand); border: 1px solid var(--border-default);">
+                                                ${callbacks.hasTemplate ? '⚡' : '📊'}
+                                            </div>
+                                            <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em;">
+                                                本月 (${escapeHtml(currentMonth)}) 尚未录入资产明细
+                                            </div>
+                                            <div style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; text-align: center;">
+                                                ${callbacks.hasTemplate ? `
+                                                    大多数情况下持仓标的不会频繁更改。您可以直接载入 <strong>${escapeHtml(callbacks.lastRecordedMonth || '')}</strong> 的模板，一次性填写本月最新数值，无需重新逐项创建！
+                                                ` : `
+                                                    每个用户初始没有模板，至少填写一次后，后续月份即可直接一键载入模板快速填写！
+                                                `}
+                                            </div>
+                                            <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 6px;">
+                                                ${callbacks.hasTemplate ? `
+                                                    <button type="button" id="btn-empty-quick-template" class="btn btn-primary" style="display:flex; align-items:center; gap:6px;">
+                                                        ⚡ 快速填写模板 (Quick Fill)
+                                                    </button>
+                                                    <button type="button" id="btn-empty-copy-last" class="btn btn-secondary" style="display:flex; align-items:center; gap:6px;">
+                                                        📋 一键复制上月数据
+                                                    </button>
+                                                ` : ''}
+                                                <button type="button" id="btn-empty-add-manual" class="btn ${callbacks.hasTemplate ? 'btn-secondary' : 'btn-primary'}">
+                                                    + 手动新增资产
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ` : processed.length === 0 ? `
                                 <tr>
                                     <td colspan="8" class="table-empty-row">
-                                        No assets found matching criteria. Click "+ Add Asset" to record a new holding.
+                                        No assets found matching criteria.
                                     </td>
                                 </tr>
                             ` : processed.map(acc => {
@@ -339,6 +377,27 @@ export function renderPortfolioTable(container, accounts = [], usdRate = 4.08, c
                 const nextM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                 callbacks.onMonthChange(nextM);
             });
+        }
+
+        // Template Quick Fill buttons
+        const tblQuickBtn = container.querySelector("#btn-tbl-quick-template");
+        if (tblQuickBtn && typeof callbacks.onQuickTemplate === 'function') {
+            tblQuickBtn.addEventListener("click", callbacks.onQuickTemplate);
+        }
+
+        const emptyQuickBtn = container.querySelector("#btn-empty-quick-template");
+        if (emptyQuickBtn && typeof callbacks.onQuickTemplate === 'function') {
+            emptyQuickBtn.addEventListener("click", callbacks.onQuickTemplate);
+        }
+
+        const emptyCopyBtn = container.querySelector("#btn-empty-copy-last");
+        if (emptyCopyBtn && typeof callbacks.onCopyTemplate === 'function') {
+            emptyCopyBtn.addEventListener("click", callbacks.onCopyTemplate);
+        }
+
+        const emptyAddBtn = container.querySelector("#btn-empty-add-manual");
+        if (emptyAddBtn && typeof callbacks.onAddAsset === 'function') {
+            emptyAddBtn.addEventListener("click", callbacks.onAddAsset);
         }
     }
 

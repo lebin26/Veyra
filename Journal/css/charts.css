@@ -254,3 +254,45 @@
   z-index: 2;
 }
 
+/* ==========================================================================
+   RESPONSIVE LAYOUT HELPERS — Used by JS-rendered dashboard views
+   ========================================================================== */
+
+/* Dashboard: 3-col analytics chart row */
+.dash-charts-row {
+  display: grid;
+  grid-template-columns: 300px 1.4fr 1.2fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+/* Dashboard: bottom 2-col row (Open Positions + Calendar) */
+.dash-bottom-row {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .dash-charts-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Stack all chart cards vertically on mobile */
+  .dash-charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack open positions above calendar on mobile */
+  .dash-bottom-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Chart SVG containers: reduce height on mobile */
+  .chart-svg-container {
+    height: 180px;
+  }
+}

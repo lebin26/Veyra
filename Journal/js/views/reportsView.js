@@ -62,7 +62,7 @@ export class ReportsView {
       </div>
 
       <!-- Main Layout: Left Navigation + Right Content -->
-      <div style="display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 120px);">
+      <div class="dash-reports-layout">
         <!-- Left Sidebar Navigation -->
         <div style="background: var(--bg-panel); border-right: 1px solid var(--border-default); padding: 16px 12px; display: flex; flex-direction: column; gap: 16px;">
           <!-- Overview Tab -->
@@ -176,7 +176,7 @@ export class ReportsView {
           <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; margin-bottom: 8px;">
             YOUR STATS <span style="font-size: 10px; color: var(--text-tertiary); font-weight: normal;">(ALL DATES)</span>
           </div>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+          <div class="reports-stats-3col">
             <div class="kpi-card" style="padding: 12px 16px;">
               <div style="font-size: 11px; color: var(--text-secondary);">Best Month</div>
               <div style="font-size: 20px; font-weight: 700; font-family: var(--font-mono); color: var(--color-profit); margin-top: 4px;">
@@ -203,7 +203,7 @@ export class ReportsView {
           <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-primary); letter-spacing: 0.03em; margin-bottom: 12px; border-bottom: 1px solid var(--border-default); padding-bottom: 8px;">
             Core Performance Matrix
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+          <div class="reports-matrix-grid">
             <!-- Left Column -->
             <table class="report-metrics-subtable">
               <tbody>
@@ -243,7 +243,7 @@ export class ReportsView {
         </div>
 
         <!-- 2 Side-by-Side Charts (PDF Page 4) -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="reports-2col-charts">
           <div class="chart-card">
             <div class="chart-card-header">
               <div class="chart-card-title">Daily Net Cumulative P&L</div>
@@ -315,7 +315,7 @@ export class ReportsView {
     host.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto;">
         <!-- Two Side-by-Side Charts (PDF Page 4) -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="reports-2col-charts">
           <!-- Chart 1: Trade Distribution by Day of Week -->
           <div class="chart-card">
             <div class="chart-card-header">
@@ -416,7 +416,7 @@ export class ReportsView {
     host.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto;">
         <!-- Two Side-by-Side Charts (PDF Page 4) -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="reports-2col-charts">
           <!-- Chart 1: Top 10 Symbols Distribution -->
           <div class="chart-card">
             <div class="chart-card-header">

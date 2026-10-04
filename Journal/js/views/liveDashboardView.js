@@ -74,7 +74,7 @@ export class LiveDashboardView {
         <div id="dash-kpi-container"></div>
 
         <!-- Row 2: 3 Analytics Charts (Zella Score Radar | Cumulative P&L Area | Daily P&L Bars) -->
-        <div style="display: grid; grid-template-columns: 320px 1.4fr 1.2fr; gap: 14px; align-items: stretch;" id="dash-charts-row">
+        <div class="dash-charts-row" id="dash-charts-row">
           <!-- Card 1: Zella Score Radar Chart -->
           <div class="chart-card" style="display: flex; flex-direction: column; justify-content: space-between;">
             <div class="chart-card-header">
@@ -104,7 +104,7 @@ export class LiveDashboardView {
         </div>
 
         <!-- Row 3: Open Positions + Trading Calendar -->
-        <div style="display: grid; grid-template-columns: 380px 1fr; gap: 14px; align-items: start;" id="dash-bottom-row">
+        <div class="dash-bottom-row" id="dash-bottom-row">
           <!-- Open Positions Table Card -->
           <div class="chart-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 100%;">
             <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-default); display: flex; justify-content: space-between; align-items: center;">

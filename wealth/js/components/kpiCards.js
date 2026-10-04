@@ -8,12 +8,18 @@ import { formatMYR, formatPercent, formatNumber } from '../core/math.js';
 export function renderKPICards(container, data, onEditRate) {
     if (!container) return;
 
-    const {
-        portfolio = {},
-        growth = {},
-        insights = {},
-        usd_rate = 4.08
-    } = data;
+    const fxState = window.VEYRA_FX || {};
+    const effectiveRate = (typeof data.usd_rate === 'number' && data.usd_rate > 0)
+        ? data.usd_rate
+        : (typeof fxState.USDMYR === 'number' ? fxState.USDMYR : null);
+    const rateDate = fxState.date || null;
+    const isFallback = Boolean(fxState.isFallback);
+    const formattedRate = (effectiveRate !== null && Number.isFinite(effectiveRate) && effectiveRate > 0)
+        ? effectiveRate.toFixed(4)
+        : "—";
+    const rateSubtext = formattedRate !== "—"
+        ? `1 USD = ${formattedRate} MYR${isFallback ? ' · Cached' : ''}`
+        : "Rate currently unavailable";
 
     const netWorth = portfolio.total_net_worth_myr || 0;
     const estimatedApr = portfolio.estimated_apr_myr || 0;
@@ -70,13 +76,13 @@ export function renderKPICards(container, data, onEditRate) {
             </div>
 
             <!-- 4. Active USD/MYR Rate -->
-            <div class="kpi-card" id="kpi-card-rate" style="cursor: pointer;" title="Click to adjust USD rate">
+            <div class="kpi-card" id="kpi-card-rate" title="USD/MYR FX Benchmark · Frankfurter">
                 <div class="kpi-label-group">
                     <span>USD / MYR FX Rate</span>
-                    <span style="font-size: 10px; color: var(--color-brand);">Edit ✎</span>
+                    <span style="font-size: 10px; color: var(--text-secondary);">${rateDate ? `Date: ${rateDate}` : 'Frankfurter'}</span>
                 </div>
-                <div class="kpi-val-regular tabular-nums">${formatNumber(usd_rate)}</div>
-                <div class="kpi-subtext">Active conversion benchmark</div>
+                <div class="kpi-val-regular tabular-nums">${formattedRate}</div>
+                <div class="kpi-subtext">${rateSubtext}</div>
             </div>
         </div>
 
@@ -135,8 +141,5 @@ export function renderKPICards(container, data, onEditRate) {
         </div>
     `;
 
-    const rateCard = document.getElementById("kpi-card-rate");
-    if (rateCard && typeof onEditRate === 'function') {
-        rateCard.addEventListener("click", onEditRate);
-    }
+    // Rate card is an automated live reference indicator (manual editing disallowed)
 }

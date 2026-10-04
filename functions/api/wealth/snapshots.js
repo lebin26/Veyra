@@ -102,19 +102,30 @@ export async function onRequest(context) {
                     return error("source_month and target_month are required", 400);
                 }
 
-                const sourceSnap = await db.prepare(
-                    "SELECT id, usd_rate FROM wealth_snapshots WHERE user_id = ? AND month = ?"
-                ).bind(currentUser.id, sourceMonth).first();
-
-                if (!sourceSnap) {
-                    return error("Source month not found", 404);
+                let sourceItemsList = [];
+                if (sourceSnap) {
+                    const sourceItemsRes = await db.prepare(`
+                        SELECT platform, product, category, currency, amount, apr
+                        FROM wealth_snapshot_items
+                        WHERE snapshot_id = ?
+                    `).bind(sourceSnap.id).all();
+                    sourceItemsList = sourceItemsRes.results || [];
+                } else {
+                    const liveRes = await db.prepare(`
+                        SELECT platform, product, category, currency, amount, apr
+                        FROM wealth_accounts
+                        WHERE user_id = ?
+                    `).bind(currentUser.id).all();
+                    sourceItemsList = liveRes.results || [];
                 }
 
-                const sourceItems = await db.prepare(`
-                    SELECT platform, product, category, currency, amount, apr
-                    FROM wealth_snapshot_items
-                    WHERE snapshot_id = ?
-                `).bind(sourceSnap.id).all();
+                const itemsToInsert = (Array.isArray(body.items) && body.items.length > 0)
+                    ? body.items
+                    : sourceItemsList;
+
+                if (itemsToInsert.length === 0) {
+                    return error("No template items found to copy. Please add at least one asset first.", 400);
+                }
 
                 // Check or create target snapshot
                 let targetSnap = await db.prepare(
@@ -136,10 +147,11 @@ export async function onRequest(context) {
                 let totalMyr = 0;
                 let totalAprMyr = 0;
 
-                for (const item of (sourceItems.results || [])) {
-                    const amt = Number(item.amount) || 0;
-                    const apr = Number(item.apr) || 0;
-                    const rate = item.currency === 'USD' ? usdRate : 1.0;
+                for (const item of itemsToInsert) {
+                    const amt = Math.max(0, Number(item.amount) || 0);
+                    const apr = Math.max(0, Number(item.apr) || 0);
+                    const currency = (item.currency || 'MYR').toUpperCase().trim();
+                    const rate = currency === 'USD' ? usdRate : 1.0;
                     const myr = Math.round(amt * rate * 100) / 100;
                     const aprAmt = Math.round(((myr * apr) / 100) * 100) / 100;
 
@@ -150,7 +162,7 @@ export async function onRequest(context) {
                     await db.prepare(`
                         INSERT INTO wealth_snapshot_items (id, snapshot_id, platform, product, category, currency, amount, amount_myr, apr, apr_amount_myr)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    `).bind(newItemId, targetSnapId, item.platform, item.product, item.category, item.currency, amt, myr, apr, aprAmt).run();
+                    `).bind(newItemId, targetSnapId, item.platform || 'Other', item.product || 'Account', item.category || 'bank', currency, amt, myr, apr, aprAmt).run();
                 }
 
                 totalMyr = Math.round(totalMyr * 100) / 100;
@@ -166,7 +178,7 @@ export async function onRequest(context) {
                 return json({
                     success: true,
                     month: targetMonth,
-                    items_count: (sourceItems.results || []).length,
+                    items_count: itemsToInsert.length,
                     total_net_worth_myr: totalMyr
                 });
             }

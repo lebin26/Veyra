@@ -475,7 +475,37 @@
             padding: 28px;
             width: 100%;
             max-width: 440px;
+            max-height: calc(100dvh - 32px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        @media (max-width: 600px) {
+            .admin-shell {
+                padding: 16px 12px calc(40px + env(safe-area-inset-bottom, 0px));
+            }
+            .modal-backdrop {
+                padding: 12px;
+            }
+            .modal-card {
+                padding: 20px 16px;
+                border-radius: 12px;
+            }
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .stat-card {
+                padding: 12px 14px;
+            }
+            .stat-value {
+                font-size: 18px;
+            }
+        }
+        @media (max-width: 380px) {
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
         }
         .modal-title {
             font-size: 16px;

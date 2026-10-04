@@ -17,6 +17,8 @@ function getScopedKey(baseKey) {
     return `${baseKey}_${uid}`;
 }
 
+import { getActiveFXRate, convertUSDToMYR } from '../../../js/services/fx.js';
+
 function getAuthHeader() {
     let token = null;
     try { token = localStorage.getItem("veyra_session_token"); } catch (_) {}
@@ -25,19 +27,8 @@ function getAuthHeader() {
     return headers;
 }
 
-function getScopedUsdRate() {
-    try {
-        const rate = localStorage.getItem(getScopedKey("veyra_wealth_usd_rate"));
-        return rate ? Number(rate) : 4.08;
-    } catch (_) {
-        return 4.08;
-    }
-}
-
-function setScopedUsdRate(rate) {
-    try {
-        localStorage.setItem(getScopedKey("veyra_wealth_usd_rate"), String(rate));
-    } catch (_) {}
+function getActiveRate() {
+    return getActiveFXRate();
 }
 
 // Local monthly storage helpers (isolated per authenticated user)
@@ -53,7 +44,7 @@ function getMonthlyStore() {
     const initial = {
         [curMonth]: {
             month: curMonth,
-            usd_rate: getScopedUsdRate(),
+            usd_rate: getActiveRate(),
             items: [],
             is_archived: false
         }
@@ -71,9 +62,10 @@ function saveMonthlyStore(store) {
 
 function computeLocalMonthlySummary(month) {
     const store = getMonthlyStore();
-    const usdRate = getScopedUsdRate();
-
     const monthData = store[month] || null;
+    const activeRate = getActiveRate();
+    const usdRate = (monthData && monthData.usd_rate) || activeRate;
+
     const accountsRaw = monthData ? (monthData.items || []) : [];
 
     let totalNetWorthMyr = 0;
@@ -84,17 +76,26 @@ function computeLocalMonthlySummary(month) {
     const computedAccounts = accountsRaw.map(a => {
         const amt = Number(a.amount) || 0;
         const apr = Number(a.apr) || 0;
-        const rate = a.currency === 'USD' ? usdRate : 1.0;
-        const myr = Math.round(amt * rate * 100) / 100;
-        const aprAmt = Math.round(((myr * apr) / 100) * 100) / 100;
+        const isUSD = a.currency === 'USD';
+        const rate = isUSD ? usdRate : 1.0;
+        const myr = (rate !== null && Number.isFinite(rate)) ? Math.round(amt * rate * 100) / 100 : null;
+        const aprAmt = (myr !== null) ? Math.round(((myr * apr) / 100) * 100) / 100 : null;
 
-        totalNetWorthMyr += myr;
-        totalEstimatedAprMyr += aprAmt;
+        if (myr !== null) {
+            totalNetWorthMyr += myr;
+        }
+        if (aprAmt !== null) {
+            totalEstimatedAprMyr += aprAmt;
+        }
 
         const cat = a.category || 'bank';
-        categoryMap[cat] = (categoryMap[cat] || 0) + myr;
+        if (myr !== null) {
+            categoryMap[cat] = (categoryMap[cat] || 0) + myr;
+        }
         const plat = a.platform || 'Other';
-        platformMap[plat] = (platformMap[plat] || 0) + myr;
+        if (myr !== null) {
+            platformMap[plat] = (platformMap[plat] || 0) + myr;
+        }
 
         return {
             ...a,
@@ -229,12 +230,11 @@ export const WealthApi = {
             const store = getMonthlyStore();
             store[m] = {
                 month: m,
-                usd_rate: remote.usd_rate || getScopedUsdRate(),
+                usd_rate: remote.usd_rate || getActiveRate(),
                 items: remote.portfolio.accounts || [],
                 is_archived: !!remote.is_archived
             };
             saveMonthlyStore(store);
-            if (remote.usd_rate) setScopedUsdRate(remote.usd_rate);
             return remote;
         }
         if (remote?.unauthorized) return { unauthorized: true };
@@ -250,12 +250,11 @@ export const WealthApi = {
             const store = getMonthlyStore();
             store[m] = {
                 month: m,
-                usd_rate: remote.usd_rate || getScopedUsdRate(),
+                usd_rate: remote.usd_rate || getActiveRate(),
                 items: remote.accounts,
                 is_archived: false
             };
             saveMonthlyStore(store);
-            if (remote.usd_rate) setScopedUsdRate(remote.usd_rate);
             return remote;
         }
 
@@ -263,7 +262,7 @@ export const WealthApi = {
         return {
             month: m,
             accounts: store[m]?.items || [],
-            usd_rate: getScopedUsdRate()
+            usd_rate: store[m]?.usd_rate || getActiveRate()
         };
     },
 
@@ -276,7 +275,7 @@ export const WealthApi = {
         
         const store = getMonthlyStore();
         if (!store[m]) {
-            store[m] = { month: m, usd_rate: getScopedUsdRate(), items: [], is_archived: false };
+            store[m] = { month: m, usd_rate: getActiveRate(), items: [], is_archived: false };
         }
         const newAcc = (remote && remote.account) ? remote.account : {
             id: 'acc_' + Date.now().toString(36),
@@ -322,42 +321,120 @@ export const WealthApi = {
         return remote || { success: true, deleted: true };
     },
 
-    // 一键从上月复制数据到新月份并归档旧月
-    async inheritFromPreviousMonth(sourceMonth, targetMonth) {
+    // 一键从上月复制数据到新月份并归档旧月（支持自定义修改金额批量应用）
+    async inheritFromPreviousMonth(sourceMonth, targetMonth, itemsOverride = null) {
+        const payload = {
+            action: "clone",
+            source_month: sourceMonth,
+            target_month: targetMonth,
+            usd_rate: getActiveRate()
+        };
+        if (Array.isArray(itemsOverride) && itemsOverride.length > 0) {
+            payload.items = itemsOverride;
+        }
+
         const remote = await request("/api/wealth/snapshots", {
             method: "POST",
-            body: JSON.stringify({
-                action: "clone",
-                source_month: sourceMonth,
-                target_month: targetMonth,
-                usd_rate: getScopedUsdRate()
-            })
+            body: JSON.stringify(payload)
         });
-        if (remote && remote.success) return remote;
+
+        if (remote && remote.success) {
+            const store = getMonthlyStore();
+            const itemsToSave = (Array.isArray(itemsOverride) && itemsOverride.length > 0)
+                ? itemsOverride.map(it => ({
+                    id: 'acc_' + Math.random().toString(36).substring(2, 9),
+                    ...it,
+                    amount: Number(it.amount) || 0,
+                    apr: Number(it.apr) || 0
+                }))
+                : (store[sourceMonth]?.items || []).map(it => ({
+                    ...it,
+                    id: 'acc_' + Math.random().toString(36).substring(2, 9)
+                }));
+
+            store[targetMonth] = {
+                month: targetMonth,
+                usd_rate: getActiveRate(),
+                items: itemsToSave,
+                is_archived: false
+            };
+            saveMonthlyStore(store);
+            return remote;
+        }
 
         const store = getMonthlyStore();
-        if (!store[sourceMonth]) {
+        const sourceItems = store[sourceMonth]?.items || [];
+        if (!store[sourceMonth] && (!itemsOverride || itemsOverride.length === 0)) {
             throw new Error(`Previous month ${sourceMonth} not found`);
         }
 
-        // Archive source month
-        store[sourceMonth].is_archived = true;
+        if (store[sourceMonth]) {
+            store[sourceMonth].is_archived = true;
+        }
 
-        // Clone items into target month
-        const clonedItems = store[sourceMonth].items.map(it => ({
-            ...it,
-            id: 'acc_' + Math.random().toString(36).substring(2, 9)
-        }));
+        const finalItems = (Array.isArray(itemsOverride) && itemsOverride.length > 0)
+            ? itemsOverride.map(it => ({
+                id: 'acc_' + Math.random().toString(36).substring(2, 9),
+                platform: it.platform || 'Other',
+                product: it.product || 'Account',
+                category: it.category || 'bank',
+                currency: it.currency || 'MYR',
+                amount: Math.max(0, Number(it.amount) || 0),
+                apr: Math.max(0, Number(it.apr) || 0)
+            }))
+            : sourceItems.map(it => ({
+                ...it,
+                id: 'acc_' + Math.random().toString(36).substring(2, 9)
+            }));
 
         store[targetMonth] = {
             month: targetMonth,
-            usd_rate: store[sourceMonth].usd_rate || getScopedUsdRate(),
-            items: clonedItems,
+            usd_rate: store[sourceMonth]?.usd_rate || getActiveRate(),
+            items: finalItems,
             is_archived: false
         };
 
         saveMonthlyStore(store);
-        return { success: true, month: targetMonth, count: clonedItems.length };
+        return { success: true, month: targetMonth, count: finalItems.length };
+    },
+
+    // 智能获取可用于快速填写的上月模板
+    async getTemplateForMonth(targetMonth) {
+        let sourceMonth = null;
+        try {
+            const summary = await this.getSummary(targetMonth);
+            sourceMonth = summary.last_recorded_month;
+            if (!sourceMonth && Array.isArray(summary.available_months)) {
+                const prev = summary.available_months.filter(m => m < targetMonth).sort().reverse();
+                sourceMonth = prev[0] || null;
+            }
+        } catch (_) {}
+
+        if (!sourceMonth) {
+            const store = getMonthlyStore();
+            const keys = Object.keys(store).filter(m => m !== targetMonth && (store[m].items || []).length > 0).sort().reverse();
+            sourceMonth = keys[0] || null;
+        }
+
+        if (!sourceMonth) {
+            return { hasTemplate: false, sourceMonth: null, items: [] };
+        }
+
+        try {
+            const port = await this.getPortfolio(sourceMonth);
+            const items = port.accounts || [];
+            if (items.length === 0) {
+                return { hasTemplate: false, sourceMonth: null, items: [] };
+            }
+            return {
+                hasTemplate: true,
+                sourceMonth,
+                usdRate: port.usd_rate || getActiveRate(),
+                items
+            };
+        } catch (_) {
+            return { hasTemplate: false, sourceMonth: null, items: [] };
+        }
     },
 
     async deleteMonth(month) {
@@ -371,9 +448,6 @@ export const WealthApi = {
     },
 
     async saveSettings(payload) {
-        if (payload.default_usd_rate) {
-            setScopedUsdRate(payload.default_usd_rate);
-        }
         await request("/api/wealth/settings", { method: "PUT", body: JSON.stringify(payload) });
         return { success: true, settings: payload };
     }

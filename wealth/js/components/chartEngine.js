@@ -771,7 +771,9 @@ export function renderChartEngine(container, analyticsData = {}) {
                     color: "var(--color-brand)",
                     title: `Month: ${d.month}`,
                     amount: formatMYR(d.total_net_worth_myr),
-                    subtitle: `FX Benchmark: 1 USD = ${d.usd_rate || 4.08} MYR`
+                    subtitle: (d.usd_rate || window.VEYRA_FX?.USDMYR)
+                        ? `FX Benchmark: 1 USD = ${Number(d.usd_rate || window.VEYRA_FX.USDMYR).toFixed(4)} MYR`
+                        : `FX Benchmark: —`
                 });
             });
             pt.addEventListener("mousemove", (e) => positionTooltip(e));

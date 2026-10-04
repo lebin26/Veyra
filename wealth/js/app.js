@@ -14,7 +14,8 @@ import { renderChartEngine } from './components/chartEngine.js';
 import { renderMonthCalendar } from './components/monthCalendar.js';
 import { openAssetModal } from './components/assetModal.js';
 import { openSnapshotModal } from './components/snapshotModal.js';
-import { openRateModal } from './components/rateModal.js';
+import { openTemplateModal } from './components/templateModal.js';
+import { initializeFX, getUSDMYRRate, formatFXRate } from '../../js/services/fx.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
     const realCurrentMonth = getCurrentMonthStr(); // Real-world current month
@@ -198,12 +199,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             currentData = data;
-            const usdRate = data.usd_rate || 4.08;
 
-            // Sync Header USD/MYR rate
-            if (elements.headerRateVal) {
-                elements.headerRateVal.textContent = Number(usdRate).toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
-            }
+            // Sync Header USD/MYR rate from unified FX service / snapshot benchmark
+            updateHeaderRatePill();
 
             // Sync Viewing Month text, picker input, dropdown, sidebar month pill, and status badge
             if (elements.headerViewingMonth) {
@@ -275,18 +273,28 @@ document.addEventListener("DOMContentLoaded", async () => {
                         alert(err.message || "Failed to delete month");
                     }
                 },
-                onInitMonth: (m) => {
+                onInitMonth: async (m) => {
                     currentMonth = m;
                     if (activeViewMode === "calendar") {
                         switchViewMode("portfolio");
                     }
-                    loadData();
+                    await loadData();
+                    const tInfo = await WealthApi.getTemplateForMonth(m);
+                    if (tInfo && tInfo.hasTemplate) {
+                        openTemplateModal(m, tInfo, () => {
+                            showToast(`已成功通过模板录入 ${m} 资产！`);
+                            loadData();
+                        });
+                    }
                 }
             });
 
+            // Check template availability for this month
+            const templateInfo = await WealthApi.getTemplateForMonth(currentMonth);
+
             // Check if month needs initialization (empty record)
             if (data.needs_init) {
-                renderMonthInitBanner(data.last_recorded_month);
+                renderMonthInitBanner(data.last_recorded_month, templateInfo);
             } else {
                 if (elements.monthInitBanner) {
                     elements.monthInitBanner.style.display = "none";
@@ -294,13 +302,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
 
-            // 1. Render KPI Cards
-            renderKPICards(elements.kpiContainer, data, () => {
-                openRateModal(usdRate, () => {
-                    showToast("FX rate updated");
-                    loadData();
-                });
-            });
+            // 1. Render KPI Cards (Automated FX benchmark, manual editing disallowed)
+            renderKPICards(elements.kpiContainer, data);
 
             // 2. Render Health Diagnostic Banner
             renderHealthDiagnostic(elements.diagnosticContainer, data);
@@ -317,6 +320,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             renderPortfolioTable(elements.portfolioContainer, data.portfolio?.accounts || [], usdRate, {
                 currentMonth: currentMonth,
                 isArchived: !!data.is_archived,
+                hasTemplate: templateInfo.hasTemplate,
+                lastRecordedMonth: templateInfo.sourceMonth,
+                onQuickTemplate: () => {
+                    openTemplateModal(currentMonth, templateInfo, () => {
+                        showToast(`已成功通过模板录入 ${currentMonth} 资产`);
+                        loadData();
+                    });
+                },
+                onCopyTemplate: async () => {
+                    try {
+                        await WealthApi.inheritFromPreviousMonth(templateInfo.sourceMonth, currentMonth);
+                        showToast(`已复制 ${templateInfo.sourceMonth} 资产到 ${currentMonth}`);
+                        loadData();
+                    } catch (err) {
+                        alert(err.message || "Failed to copy template");
+                    }
+                },
                 onMonthChange: (m) => {
                     currentMonth = m;
                     showToast(`Switched Holdings to ${m}`);
@@ -393,43 +413,65 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ──────────────────────────────────────────
     // 7. Uninitialized Month Quick Inherit Banner
     // ──────────────────────────────────────────
-    function renderMonthInitBanner(lastRecordedMonth) {
+    function renderMonthInitBanner(lastRecordedMonth, templateInfo) {
         if (!elements.monthInitBanner) return;
         elements.monthInitBanner.style.display = "block";
+
+        const hasTemplate = templateInfo && templateInfo.hasTemplate;
+        const sourceM = templateInfo?.sourceMonth || lastRecordedMonth;
+
         elements.monthInitBanner.innerHTML = `
             <div style="background:var(--bg-panel); border:1px solid var(--border-default); border-left:3px solid var(--color-brand); border-radius:var(--radius-panel); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <strong style="font-size:13px; color:var(--text-primary);">New Month Entry (${currentMonth})</strong>
-                    <span style="font-size:12px; color:var(--text-secondary);">
-                        ${lastRecordedMonth
-                            ? `Previous month (${lastRecordedMonth}) has been archived. Click below to copy all assets from ${lastRecordedMonth} into ${currentMonth} for quick balance updates.`
-                            : `No asset holdings have been entered for this month yet.`}
+                    <strong style="font-size:13.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+                        <span>新月份资产建档 (${escapeHtml(currentMonth)})</span>
+                        ${hasTemplate ? `<span class="category-tag category-trading" style="font-size:10px;">可导入 ${escapeHtml(sourceM)} 模板</span>` : ''}
+                    </strong>
+                    <span style="font-size:12px; color:var(--text-secondary); line-height:1.45;">
+                        ${hasTemplate
+                            ? `检测到您在 <strong>${escapeHtml(sourceM)}</strong> 已有资产记录。大多数情况下各标的不变，您可以直接获取上月模板，一次性填写或微调本月金额！`
+                            : `您当前尚未录入任何历史月份数据。每个用户初始没有模板，至少添加一次资产后，系统将自动将其作为后续月份的快速填写模板。`}
                     </span>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    ${lastRecordedMonth ? `
-                        <button type="button" id="btn-inherit-last" class="btn btn-primary">
-                            ⚡ Copy All Assets from ${lastRecordedMonth}
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    ${hasTemplate ? `
+                        <button type="button" id="btn-quick-fill-template" class="btn btn-primary" style="display:flex; align-items:center; gap:6px;">
+                            ⚡ 快速填写模板 (Quick Fill)
+                        </button>
+                        <button type="button" id="btn-inherit-last" class="btn btn-secondary" style="display:flex; align-items:center; gap:6px;">
+                            📋 一键复制上月数据
                         </button>
                     ` : ''}
-                    <button type="button" id="btn-start-blank" class="btn btn-secondary">
-                        + Add Asset Manually
+                    <button type="button" id="btn-start-blank" class="btn ${hasTemplate ? 'btn-secondary' : 'btn-primary'}">
+                        ${hasTemplate ? '+ 手动添加资产' : '+ 手动新增第一笔资产'}
                     </button>
                 </div>
             </div>
         `;
 
-        const inheritBtn = elements.monthInitBanner.querySelector("#btn-inherit-last");
-        if (inheritBtn) {
-            inheritBtn.addEventListener("click", async () => {
-                try {
-                    await WealthApi.inheritFromPreviousMonth(lastRecordedMonth, currentMonth);
-                    showToast(`Copied assets from ${lastRecordedMonth} into ${currentMonth}`);
-                    loadData();
-                } catch (err) {
-                    alert(err.message || "Failed to inherit previous month");
-                }
-            });
+        if (hasTemplate) {
+            const quickBtn = elements.monthInitBanner.querySelector("#btn-quick-fill-template");
+            if (quickBtn) {
+                quickBtn.addEventListener("click", () => {
+                    openTemplateModal(currentMonth, templateInfo, () => {
+                        showToast(`已成功录入 ${currentMonth} 资产！`);
+                        loadData();
+                    });
+                });
+            }
+
+            const inheritBtn = elements.monthInitBanner.querySelector("#btn-inherit-last");
+            if (inheritBtn) {
+                inheritBtn.addEventListener("click", async () => {
+                    try {
+                        await WealthApi.inheritFromPreviousMonth(sourceM, currentMonth);
+                        showToast(`已直接复制 ${sourceM} 资产到 ${currentMonth}`);
+                        loadData();
+                    } catch (err) {
+                        alert(err.message || "Failed to inherit previous month");
+                    }
+                });
+            }
         }
 
         const blankBtn = elements.monthInitBanner.querySelector("#btn-start-blank");
@@ -503,20 +545,49 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    function updateHeaderRatePill() {
+        if (!elements.headerRateVal) return;
+        const fx = window.VEYRA_FX;
+        if (!fx || fx.status === 'loading') {
+            elements.headerRateVal.textContent = "Loading...";
+            if (elements.headerRatePill) {
+                elements.headerRatePill.title = "USD/MYR — Loading latest rate from Frankfurter...";
+            }
+        } else if (typeof fx.USDMYR === 'number' && fx.USDMYR > 0) {
+            const formatted = formatFXRate(fx.USDMYR);
+            elements.headerRateVal.textContent = formatted;
+            const fallbackText = fx.isFallback ? " · Cached fallback" : "";
+            if (elements.headerRatePill) {
+                elements.headerRatePill.title = `1 USD = ${formatted} MYR\nRate date: ${fx.date || '—'}${fallbackText}\nSource: Frankfurter`;
+            }
+        } else {
+            elements.headerRateVal.textContent = "Unavailable";
+            if (elements.headerRatePill) {
+                elements.headerRatePill.title = "USD/MYR exchange rate currently unavailable";
+            }
+        }
+    }
+
     if (elements.headerRatePill) {
-        elements.headerRatePill.addEventListener("click", () => {
-            const currentRate = currentData?.usd_rate || 4.08;
-            openRateModal(currentRate, () => {
-                showToast("FX rate updated");
-                loadData();
-            });
+        elements.headerRatePill.addEventListener("click", async () => {
+            showToast("Refreshing USD/MYR rate from Frankfurter...");
+            try {
+                await getUSDMYRRate({ forceRefresh: true });
+                await initializeFX();
+                updateHeaderRatePill();
+                await loadData();
+                const rate = window.VEYRA_FX?.USDMYR;
+                showToast(`USD/MYR refreshed: ${formatFXRate(rate)} (${window.VEYRA_FX?.date || ''})`);
+            } catch (err) {
+                showToast("Failed to refresh live rate. Using cached rate.");
+            }
         });
     }
 
     if (elements.btnTakeSnapshot) {
         elements.btnTakeSnapshot.addEventListener("click", () => {
             const netWorth = currentData?.portfolio?.total_net_worth_myr || 0;
-            const usdRate = currentData?.usd_rate || 4.08;
+            const usdRate = currentData?.usd_rate || window.VEYRA_FX?.USDMYR || null;
             openSnapshotModal(currentMonth, netWorth, usdRate, (newMonth) => {
                 showToast(`Month ${newMonth} archived successfully`);
                 currentMonth = newMonth;
@@ -557,7 +628,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         else if (e.key === "s" || e.key === "S") {
             e.preventDefault();
             const netWorth = currentData?.portfolio?.total_net_worth_myr || 0;
-            const usdRate = currentData?.usd_rate || 4.08;
+            const usdRate = currentData?.usd_rate || window.VEYRA_FX?.USDMYR || null;
             openSnapshotModal(currentMonth, netWorth, usdRate, () => loadData());
         }
     });
@@ -565,7 +636,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Mobile zoom guard
     document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
 
-    // Initialize application
+    // 1. Initialize automated USD/MYR FX Benchmark from Frankfurter API / Local Cache
+    await initializeFX();
+    updateHeaderRatePill();
+
+    // 2. React to dynamic FX updates
+    window.addEventListener("veyra:fx:updated", () => {
+        updateHeaderRatePill();
+        if (currentData) {
+            renderView(activeViewMode);
+        }
+    });
+
+    // 3. Initialize user session and load month-centric portfolio
     const isAuthed = await checkAuthAndEntitlements();
     if (isAuthed) {
         await loadData();

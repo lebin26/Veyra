@@ -51,7 +51,7 @@ export class NotebookView {
           <button class="chip-filter ${this.activeCategory === 'lessons' ? 'active' : ''}" data-cat="lessons">💡 Lessons</button>
         </div>
 
-        <div id="notes-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;"></div>
+        <div id="notes-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px;"></div>
       </div>
     `;
 

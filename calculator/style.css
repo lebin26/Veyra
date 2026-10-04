@@ -1307,6 +1307,13 @@ input, button, table, .tabular-nums, .result-hero-val, .readout-val, .metric-val
     flex-wrap: wrap;
 }
 
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+    .desktop-shortcuts-hint,
+    .sidebar-shortcut-tag {
+        display: none !important;
+    }
+}
+
 .shortcuts-title {
     font-weight: 500;
 }

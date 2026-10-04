@@ -127,3 +127,61 @@
   align-items: center;
   gap: 6px;
 }
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS (TABLE)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Table toolbar: stack vertically, full-width controls */
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .table-search-input {
+    width: 100%;
+    font-size: 16px; /* Prevents iOS auto-zoom */
+  }
+
+  .table-filter-group {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .table-select {
+    font-size: 16px; /* Prevents iOS auto-zoom */
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* Table: allow horizontal scrolling within the card */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure table rows don't wrap on mobile */
+  .data-table {
+    min-width: 540px;
+  }
+
+  /* Pagination: stack on very small screens */
+  .table-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .data-table {
+    font-size: 11px;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 7px 10px;
+  }
+}
+

@@ -521,3 +521,42 @@
     width: 100%;
   }
 }
+
+/* Template Batch Fill Modal Styles */
+.template-modal-panel {
+  max-width: 760px;
+  width: 100%;
+}
+
+.template-amount-input {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.template-amount-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px var(--color-brand-ring, rgba(47, 91, 255, 0.15));
+  outline: none;
+}
+
+.btn-remove-row:hover {
+  color: var(--color-loss) !important;
+  background: var(--color-loss-bg);
+  border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+  .template-quick-bar {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  #template-live-summary {
+    flex-wrap: wrap;
+    font-size: 11px !important;
+    gap: 6px !important;
+  }
+}
+
